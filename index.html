@@ -9,10 +9,9 @@
   <meta name="color-scheme" content="light"/>
   <meta name="theme-color" content="#1D9E75"/>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="manifest" href="manifest.webmanifest">
   <title>The Big One</title>
-  <script type="module" crossorigin src="/The-Big-One/assets/index-_bWqM8WE.js"></script>
-  <link rel="stylesheet" crossorigin href="/The-Big-One/assets/index-BBL5IknU.css">
+  <script type="module" crossorigin src="/The-Big-One/assets/index-Cz3d_V-a.js"></script>
+  <link rel="stylesheet" crossorigin href="/The-Big-One/assets/index-BdQjm_K-.css">
 <link rel="manifest" href="/The-Big-One/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/The-Big-One/registerSW.js"></script></head>
 <body>
 <div class="outer">
@@ -20,43 +19,53 @@
   <!-- ── Main app ── -->
   <div class="app" id="mainApp">
     <div class="top-bar">
-      <button class="top-btn" id="ceaseResus">EXPORT</button>
-      <button class="top-btn" id="masterResetBtn">SETTINGS</button>
+      <button class="top-btn" id="masterResetBtn">Reset all</button>
+      <button class="cease-btn" id="ceaseResus">Close case</button>
     </div>
 
-    <div class="stat-row">
-      <div class="stat-card">
-        <div class="stat-label">TOTAL ELAPSED</div>
-        <div class="stat-value" id="countupDisplay">0:00</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">ADRENALINE</div>
-        <div class="stat-value" id="cycleCount">08</div>
-        <div id="adrDueLabel" style="font-size:11px;font-weight:600;margin-top:2px;color:#E24B4A;">Nil Adr. given</div>
-      </div>
+    <div class="banner-row">
+      <button class="rev-banner half-banner" id="revBtn">Reversibles</button>
+      <button class="rosc-banner half-banner" id="roscBtn">ROSC</button>
+      <button class="phea-banner half-banner" id="pheaBtn">PHEA</button>
     </div>
 
-    <div id="centralBox" style="border:2px solid #1D9E75;border-radius:var(--rad2);background:var(--bg);width:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;flex:1;min-height:0;">
+
+    <div id="centralBox" style="border:1.5px solid #1D9E75;border-radius:var(--rad2);background:var(--bg);width:100%;overflow:hidden;display:flex;flex-direction:column;position:relative;flex:1;padding-bottom:70px;">
 
       <!-- Normal contents -->
-      <div id="centralBoxNormal" style="display:flex;flex-direction:column;flex:1;position:relative;">
-        
+      <div id="centralBoxNormal" style="display:flex;flex-direction:column;flex:1;">
+        <div class="stat-row" style="padding:0.75rem 0.75rem 0.5rem;margin-top:30px;">
+          <div class="stat-card">
+            <div class="stat-label">Total elapsed</div>
+            <div class="stat-value" id="countupDisplay">0:00</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">CPR round</div>
+            <div class="stat-value" id="cycleCount">—</div>
+            <div id="adrDueLabel" style="font-size:11px;font-weight:600;margin-top:2px;color:#E24B4A;">Nil Adr. given</div>
+          </div>
+        </div>
+
         <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;width:100%;padding:1rem 0;">
-          <div class="ring-wrap">
-            <svg width="216" height="216" style="position:absolute;top:0;left:0;">
-              <circle class="ring-bg" cx="108" cy="108" r="94.5"/>
-              <circle class="ring-fg" id="ring" cx="108" cy="108" r="94.5" style="transform:rotate(-90deg);transform-origin:108px 108px;"/>
-            </svg>
-            <div class="timer-display hidden" id="display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;">2:00</div>
-            <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">COACHED</div>
-            <button class="start-btn" id="startBtn">START</button>
+          <div style="display:flex;align-items:center;justify-content:center;width:100%;margin-top:35px;">
+            <div style="width:60px;"></div>
+            <div class="ring-wrap">
+              <svg width="216" height="216" style="position:absolute;top:0;left:0;">
+                <circle class="ring-bg" cx="108" cy="108" r="94.5"/>
+                <circle class="ring-fg" id="ring" cx="108" cy="108" r="94.5" style="transform:rotate(-90deg);transform-origin:108px 108px;"/>
+              </svg>
+              <div class="timer-display hidden" id="display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;">2:00</div>
+              <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">COACHED</div>
+              <button class="start-btn" id="startBtn">START</button>
+            </div>
+            <div style="width:60px;"></div>
           </div>
         </div>
 
         <!-- Pause and Reset buttons at bottom of card -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;padding:12px;margin-top:auto;">
-          <button class="circle-side-btn hidden" id="pauseBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:48px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Pause</button>
-          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:48px;font-size:15px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Refresh</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:calc(100% - 20px);padding:0;position:absolute;bottom:15px;left:10px;">
+          <button class="circle-side-btn hidden" id="pauseBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Pause</button>
+          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Refresh</button>
         </div>
       </div>
 
@@ -262,16 +271,18 @@
       </div>
     </div>
 
-    <div class="btn-row" id="mainBtnRow" style="margin-bottom:8px;">
+    <div class="btn-row" id="mainBtnRow" style="position:relative;z-index:1;margin-top:0;">
       <button class="btn-half" id="fullLogBtn">Running summary</button>
       <button class="btn-half" id="txBtn">Add Tx</button>
     </div>
 
-    <div id="lastTxBar" style="display:flex;align-items:center;padding:12px 14px;background:#f5f5f5;border-radius:var(--rad);width:100%;min-height:44px;margin-bottom:10px;">
+    <div id="lastTxBar" style="display:flex;align-items:center;padding:12px 14px;background:#f5f5f5;border-radius:var(--rad);width:100%;margin-top:10px;">
       <span style="font-size:12px;font-weight:600;color:var(--txt2);flex:1;">Last Tx</span>
       <span id="lastTxName" style="font-size:14px;font-weight:600;flex:2;text-align:center;">No treatment logged</span>
       <span id="lastTxAgo" style="font-size:12px;color:var(--txt2);flex:1;text-align:right;"></span>
     </div>
+
+    <div style="height:20px;"></div>
 
   </div>
 
@@ -435,7 +446,7 @@
   </div>
 
   <!-- ── Export warning overlay ── -->
-  <div class="overlay" id="warnOverlay" style="justify-content:center;align-items:center;">
+  <div class="overlay" id="warnOverlay" style="justify-content:center;align-items:center;min-height:100vh;">
     <div class="warn-box">
       <div class="warn-icon">⚠️</div>
       <div class="warn-title" id="warnTitle">Stop all timers?</div>
