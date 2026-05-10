@@ -1,1 +1,0 @@
-if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/The-Big-One/sw.js', { scope: '/The-Big-One/' })})}
