@@ -55,7 +55,7 @@
                 <circle class="ring-fg" id="ring" cx="108" cy="108" r="94.5" style="transform:rotate(-90deg);transform-origin:108px 108px;"/>
               </svg>
               <div class="timer-display hidden" id="display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;">2:00</div>
-              <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">COACHED</div>
+              <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">Rhythm check</div>
               <button class="start-btn" id="startBtn">START</button>
             </div>
             <div style="width:60px;"></div>
@@ -65,7 +65,7 @@
         <!-- Pause and Reset buttons at bottom of card -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:calc(100% - 20px);padding:0;position:absolute;bottom:15px;left:10px;">
           <button class="circle-side-btn hidden" id="pauseBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Pause</button>
-          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Refresh<br>COACHED</button>
+          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Reset<br>timer</button>
         </div>
       </div>
 
@@ -123,7 +123,7 @@
           <div id="accOtherBody" class="tx-acc-body" style="display:none;">
             <button class="tx-item" data-tx="Corpuls">Corpuls</button>
             <button class="tx-item" data-tx="Extrication">Extrication</button>
-            <button class="tx-item" data-tx="IO access">IO access</button>
+            <button class="tx-item" data-tx="IO access">IO</button>
             <button class="tx-item" data-tx="IV access">IV access</button>
             <button class="tx-item" data-tx="Pacing">Pacing</button>
             <div class="tx-item-other">
@@ -293,7 +293,7 @@
         <span class="ov-title">Running summary</span>
         <div class="mini-wrap" id="miniWrap" style="margin-top:4px;">
           <span class="mini-cd" id="miniCountdown"></span>
-          <span class="coached-lbl">COACHED</span>
+          <span class="coached-lbl">Rhythm check</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -370,7 +370,7 @@
           <div style="position:absolute;top:22px;bottom:180px;left:0;right:0;display:flex;align-items:center;">
             <div style="border:2px solid #1D9E75;border-radius:var(--rad2);background:#fff;display:flex;flex-direction:column;align-items:stretch;overflow:hidden;width:100%;height:100%;">
               <div style="background:#1D9E75;padding:10px 24px;text-align:center;">
-                <span style="font-size:18px;font-weight:600;color:#fff;letter-spacing:0.01em;">How long until next rhythm check?</span>
+                <span style="font-size:18px;font-weight:600;color:#fff;letter-spacing:0.01em;">Enter time to next rhythm check</span>
               </div>
               <div style="padding:22.5px 32px;display:flex;align-items:center;justify-content:center;flex:1;">
                 <div class="arrow-time-row">
@@ -431,7 +431,7 @@
                 <div style="display:flex;background:#fff;height:25%;">
                   <button class="cu-chip-btn" id="bvmToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;border-right:0.5px solid var(--brd);color:var(--txt);">BVM</button>
                   <button class="cu-chip-btn" id="lmaToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;border-right:0.5px solid var(--brd);color:var(--txt);">LMA</button>
-                  <button class="cu-chip-btn" id="ioToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;color:var(--txt);">IO access</button>
+                  <button class="cu-chip-btn" id="ioToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;color:var(--txt);">IO</button>
                 </div>
               </div>
             </div>
