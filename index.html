@@ -16,6 +16,13 @@
   
   <div id="app">
     
+    <!-- Control Buttons (Top) -->
+    <div class="controls-top">
+      <button id="btnPause">Pause timer</button>
+      <button id="btnReset">Reset timer</button>
+      <button id="btnCloseCase">Close case</button>
+    </div>
+    
     <!-- Catchup Modal -->
     <div id="catchupModal" class="modal">
       <div class="modal-content">
@@ -51,7 +58,7 @@
         
         <!-- Page 3: Set rhythm check target -->
         <div id="catchupPage3" class="catchup-page" style="display:none;">
-          <h2>Enter what the elapsed time will be when the next rhythm check is due</h2>
+          <h2>Enter what the elapsed case time will be when the next rhythm check is due</h2>
           <div class="time-picker">
             <div class="time-column">
               <button class="time-btn" data-action="rhythm-mins-up">▲</button>
@@ -73,7 +80,7 @@
         
         <!-- Page 4: Add prior treatments -->
         <div id="catchupPage4" class="catchup-page" style="display:none;">
-          <p style="font-size:16px; color:#666; margin-bottom:24px;">Select any treatments given before starting this timer</p>
+          <h2>Select any already administered treatments</h2>
           <div class="prior-tx-list">
             
             <!-- Shock with counter only -->
@@ -116,7 +123,6 @@
             <button class="prior-tx-btn" data-tx="IO">IO</button>
             
           </div>
-          <div id="priorTxSelected"></div>
           <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
           <button id="btnCatchupBack3" class="modal-btn">Back</button>
         </div>
@@ -240,51 +246,6 @@
         </table>
       </div>
       
-      <div id="overlayCaseSummary" class="overlay" style="display:none;">
-        <div style="text-align: center; padding: 20px 0;">
-          <h2 style="font-size: 28px; color: #1a1a1a; margin-bottom: 30px;">Case Summary</h2>
-        </div>
-        
-        <div class="section-header green-header-light">ARREST SUMMARY</div>
-        <div class="summary-row">
-          <span>Total time elapsed</span>
-          <span id="caseElapsed">0:00</span>
-        </div>
-        <div class="summary-row">
-          <span>CPR rounds</span>
-          <span id="caseRounds">1</span>
-        </div>
-        <div class="summary-row">
-          <span style="color: #a32d2d;">Shocks given</span>
-          <span style="color: #a32d2d;" id="caseShocks">0</span>
-        </div>
-        <div class="summary-row">
-          <span style="color: #1D5F9E;">Disarmed</span>
-          <span style="color: #1D5F9E;" id="caseDisarmed">0</span>
-        </div>
-        
-        <div class="section-header green-header-light">PHARMA SUMMARY</div>
-        <div id="casePharmaSummary"></div>
-        
-        <div class="section-header green-header-light">TREATMENT LOG</div>
-        <table class="summary-table">
-          <thead>
-            <tr>
-              <th>TREATMENT</th>
-              <th>TIME</th>
-              <th>ELAPSED</th>
-              <th>AGO</th>
-            </tr>
-          </thead>
-          <tbody id="caseTreatmentsTable">
-          </tbody>
-        </table>
-        
-        <div style="margin-top: 30px; display: flex; gap: 12px;">
-          <button id="btnExportPdf" class="modal-btn primary">Export PDF</button>
-          <button id="btnBackFromCase" class="modal-btn">Back</button>
-        </div>
-      </div>
       
       <div id="overlayTreatment" class="overlay" style="display:none;">
         <div class="section-header green-header" data-section="medications">Medications</div>
@@ -344,13 +305,54 @@
       <button id="btnAddTx">Add Tx</button>
     </div>
     
-    <!-- Controls -->
-    <div class="controls">
-      <button id="btnPause">Pause timer</button>
-      <button id="btnReset">Reset timer</button>
-      <button id="btnCloseCase">Close case</button>
+  </div>
+  
+  <!-- Case Summary Page (Full Screen) -->
+  <div id="overlayCaseSummary" style="display:none;">
+    <div class="case-summary-page">
+      <h1 style="text-align: center; font-size: 32px; color: #1a1a1a; margin-bottom: 24px; font-weight: 700;">Case Summary</h1>
+      
+      <div class="section-header green-header-light">ARREST SUMMARY</div>
+      <div class="summary-row">
+        <span>Total time elapsed</span>
+        <span id="caseElapsed">0:00</span>
+      </div>
+      <div class="summary-row">
+        <span>CPR rounds</span>
+        <span id="caseRounds">1</span>
+      </div>
+      <div class="summary-row">
+        <span style="color: #a32d2d;">Shocks given</span>
+        <span style="color: #a32d2d;" id="caseShocks">0</span>
+      </div>
+      <div class="summary-row">
+        <span style="color: #1D5F9E;">Disarmed</span>
+        <span style="color: #1D5F9E;" id="caseDisarmed">0</span>
+      </div>
+      
+      <div class="section-header green-header-light">PHARMA SUMMARY</div>
+      <div id="casePharmaSummary"></div>
+      
+      <div class="section-header green-header-light">TREATMENT LOG</div>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>TREATMENT</th>
+            <th>TIME</th>
+            <th>ELAPSED</th>
+            <th>AGO</th>
+          </tr>
+        </thead>
+        <tbody id="caseTreatmentsTable">
+        </tbody>
+      </table>
+      
+      <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr; gap: 12px;">
+        <button id="btnBackFromCase" class="modal-btn">Return to active case</button>
+        <button id="btnExportPdf" class="modal-btn primary">Export PDF</button>
+        <button id="btnDeleteCase" class="modal-btn" style="background: #a32d2d; color: white;">Delete case</button>
+      </div>
     </div>
-    
   </div>
   
   <script src="app.js"></script>

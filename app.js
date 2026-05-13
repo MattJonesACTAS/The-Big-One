@@ -670,12 +670,7 @@ function updatePriorTxDisplay() {
     catchupState.priorTreatmentCounts.disarm + 
     catchupState.priorTreatmentCounts.adrenaline;
   
-  const display = document.getElementById('priorTxSelected');
-  if (total > 0) {
-    display.textContent = `Selected: ${total} treatment(s)`;
-  } else {
-    display.textContent = '';
-  }
+  // Counter removed from UI
 }
 
 // === PDF EXPORT ===
@@ -708,6 +703,14 @@ function exportPDF() {
 
 // === CASE SUMMARY ===
 function showCaseSummary() {
+  if (!confirm('Close this case? This will end the timer and show the case summary.')) {
+    return;
+  }
+  
+  // Stop the timer
+  state.running = false;
+  saveState();
+  
   // Populate case summary (same as running summary)
   document.getElementById('caseElapsed').textContent = formatTime(state.elapsedSeconds);
   document.getElementById('caseRounds').textContent = state.cprRound;
@@ -771,14 +774,59 @@ function showCaseSummary() {
     }).join('');
   }
   
-  // Show the overlay
+  // Hide main app, show case summary
+  document.getElementById('app').style.display = 'none';
   el.overlays.caseSummary.style.display = 'block';
-  el.mainDisplay.style.visibility = 'hidden';
 }
 
 document.getElementById('btnCloseCase').addEventListener('click', showCaseSummary);
-document.getElementById('btnBackFromCase').addEventListener('click', () => {
-  el.overlays.caseSummary.style.display = 'none';
-  el.mainDisplay.style.visibility = 'visible';
-});
+
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
+
+// Return to active case - continue timer as it was
+document.getElementById('btnBackFromCase').addEventListener('click', () => {
+  // Just hide case summary and show main app - timer continues as it was
+  el.overlays.caseSummary.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  // If timer was running when case was closed, resume it
+  if (state.running) {
+    state.startTime = Date.now();
+  }
+});
+
+// Delete case button - clear everything and return to page 1
+document.getElementById('btnDeleteCase').addEventListener('click', () => {
+  if (!confirm('Delete this case? All data will be lost and you will return to the start screen.')) {
+    return;
+  }
+  
+  // Clear all state
+  state.running = false;
+  state.startTime = null;
+  state.pausedTime = 0;
+  state.elapsedSeconds = 0;
+  state.rhythmCheckTarget = 120;
+  state.cprRound = 1;
+  state.shocks = 0;
+  state.treatments = [];
+  state.catchupElapsed = 0;
+  state.startClockTime = null;
+  
+  clearState();
+  
+  // Reset UI
+  updateDisplay();
+  el.cprRound.textContent = '1';
+  el.adrWarning.textContent = '';
+  el.buttons.pause.textContent = 'Pause timer';
+  
+  // Hide case summary
+  el.overlays.caseSummary.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  // Show catchup modal page 1
+  catchupEl.modal.style.display = 'flex';
+  catchupEl.pages.forEach(p => p.style.display = 'none');
+  catchupEl.page1.style.display = 'block';
+});
