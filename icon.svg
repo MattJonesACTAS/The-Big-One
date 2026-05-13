@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#ffffff"/>
-  <rect x="192" y="96" width="128" height="320" fill="#1D9E75" rx="20"/>
-  <rect x="96" y="192" width="320" height="128" fill="#1D9E75" rx="20"/>
+  <circle cx="256" cy="256" r="220" fill="#1D9E75"/>
+  <text x="256" y="290" font-family="Arial, sans-serif" font-size="153" font-weight="bold" fill="#ffffff" text-anchor="middle">CPR</text>
 </svg>
