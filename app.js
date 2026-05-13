@@ -259,9 +259,7 @@ document.querySelectorAll('.tx-btn').forEach(btn => {
   });
 });
 
-// === INITIALIZE ===
-updateCatchupDisplay();
-updateDisplay();
+// === INITIALIZE (moved to end after catchup code) ===
 
 // === CATCHUP FLOW ===
 let catchupState = {
@@ -408,3 +406,7 @@ document.querySelectorAll('.time-btn').forEach(btn => {
     adjustCatchupTime(btn.dataset.action);
   });
 });
+
+// === INITIALIZE ===
+updateCatchupDisplay();
+updateDisplay();
