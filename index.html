@@ -9,7 +9,7 @@
   <meta name="color-scheme" content="light"/>
   <meta name="theme-color" content="#1D9E75"/>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <title>The Big One - v34-1778502838</title>
+  <title>The Big One</title>
   <script type="module" crossorigin src="/The-Big-One/assets/index-Cz3d_V-a.js"></script>
   <link rel="stylesheet" crossorigin href="/The-Big-One/assets/index-BdQjm_K-.css">
 <link rel="manifest" href="/The-Big-One/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/The-Big-One/registerSW.js"></script></head>
@@ -40,7 +40,7 @@
             <div class="stat-value" id="countupDisplay">0:00</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Current CPR round</div>
+            <div class="stat-label">CPR round</div>
             <div class="stat-value" id="cycleCount">—</div>
             <div id="adrDueLabel" style="font-size:11px;font-weight:600;margin-top:2px;color:#E24B4A;">Nil Adr. given</div>
           </div>
@@ -55,7 +55,7 @@
                 <circle class="ring-fg" id="ring" cx="108" cy="108" r="94.5" style="transform:rotate(-90deg);transform-origin:108px 108px;"/>
               </svg>
               <div class="timer-display hidden" id="display" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);white-space:nowrap;">2:00</div>
-              <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">Rhythm check</div>
+              <div class="countdown-label" id="coachedLabel" style="position:absolute;top:75%;left:50%;transform:translate(-50%,-50%);color:var(--txt3);white-space:nowrap;">COACHED</div>
               <button class="start-btn" id="startBtn">START</button>
             </div>
             <div style="width:60px;"></div>
@@ -65,7 +65,7 @@
         <!-- Pause and Reset buttons at bottom of card -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;width:calc(100% - 20px);padding:0;position:absolute;bottom:15px;left:10px;">
           <button class="circle-side-btn hidden" id="pauseBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Pause</button>
-          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Reset<br>timer</button>
+          <button class="circle-side-btn reset-btn-icon hidden" id="resetBtn" style="background:var(--bg2);border:none;border-radius:var(--rad);height:44px;font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;width:100%;color:var(--txt2);">Refresh<br>COACHED</button>
         </div>
       </div>
 
@@ -123,7 +123,7 @@
           <div id="accOtherBody" class="tx-acc-body" style="display:none;">
             <button class="tx-item" data-tx="Corpuls">Corpuls</button>
             <button class="tx-item" data-tx="Extrication">Extrication</button>
-            <button class="tx-item" data-tx="IO access">IO</button>
+            <button class="tx-item" data-tx="IO access">IO access</button>
             <button class="tx-item" data-tx="IV access">IV access</button>
             <button class="tx-item" data-tx="Pacing">Pacing</button>
             <div class="tx-item-other">
@@ -223,7 +223,7 @@
       </div>
 
       <div id="rhythmPrompt" style="display:none;position:absolute;inset:0;background:var(--bg);padding:0.75rem 1rem;flex-direction:column;gap:5px;overflow-y:auto;z-index:5;justify-content:center;">
-        <div style="font-size:15px;font-weight:700;color:var(--txt);text-align:center;margin-bottom:2px;">Log rhythm</div>
+        <div style="font-size:15px;font-weight:700;color:var(--txt);text-align:center;margin-bottom:2px;">COACHED — log rhythm</div>
         <button class="tx-item shock" data-shock-tx="Shock - VF" style="border-radius:var(--rad);border:1px solid #E24B4A;text-align:center;">Shock — VF</button>
         <button class="tx-item shock" data-shock-tx="Shock - VT" style="border-radius:var(--rad);border:1px solid #E24B4A;text-align:center;">Shock — VT</button>
         <button class="tx-item noshock" data-shock-tx="Disarm - Asystole" style="border-radius:var(--rad);border:1px solid #185FA5;text-align:center;">Disarm — Asystole</button>
@@ -293,7 +293,7 @@
         <span class="ov-title">Running summary</span>
         <div class="mini-wrap" id="miniWrap" style="margin-top:4px;">
           <span class="mini-cd" id="miniCountdown"></span>
-          <span class="coached-lbl">Rhythm check</span>
+          <span class="coached-lbl">COACHED</span>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
@@ -344,10 +344,16 @@
               <div style="padding:22.5px 32px;display:flex;align-items:center;justify-content:center;flex:1;">
                 <div class="arrow-time-row">
                   <div class="arrow-field">
-                    <button class="arrow-btn" id="elMinsUp">▲</button>
-                    <span class="arrow-val" id="elMinsVal">0</span>
-                    <button class="arrow-btn" id="elMinsDown">▼</button>
-                    <div class="catchup-unit">min</div>
+                    <button class="arrow-btn" id="elMins10Up">▲</button>
+                    <span class="arrow-val" id="elMins10Val">0</span>
+                    <button class="arrow-btn" id="elMins10Down">▼</button>
+                    <div class="catchup-unit">10min</div>
+                  </div>
+                  <div class="arrow-field">
+                    <button class="arrow-btn" id="elMins1Up">▲</button>
+                    <span class="arrow-val" id="elMins1Val">0</span>
+                    <button class="arrow-btn" id="elMins1Down">▼</button>
+                    <div class="catchup-unit">1min</div>
                   </div>
                   <div class="arrow-sep">:</div>
                   <div class="arrow-field">
@@ -431,7 +437,7 @@
                 <div style="display:flex;background:#fff;height:25%;">
                   <button class="cu-chip-btn" id="bvmToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;border-right:0.5px solid var(--brd);color:var(--txt);">BVM</button>
                   <button class="cu-chip-btn" id="lmaToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;border-right:0.5px solid var(--brd);color:var(--txt);">LMA</button>
-                  <button class="cu-chip-btn" id="ioToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;color:var(--txt);">IO</button>
+                  <button class="cu-chip-btn" id="ioToggle" style="flex:1;height:100%;border-radius:0;font-size:14px;border:none;color:var(--txt);">IO access</button>
                 </div>
               </div>
             </div>
