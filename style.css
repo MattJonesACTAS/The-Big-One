@@ -166,6 +166,18 @@ button:active {
   overflow-y: auto;
 }
 
+#overlayReversibles {
+  background: #E3F2FD;
+}
+
+#overlayRosc {
+  background: #FFF3E0;
+}
+
+#overlayPhea {
+  background: #F3E5F5;
+}
+
 .overlay h3 {
   font-size: 22px;
   color: #1a1a1a;
@@ -217,6 +229,12 @@ button:active {
 .purple-header {
   background: #F3E5F5;
   color: #6A1B9A;
+}
+
+.purple-header-dark {
+  background: #7B1FA2;
+  color: white;
+  font-weight: 700;
 }
 
 .dark-purple-header {
@@ -414,7 +432,7 @@ button:active {
   padding: 8px 12px;
   border-bottom: 1px solid #f5f5f5;
   color: #666;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .summary-table td:nth-child(3) {
@@ -472,6 +490,34 @@ button:active {
 
 .case-summary-page .summary-row {
   padding: 8px 18px;
+}
+
+/* Case Summary Buttons */
+.case-summary-btn {
+  padding: 12px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+
+.case-summary-btn.primary {
+  background: #1D9E75;
+  color: white;
+}
+
+.case-summary-btn.primary:active {
+  background: #177d5e;
+}
+
+.case-summary-btn.delete {
+  background: #a32d2d;
+  color: white;
+}
+
+.case-summary-btn.delete:active {
+  background: #8b2525;
 }
 
 /* Mobile adjustments for case summary */
@@ -659,8 +705,9 @@ button:active {
 }
 
 .prior-tx-btn.selected {
-  background: #1D9E75;
-  color: white;
+  background: #FFF9C4;
+  color: #1a1a1a;
+  border: 2px solid #F9A825;
 }
 
 #priorTxSelected {

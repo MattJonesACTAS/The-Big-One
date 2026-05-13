@@ -115,9 +115,9 @@
             
             <!-- BVM, LMA, IO (horizontal toggle buttons) -->
             <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px;">
-              <button class="prior-tx-btn" data-tx="BVM">BVM</button>
-              <button class="prior-tx-btn" data-tx="LMA">LMA</button>
-              <button class="prior-tx-btn" data-tx="IO">IO</button>
+              <button class="prior-tx-btn" data-tx="BVM" style="text-align: center;">BVM</button>
+              <button class="prior-tx-btn" data-tx="LMA" style="text-align: center;">LMA</button>
+              <button class="prior-tx-btn" data-tx="IO" style="text-align: center;">IO</button>
             </div>
             
           </div>
@@ -233,7 +233,7 @@
         <label><input type="checkbox"> ELM discussed</label>
         <label><input type="checkbox"> Fallback plan discussed</label>
         
-        <div class="section-header purple-header">POST-INTUBATION</div>
+        <div class="section-header purple-header-dark">POST-INTUBATION</div>
         <label><input type="checkbox"> Confirm ETT placement — EtCO<sub>2</sub>, visualise cords, auscultation, misting, chest rise</label>
         <label><input type="checkbox"> Colleague confirms placement</label>
         <label><input type="checkbox"> Secure tube — Thomas block / tube tie</label>
@@ -337,15 +337,38 @@
     
   </div>
   
+  <!-- Close Case Warning Modal -->
+  <div id="closeCaseWarning" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 400px;">
+      <h2 style="font-size: 24px; margin-bottom: 16px; color: #1a1a1a;">Close this case?</h2>
+      <p style="font-size: 16px; color: #666; margin-bottom: 24px;">This will end the timer and show the case summary.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <button id="closeCaseCancel" class="modal-btn">Cancel</button>
+        <button id="closeCaseConfirm" class="modal-btn primary">OK</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Delete Case Warning Modal -->
+  <div id="deleteCaseWarning" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width: 400px;">
+      <h2 style="font-size: 24px; margin-bottom: 16px; color: #a32d2d;">Delete this case?</h2>
+      <p style="font-size: 16px; color: #666; margin-bottom: 24px;">All data will be lost and you will return to the start screen.</p>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <button id="deleteCaseCancel" class="modal-btn">Cancel</button>
+        <button id="deleteCaseConfirm" class="modal-btn" style="background: #a32d2d; color: white;">Delete</button>
+      </div>
+    </div>
+  </div>
+  
   <!-- Case Summary Page (Full Screen) -->
   <div id="overlayCaseSummary" style="display:none;">
     <div class="case-summary-page">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
-        <h1 style="font-size: 32px; color: #1a1a1a; margin: 0; font-weight: 700;">Case Summary</h1>
-        <div style="display: flex; gap: 12px;">
-          <button id="btnExportPdf" class="modal-btn primary">Export PDF</button>
-          <button id="btnDeleteCase" class="modal-btn" style="background: #a32d2d; color: white;">Delete case</button>
-        </div>
+      <h1 style="font-size: 32px; color: #1a1a1a; margin: 0 0 16px 0; font-weight: 700;">Case Summary</h1>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+        <button id="btnExportPdf" class="case-summary-btn primary">Export PDF</button>
+        <button id="btnDeleteCase" class="case-summary-btn delete">Delete case</button>
       </div>
       
       <div class="section-header green-header-light">ARREST SUMMARY</div>

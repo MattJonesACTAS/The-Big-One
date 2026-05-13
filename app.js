@@ -38,6 +38,9 @@ function loadState() {
     updateDisplay();
     el.cprRound.textContent = state.cprRound;
     
+    // Hide catchup modal since we have saved state
+    document.getElementById('catchupModal').style.display = 'none';
+    
     // Restart timer if it was running
     if (state.running) {
       startTimer();
