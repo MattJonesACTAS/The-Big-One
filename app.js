@@ -1,3 +1,6 @@
+// Wrap everything in DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+
 // === STATE ===
 let state = {
   running: false,
@@ -566,3 +569,6 @@ function exportPDF() {
 }
 
 document.getElementById('btnPdf').addEventListener('click', exportPDF);
+
+// End DOMContentLoaded wrapper
+});
