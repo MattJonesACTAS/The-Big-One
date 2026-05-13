@@ -108,20 +108,48 @@ function showOverlay(name) {
 }
 
 function updateRunningSummary() {
-  document.getElementById('sumElapsed').textContent = formatTime(state.elapsedSeconds);
+  // Update rounds, shocks, disarmed counts
   document.getElementById('sumRounds').textContent = state.cprRound;
   document.getElementById('sumShocks').textContent = state.shocks;
   
-  const list = document.getElementById('sumTreatmentsList');
-  if (state.treatments.length === 0) {
-    list.innerHTML = '<div style="color:#999; font-style:italic;">No treatments recorded</div>';
+  // Count disarm treatments
+  const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
+  document.getElementById('sumDisarmed').textContent = disarmCount;
+  
+  // Pharma summary - count each medication type
+  const pharmaCounts = {};
+  state.treatments.forEach(tx => {
+    if (tx.name.includes('Adrenaline push')) {
+      pharmaCounts['Adrenaline push'] = (pharmaCounts['Adrenaline push'] || 0) + 1;
+    }
+    // Add other medications as needed
+  });
+  
+  const pharmaDiv = document.getElementById('sumPharmaSummary');
+  if (Object.keys(pharmaCounts).length === 0) {
+    pharmaDiv.innerHTML = '<div style="padding: 12px 18px; color:#999; font-style:italic;">No medications given</div>';
   } else {
-    list.innerHTML = state.treatments.map(tx => {
-      const timeDisplay = tx.prior ? '< —' : (tx.clock + ' (' + formatTime(tx.elapsed) + ')');
-      return `<div class="treatment-item">
-        <span class="treatment-name">${tx.name}</span>
-        <span class="treatment-time">${timeDisplay}</span>
-      </div>`;
+    pharmaDiv.innerHTML = Object.entries(pharmaCounts).map(([name, count]) => 
+      `<div class="summary-row"><span>${name}</span><span>${count}</span></div>`
+    ).join('');
+  }
+  
+  // Treatment log table
+  const tbody = document.getElementById('sumTreatmentsTable');
+  if (state.treatments.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
+  } else {
+    tbody.innerHTML = state.treatments.map(tx => {
+      const timeDisplay = tx.prior ? '< —' : tx.clock;
+      const elapsedDisplay = tx.prior ? '< —' : formatTime(tx.elapsed);
+      const ago = tx.prior ? '> —' : '> ' + formatTime(state.elapsedSeconds - tx.elapsed);
+      
+      return `<tr>
+        <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
+        <td style="color: #999;">${timeDisplay}</td>
+        <td style="color: #999;">${elapsedDisplay}</td>
+        <td style="color: #999;">${ago}</td>
+      </tr>`;
     }).join('');
   }
 }
@@ -282,6 +310,29 @@ document.querySelectorAll('.tx-btn').forEach(btn => {
     addTreatment(btn.dataset.tx);
   });
 });
+
+// Custom treatment input
+const customTxInput = document.getElementById('customTx');
+const btnAddCustomTx = document.getElementById('btnAddCustomTx');
+if (customTxInput && btnAddCustomTx) {
+  btnAddCustomTx.addEventListener('click', () => {
+    const value = customTxInput.value.trim();
+    if (value) {
+      addTreatment(value);
+      customTxInput.value = '';
+    }
+  });
+  
+  customTxInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      const value = customTxInput.value.trim();
+      if (value) {
+        addTreatment(value);
+        customTxInput.value = '';
+      }
+    }
+  });
+}
 
 // === INITIALIZE (moved to end after catchup code) ===
 
