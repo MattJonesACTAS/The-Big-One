@@ -43,40 +43,53 @@ const el = {
 const topOverlays = ['reversibles', 'rosc', 'phea'];
 const bottomOverlays = ['summary', 'treatment'];
 
+function getOverlayKey(buttonName) {
+  const map = {
+    'reversibles': 'reversibles',
+    'rosc': 'rosc',
+    'phea': 'phea',
+    'summary': 'summary',
+    'addTx': 'treatment'
+  };
+  return map[buttonName];
+}
+
+function getButtonText(buttonName) {
+  const map = {
+    'reversibles': 'Reversibles',
+    'rosc': 'ROSC',
+    'phea': 'PHEA',
+    'summary': 'Running summary',
+    'addTx': 'Add Tx'
+  };
+  return map[buttonName];
+}
+
 function showOverlay(name) {
-  // If clicking same overlay, close it
   if (state.currentOverlay === name) {
     closeOverlay();
     return;
   }
   
-  // Hide main display
   el.mainDisplay.style.visibility = 'hidden';
   
-  // Handle old overlay
   if (state.currentOverlay) {
-    const oldOverlay = el.overlays[state.currentOverlay];
+    const oldOverlay = el.overlays[getOverlayKey(state.currentOverlay)];
     const oldBtn = el.buttons[state.currentOverlay];
     
-    // Keep it visible briefly while new one slides over
     setTimeout(() => {
       oldOverlay.style.display = 'none';
       oldBtn.classList.remove('active');
-      if (oldBtn.id !== 'btnAddTx') {
-        oldBtn.textContent = oldBtn.id.replace('btn', '').replace(/([A-Z])/g, ' $1').trim();
-      } else {
-        oldBtn.textContent = 'Add Tx';
-      }
+      oldBtn.textContent = getButtonText(state.currentOverlay);
     }, 150);
   }
   
-  // Show new overlay with animation
-  const overlay = el.overlays[name];
+  const overlay = el.overlays[getOverlayKey(name)];
   const btn = el.buttons[name];
   
   overlay.classList.remove('slide-out-up', 'slide-out-down');
   
-  if (topOverlays.includes(name)) {
+  if (topOverlays.includes(getOverlayKey(name))) {
     overlay.classList.add('slide-in-down');
   } else {
     overlay.classList.add('slide-in-up');
@@ -92,32 +105,23 @@ function showOverlay(name) {
 function closeOverlay() {
   if (!state.currentOverlay) return;
   
-  const overlay = el.overlays[state.currentOverlay];
+  const overlayKey = getOverlayKey(state.currentOverlay);
+  const overlay = el.overlays[overlayKey];
   const btn = el.buttons[state.currentOverlay];
-  const isTop = topOverlays.includes(state.currentOverlay);
+  const isTop = topOverlays.includes(overlayKey);
   
-  // Remove slide-in, add slide-out
   overlay.classList.remove('slide-in-down', 'slide-in-up');
   overlay.classList.add(isTop ? 'slide-out-up' : 'slide-out-down');
   
-  // Wait for animation, then hide
   overlay.addEventListener('animationend', function hideAfterAnim() {
     overlay.style.display = 'none';
     overlay.classList.remove('slide-out-up', 'slide-out-down');
     overlay.removeEventListener('animationend', hideAfterAnim);
   }, { once: true });
   
-  // Reset button
   btn.classList.remove('active');
-  if (btn.id === 'btnAddTx') {
-    btn.textContent = 'Add Tx';
-  } else if (btn.id === 'btnSummary') {
-    btn.textContent = 'Running summary';
-  } else {
-    btn.textContent = btn.id.replace('btn', '').replace(/([A-Z])/g, ' $1').trim();
-  }
+  btn.textContent = getButtonText(state.currentOverlay);
   
-  // Show main display after animation
   setTimeout(() => {
     el.mainDisplay.style.visibility = 'visible';
   }, 300);
@@ -243,7 +247,7 @@ el.buttons.reversibles.addEventListener('click', () => showOverlay('reversibles'
 el.buttons.rosc.addEventListener('click', () => showOverlay('rosc'));
 el.buttons.phea.addEventListener('click', () => showOverlay('phea'));
 el.buttons.summary.addEventListener('click', () => showOverlay('summary'));
-el.buttons.addTx.addEventListener('click', () => showOverlay('treatment'));
+el.buttons.addTx.addEventListener('click', () => showOverlay('addTx'));
 
 el.buttons.pause.addEventListener('click', togglePause);
 el.buttons.reset.addEventListener('click', resetTimer);
