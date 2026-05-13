@@ -394,11 +394,6 @@ function adjustCatchupTime(action) {
 }
 
 // Catchup button handlers
-document.getElementById('btnStartFresh').addEventListener('click', () => {
-  catchupEl.modal.style.display = 'none';
-  startTimer();
-});
-
 document.getElementById('btnCatchup').addEventListener('click', () => {
   showCatchupPage(2);
 });
