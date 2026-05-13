@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>The Big One</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <div id="app">
+    
+    <!-- Top Buttons -->
+    <div class="top-buttons">
+      <button id="btnReversibles">Reversibles</button>
+      <button id="btnRosc">ROSC</button>
+      <button id="btnPhea">PHEA</button>
+    </div>
+    
+    <!-- Central Box -->
+    <div id="centralBox">
+      
+      <!-- Main Display -->
+      <div id="mainDisplay">
+        <div class="timer-label">Rhythm check</div>
+        <div id="mainTimer">2:00</div>
+        <div class="info-line">Current CPR round: <span id="cprRound">1</span></div>
+        <div class="info-line" id="adrWarning"></div>
+        <div class="info-line">Total time elapsed: <span id="totalElapsed">0:00</span></div>
+      </div>
+      
+      <!-- Overlays -->
+      <div id="overlayReversibles" class="overlay" style="display:none;">
+        <h3>Reversibles</h3>
+        <label><input type="checkbox"> Hypoxia</label>
+        <label><input type="checkbox"> Hypovolaemia</label>
+        <label><input type="checkbox"> Hypo/hyperkalaemia</label>
+        <label><input type="checkbox"> Hypothermia</label>
+        <label><input type="checkbox"> Thrombosis</label>
+        <label><input type="checkbox"> Tension pneumothorax</label>
+        <label><input type="checkbox"> Tamponade</label>
+        <label><input type="checkbox"> Toxins</label>
+      </div>
+      
+      <div id="overlayRosc" class="overlay" style="display:none;">
+        <h3>ROSC</h3>
+        <label><input type="checkbox"> 12-lead ECG</label>
+        <label><input type="checkbox"> Treat cause</label>
+        <label><input type="checkbox"> Temperature control</label>
+        <label><input type="checkbox"> Coronary angiography</label>
+      </div>
+      
+      <div id="overlayPhea" class="overlay" style="display:none;">
+        <h3>PHEA</h3>
+        <label><input type="checkbox"> BLS quality</label>
+        <label><input type="checkbox"> IV/IO access</label>
+        <label><input type="checkbox"> Airway & ventilation</label>
+        <label><input type="checkbox"> Reversible causes</label>
+        <label><input type="checkbox"> When to stop</label>
+      </div>
+      
+      <div id="overlaySummary" class="overlay" style="display:none;">
+        <h3>Running Summary</h3>
+        <div>CPR rounds: <span id="sumRounds">1</span></div>
+        <div>Shocks: <span id="sumShocks">0</span></div>
+        <div id="sumTreatments"></div>
+      </div>
+      
+      <div id="overlayTreatment" class="overlay" style="display:none;">
+        <h3>Add Treatment</h3>
+        <button class="tx-btn" data-tx="Shock">Shock</button>
+        <button class="tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+        <button class="tx-btn" data-tx="Amiodarone">Amiodarone</button>
+        <button class="tx-btn" data-tx="LMA">LMA</button>
+        <button class="tx-btn" data-tx="IO">IO</button>
+      </div>
+      
+    </div>
+    
+    <!-- Bottom Buttons -->
+    <div class="bottom-buttons">
+      <button id="btnSummary">Running summary</button>
+      <button id="btnAddTx">Add Tx</button>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+      <button id="btnPause">Pause timer</button>
+      <button id="btnReset">Reset timer</button>
+    </div>
+    
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
