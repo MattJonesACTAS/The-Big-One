@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>The Big One</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  
+  <div id="app">
+    
+    <!-- Catchup Modal -->
+    <div id="catchupModal" class="modal">
+      <div class="modal-content">
+        
+        <!-- Page 1: Start fresh or catchup -->
+        <div id="catchupPage1" class="catchup-page">
+          <h2>Starting cardiac arrest timer</h2>
+          <p>Are you starting from the beginning?</p>
+          <button id="btnStartFresh" class="modal-btn primary">Yes - Start from 0:00</button>
+          <button id="btnCatchup" class="modal-btn">No - Set elapsed time</button>
+        </div>
+        
+        <!-- Page 2: Set elapsed time -->
+        <div id="catchupPage2" class="catchup-page" style="display:none;">
+          <h2>Total time already elapsed</h2>
+          <div class="time-picker">
+            <div class="time-column">
+              <button class="time-btn" data-action="mins-up">▲</button>
+              <div id="catchupMins" class="time-value">0</div>
+              <button class="time-btn" data-action="mins-down">▼</button>
+              <div class="time-label">min</div>
+            </div>
+            <div class="time-colon">:</div>
+            <div class="time-column">
+              <button class="time-btn" data-action="secs-up">▲</button>
+              <div id="catchupSecs" class="time-value">00</div>
+              <button class="time-btn" data-action="secs-down">▼</button>
+              <div class="time-label">sec</div>
+            </div>
+          </div>
+          <button id="btnCatchupNext" class="modal-btn primary">Next</button>
+          <button id="btnCatchupBack1" class="modal-btn">Back</button>
+        </div>
+        
+        <!-- Page 3: Set rhythm check target -->
+        <div id="catchupPage3" class="catchup-page" style="display:none;">
+          <h2>Elapsed time rhythm check is due</h2>
+          <div class="time-picker">
+            <div class="time-column">
+              <button class="time-btn" data-action="rhythm-mins-up">▲</button>
+              <div id="rhythmMins" class="time-value">2</div>
+              <button class="time-btn" data-action="rhythm-mins-down">▼</button>
+              <div class="time-label">min</div>
+            </div>
+            <div class="time-colon">:</div>
+            <div class="time-column">
+              <button class="time-btn" data-action="rhythm-secs-up">▲</button>
+              <div id="rhythmSecs" class="time-value">00</div>
+              <button class="time-btn" data-action="rhythm-secs-down">▼</button>
+              <div class="time-label">sec</div>
+            </div>
+          </div>
+          <button id="btnCatchupNext2" class="modal-btn primary">Next</button>
+          <button id="btnCatchupBack2" class="modal-btn">Back</button>
+        </div>
+        
+        <!-- Page 4: Add prior treatments -->
+        <div id="catchupPage4" class="catchup-page" style="display:none;">
+          <h2>Add previous treatments</h2>
+          <p style="font-size:14px; color:#666;">Select any treatments given before starting this timer</p>
+          <div class="prior-tx-list">
+            <button class="prior-tx-btn" data-tx="Shock">Shock</button>
+            <button class="prior-tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+            <button class="prior-tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
+            <button class="prior-tx-btn" data-tx="Amiodarone">Amiodarone</button>
+            <button class="prior-tx-btn" data-tx="Atropine">Atropine</button>
+            <button class="prior-tx-btn" data-tx="Calcium">Calcium</button>
+            <button class="prior-tx-btn" data-tx="Fluid bolus">Fluid bolus</button>
+            <button class="prior-tx-btn" data-tx="Magnesium">Magnesium</button>
+            <button class="prior-tx-btn" data-tx="Sodium bicarb">Sodium bicarb</button>
+            <button class="prior-tx-btn" data-tx="Thrombolysis">Thrombolysis</button>
+            <button class="prior-tx-btn" data-tx="LMA">LMA</button>
+            <button class="prior-tx-btn" data-tx="ETT">ETT</button>
+            <button class="prior-tx-btn" data-tx="IO">IO</button>
+            <button class="prior-tx-btn" data-tx="Disarm defib">Disarm defib</button>
+          </div>
+          <div id="priorTxSelected"></div>
+          <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
+          <button id="btnCatchupBack3" class="modal-btn">Back</button>
+        </div>
+        
+      </div>
+    </div>
+    
+    <!-- Top Buttons -->
+    <div class="top-buttons">
+      <button id="btnReversibles">Reversibles</button>
+      <button id="btnRosc">ROSC</button>
+      <button id="btnPhea">PHEA</button>
+    </div>
+    
+    <!-- Central Box -->
+    <div id="centralBox">
+      
+      <!-- Main Display -->
+      <div id="mainDisplay">
+        <div class="timer-label">Rhythm check</div>
+        <div id="mainTimer">2:00</div>
+        <div class="info-line">Current CPR round: <span id="cprRound">1</span></div>
+        <div class="info-line" id="adrWarning"></div>
+        <div class="info-line">Total time elapsed: <span id="totalElapsed">0:00</span></div>
+      </div>
+      
+      <!-- Overlays -->
+      <div id="overlayReversibles" class="overlay" style="display:none;">
+        <h3>Reversibles</h3>
+        <label><input type="checkbox"> Hypoxia</label>
+        <label><input type="checkbox"> Hypovolaemia</label>
+        <label><input type="checkbox"> Hypo/hyperkalaemia</label>
+        <label><input type="checkbox"> Hypothermia</label>
+        <label><input type="checkbox"> Thrombosis</label>
+        <label><input type="checkbox"> Tension pneumothorax</label>
+        <label><input type="checkbox"> Tamponade</label>
+        <label><input type="checkbox"> Toxins</label>
+      </div>
+      
+      <div id="overlayRosc" class="overlay" style="display:none;">
+        <h3>ROSC</h3>
+        <label><input type="checkbox"> 12-lead ECG</label>
+        <label><input type="checkbox"> Treat cause</label>
+        <label><input type="checkbox"> Temperature control</label>
+        <label><input type="checkbox"> Coronary angiography</label>
+      </div>
+      
+      <div id="overlayPhea" class="overlay" style="display:none;">
+        <h3>PHEA</h3>
+        <label><input type="checkbox"> BLS quality</label>
+        <label><input type="checkbox"> IV/IO access</label>
+        <label><input type="checkbox"> Airway & ventilation</label>
+        <label><input type="checkbox"> Reversible causes</label>
+        <label><input type="checkbox"> When to stop</label>
+      </div>
+      
+      <div id="overlaySummary" class="overlay" style="display:none;">
+        <h3>Running Summary</h3>
+        <div class="summary-section">
+          <strong>Total time elapsed:</strong> <span id="sumElapsed">0:00</span>
+        </div>
+        <div class="summary-section">
+          <strong>CPR rounds:</strong> <span id="sumRounds">1</span>
+        </div>
+        <div class="summary-section">
+          <strong>Shocks given:</strong> <span id="sumShocks">0</span>
+        </div>
+        <div class="summary-section">
+          <strong>Treatments:</strong>
+          <div id="sumTreatmentsList" class="treatments-list"></div>
+        </div>
+      </div>
+      
+      <div id="overlayTreatment" class="overlay" style="display:none;">
+        <h3>Add Treatment</h3>
+        <button class="tx-btn" data-tx="Shock">Shock</button>
+        <button class="tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+        <button class="tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
+        <button class="tx-btn" data-tx="Amiodarone">Amiodarone</button>
+        <button class="tx-btn" data-tx="Atropine">Atropine</button>
+        <button class="tx-btn" data-tx="Calcium">Calcium</button>
+        <button class="tx-btn" data-tx="Fluid bolus">Fluid bolus</button>
+        <button class="tx-btn" data-tx="Magnesium">Magnesium</button>
+        <button class="tx-btn" data-tx="Sodium bicarb">Sodium bicarb</button>
+        <button class="tx-btn" data-tx="Thrombolysis">Thrombolysis</button>
+        <button class="tx-btn" data-tx="LMA">LMA</button>
+        <button class="tx-btn" data-tx="ETT">ETT</button>
+        <button class="tx-btn" data-tx="IO">IO</button>
+        <button class="tx-btn" data-tx="Disarm defib">Disarm defib</button>
+      </div>
+      
+    </div>
+    
+    <!-- Bottom Buttons -->
+    <div class="bottom-buttons">
+      <button id="btnSummary">Running summary</button>
+      <button id="btnAddTx">Add Tx</button>
+    </div>
+    
+    <!-- Controls -->
+    <div class="controls">
+      <button id="btnPause">Pause timer</button>
+      <button id="btnReset">Reset timer</button>
+      <button id="btnPdf">Export PDF</button>
+    </div>
+    
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
+
+  <!-- PDF Print View (hidden) -->
+  <div id="pdfView" class="pdf-view">
+    <h1>Case Summary</h1>
+    <div id="pdfDate"></div>
+    
+    <h2>Arrest Summary</h2>
+    <div class="pdf-section">
+      <div>Total time elapsed: <strong id="pdfElapsed"></strong></div>
+      <div>CPR rounds: <strong id="pdfRounds"></strong></div>
+      <div>Shocks given: <strong id="pdfShocks"></strong></div>
+    </div>
+    
+    <h2>Treatment Log</h2>
+    <table id="pdfTable">
+      <thead>
+        <tr>
+          <th>Treatment</th>
+          <th>Time</th>
+          <th>Elapsed</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody">
+      </tbody>
+    </table>
+  </div>
+
