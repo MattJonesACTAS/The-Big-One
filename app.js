@@ -61,7 +61,7 @@ function getButtonText(buttonName) {
     'reversibles': 'Reversibles',
     'rosc': 'ROSC',
     'phea': 'PHEA',
-    'summary': 'Running summary',
+    'summary': 'Summary',
     'addTx': 'Add Tx'
   };
   return map[buttonName];
@@ -118,13 +118,22 @@ function updateRunningSummary() {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   document.getElementById('sumDisarmed').textContent = disarmCount;
   
-  // Pharma summary - count each medication type
+  // Pharma summary - count all medication types
+  const medications = [
+    'Adrenaline push', 'Adrenaline infus.', 'Adrenaline', 'Amiodarone', 
+    'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
+    'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
+  ];
+  
   const pharmaCounts = {};
   state.treatments.forEach(tx => {
-    if (tx.name.includes('Adrenaline push')) {
-      pharmaCounts['Adrenaline push'] = (pharmaCounts['Adrenaline push'] || 0) + 1;
+    // Check if treatment name includes any medication name
+    for (const med of medications) {
+      if (tx.name.includes(med)) {
+        pharmaCounts[med] = (pharmaCounts[med] || 0) + 1;
+        break; // Only count once per treatment
+      }
     }
-    // Add other medications as needed
   });
   
   const pharmaDiv = document.getElementById('sumPharmaSummary');
@@ -136,12 +145,15 @@ function updateRunningSummary() {
     ).join('');
   }
   
-  // Treatment log table
+  // Treatment log table - most recent first
   const tbody = document.getElementById('sumTreatmentsTable');
   if (state.treatments.length === 0) {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
   } else {
-    tbody.innerHTML = state.treatments.map(tx => {
+    // Reverse array to show most recent first
+    const reversedTreatments = [...state.treatments].reverse();
+    
+    tbody.innerHTML = reversedTreatments.map(tx => {
       let timeDisplay, elapsedDisplay, ago;
       
       if (tx.prior) {
@@ -291,7 +303,7 @@ function addTreatment(name) {
   const treatment = {
     name: name,
     elapsed: state.elapsedSeconds,
-    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
+    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false })
   };
   
   state.treatments.push(treatment);
@@ -536,7 +548,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: txName,
       elapsed: 0,
-      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
       prior: true
     });
   });
@@ -546,7 +558,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Shock #${i + 1}`,
       elapsed: 0,
-      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
       prior: true
     });
     state.shocks++;
@@ -556,7 +568,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Disarm #${i + 1}`,
       elapsed: 0,
-      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
       prior: true
     });
   }
@@ -565,7 +577,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Adrenaline #${i + 1}`,
       elapsed: 0,
-      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
       prior: true
     });
   }

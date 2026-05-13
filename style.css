@@ -376,17 +376,18 @@ button:active {
 
 .summary-table th {
   text-align: left;
-  padding: 12px 18px;
+  padding: 10px 12px;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12px;
   color: #666;
   letter-spacing: 0.5px;
 }
 
 .summary-table td {
-  padding: 12px 18px;
+  padding: 8px 12px;
   border-bottom: 1px solid #f5f5f5;
   color: #666;
+  font-size: 13px;
 }
 
 .summary-table tbody tr:last-child td {
