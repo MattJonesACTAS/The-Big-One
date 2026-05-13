@@ -17,7 +17,6 @@ let catchupState = {
   elapsedSecs: 0,
   rhythmMins: 2,
   rhythmSecs: 0,
-  priorTreatments: [],
   priorTreatmentCounts: {
     shock: 0,
     disarm: 0,
@@ -42,17 +41,16 @@ function updateDisplay() {
   const timerEl = document.getElementById('timer');
   const rhythmTimeEl = document.getElementById('rhythmTime');
   const roundEl = document.getElementById('round');
-  const shocksEl = document.getElementById('shocks');
   
   if (timerEl) timerEl.textContent = formatTime(state.elapsedSeconds);
   
   const remaining = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
   if (rhythmTimeEl) rhythmTimeEl.textContent = formatTime(remaining);
   
-  if (roundEl) roundEl.textContent = state.cprRound;
-  if (shocksEl) shocksEl.textContent = state.shocks;
+  if (roundEl) roundEl.textContent = state.cprRound || '—';
   
   updateProgress();
+  updateAdrenalineLabel();
 }
 
 function updateProgress() {
@@ -65,6 +63,23 @@ function updateProgress() {
   }
 }
 
+function updateAdrenalineLabel() {
+  const adrLabel = document.getElementById('adrLabel');
+  if (!adrLabel) return;
+  
+  const adrCount = state.treatments.filter(t => 
+    t.name === 'Adrenaline (push)' || t.name === 'Adrenaline (infus)'
+  ).length;
+  
+  if (adrCount === 0) {
+    adrLabel.textContent = 'Nil Adr. given';
+    adrLabel.style.color = '#E24B4A';
+  } else {
+    adrLabel.textContent = `${adrCount} Adr. given`;
+    adrLabel.style.color = '#1D9E75';
+  }
+}
+
 function tick() {
   if (!state.running) return;
   
@@ -74,7 +89,7 @@ function tick() {
   if (state.elapsedSeconds >= state.rhythmCheckTarget) {
     state.rhythmCheckTarget += 120;
     state.cprRound++;
-    showOverlay('rhythm-check');
+    showPanel('rhythmCheckPanel');
   }
   
   updateDisplay();
@@ -85,75 +100,31 @@ function startTimer() {
   if (state.running) return;
   state.running = true;
   state.startTime = Date.now();
+  
+  const startBtn = document.getElementById('startBtn');
+  if (startBtn) startBtn.classList.add('hidden');
+  
   tick();
 }
 
-// === OVERLAY SYSTEM ===
-let currentOverlay = null;
-let isAnimating = false;
-
-function showOverlay(type) {
-  if (isAnimating) return;
-  
-  const overlays = {
-    'rhythm-check': document.getElementById('overlayRhythmCheck'),
-    'shock': document.getElementById('overlayShock'),
-    'rosc': document.getElementById('overlayRosc'),
-    'phea': document.getElementById('overlayPhea'),
-    'tx': document.getElementById('overlayTx')
-  };
-  
-  const overlay = overlays[type];
-  if (!overlay || currentOverlay === overlay) return;
-  
-  if (currentOverlay) {
-    hideOverlay(currentOverlay, () => {
-      showOverlayAnimation(overlay);
-    });
-  } else {
-    showOverlayAnimation(overlay);
-  }
-}
-
-function showOverlayAnimation(overlay) {
-  isAnimating = true;
-  currentOverlay = overlay;
-  overlay.style.display = 'flex';
-  
-  const isBottom = overlay.classList.contains('bottom');
-  overlay.classList.add(isBottom ? 'slide-up' : 'slide-down');
-  
-  overlay.addEventListener('animationend', function onEnd() {
-    overlay.removeEventListener('animationend', onEnd);
-    overlay.classList.remove(isBottom ? 'slide-up' : 'slide-down');
-    isAnimating = false;
+// === PANEL SYSTEM ===
+function showPanel(panelId) {
+  // Hide all panels
+  document.querySelectorAll('.panel-overlay').forEach(p => {
+    p.style.display = 'none';
   });
+  
+  // Show requested panel
+  const panel = document.getElementById(panelId);
+  if (panel) {
+    panel.style.display = 'block';
+  }
 }
 
-function hideOverlay(overlay, callback) {
-  if (!overlay || overlay.style.display === 'none') {
-    if (callback) callback();
-    return;
-  }
-  
-  isAnimating = true;
-  const isBottom = overlay.classList.contains('bottom');
-  overlay.classList.add(isBottom ? 'slide-down-hide' : 'slide-up-hide');
-  
-  overlay.addEventListener('animationend', function onEnd() {
-    overlay.removeEventListener('animationend', onEnd);
-    overlay.style.display = 'none';
-    overlay.classList.remove(isBottom ? 'slide-down-hide' : 'slide-up-hide');
-    currentOverlay = null;
-    isAnimating = false;
-    if (callback) callback();
+function hideAllPanels() {
+  document.querySelectorAll('.panel-overlay').forEach(p => {
+    p.style.display = 'none';
   });
-}
-
-function closeCurrentOverlay() {
-  if (currentOverlay) {
-    hideOverlay(currentOverlay);
-  }
 }
 
 // === TREATMENT SYSTEM ===
@@ -172,15 +143,23 @@ function addTreatment(name, isPrior = false) {
   }
   
   updateDisplay();
-  updateRunningList();
+  updateSummary();
 }
 
-function updateRunningList() {
-  const listEl = document.getElementById('runningList');
+function updateSummary() {
+  const listEl = document.getElementById('summaryList');
+  const elapsedEl = document.getElementById('summaryElapsed');
+  const cprEl = document.getElementById('summaryCpr');
+  const shocksEl = document.getElementById('summaryShocks');
+  
+  if (elapsedEl) elapsedEl.textContent = formatTime(state.elapsedSeconds);
+  if (cprEl) cprEl.textContent = state.cprRound;
+  if (shocksEl) shocksEl.textContent = state.shocks;
+  
   if (!listEl) return;
   
   if (state.treatments.length === 0) {
-    listEl.innerHTML = '<div style="color:#666;font-style:italic;text-align:center;padding:20px;">No treatments recorded yet</div>';
+    listEl.innerHTML = '<div style="color:#999;font-style:italic;text-align:center;padding:20px;">No treatments recorded</div>';
     return;
   }
   
@@ -188,7 +167,7 @@ function updateRunningList() {
     const timeStr = tx.prior ? '< —' : tx.clock;
     const elapsedStr = tx.prior ? '< —' : formatTime(tx.elapsed);
     return `
-      <div style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #eee;">
+      <div style="display:flex;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #f5f5f5;">
         <span style="font-weight:500;">${tx.name}</span>
         <span style="color:#666;">${timeStr} (${elapsedStr})</span>
       </div>
@@ -257,15 +236,11 @@ function adjustCatchupTime(action) {
 }
 
 function finalizeCatchup() {
-  // Set timer state from catchup
   state.elapsedSeconds = (catchupState.elapsedMins * 60) + catchupState.elapsedSecs;
   state.rhythmCheckTarget = (catchupState.rhythmMins * 60) + catchupState.rhythmSecs;
   state.pausedTime = state.elapsedSeconds * 1000;
-  
-  // Calculate CPR round
   state.cprRound = Math.floor(state.elapsedSeconds / 120);
   
-  // Add prior treatments
   if (catchupState.priorTreatmentCounts.shock > 0) {
     for (let i = 0; i < catchupState.priorTreatmentCounts.shock; i++) {
       addTreatment('Shock', true);
@@ -292,7 +267,6 @@ function finalizeCatchup() {
   if (lmaActive) addTreatment('LMA', true);
   if (ioActive) addTreatment('IO', true);
   
-  // Close modal and start timer
   const modal = document.getElementById('catchupModal');
   if (modal) modal.style.display = 'none';
   
@@ -388,36 +362,57 @@ if (btnCloseCase) {
 // Banner buttons
 const btnReversibles = document.getElementById('btnReversibles');
 if (btnReversibles) {
-  btnReversibles.addEventListener('click', () => showOverlay('rhythm-check'));
+  btnReversibles.addEventListener('click', () => showPanel('rhythmCheckPanel'));
 }
 
 const btnROSC = document.getElementById('btnROSC');
 if (btnROSC) {
-  btnROSC.addEventListener('click', () => showOverlay('rosc'));
+  btnROSC.addEventListener('click', () => showPanel('roscPanel'));
 }
 
 const btnPHEA = document.getElementById('btnPHEA');
 if (btnPHEA) {
-  btnPHEA.addEventListener('click', () => showOverlay('phea'));
+  btnPHEA.addEventListener('click', () => showPanel('pheaPanel'));
 }
 
-// Overlay close buttons
-document.querySelectorAll('.overlay-close').forEach(btn => {
-  btn.addEventListener('click', closeCurrentOverlay);
-});
+// Panel close buttons
+const closeRhythm = document.getElementById('closeRhythm');
+if (closeRhythm) {
+  closeRhythm.addEventListener('click', hideAllPanels);
+}
+
+const closeRosc = document.getElementById('closeRosc');
+if (closeRosc) {
+  closeRosc.addEventListener('click', hideAllPanels);
+}
+
+const closePhea = document.getElementById('closePhea');
+if (closePhea) {
+  closePhea.addEventListener('click', hideAllPanels);
+}
+
+const closeTx = document.getElementById('closeTx');
+if (closeTx) {
+  closeTx.addEventListener('click', hideAllPanels);
+}
+
+const closeSummary = document.getElementById('closeSummary');
+if (closeSummary) {
+  closeSummary.addEventListener('click', hideAllPanels);
+}
 
 // Treatment accordion
 document.querySelectorAll('.accordion-header').forEach(header => {
   header.addEventListener('click', () => {
     const content = header.nextElementSibling;
-    const isOpen = content.style.display === 'block';
+    const isOpen = content.style.display === 'flex';
     
     document.querySelectorAll('.accordion-content').forEach(c => {
       c.style.display = 'none';
     });
     
     if (!isOpen) {
-      content.style.display = 'block';
+      content.style.display = 'flex';
     }
   });
 });
@@ -427,31 +422,49 @@ document.querySelectorAll('.tx-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const txName = btn.dataset.tx;
     addTreatment(txName);
-    closeCurrentOverlay();
+    hideAllPanels();
   });
 });
 
 // Bottom buttons
 const btnSummary = document.getElementById('btnSummary');
-const summaryModal = document.getElementById('summaryModal');
-const btnCloseSummary = document.getElementById('btnCloseSummary');
-
-if (btnSummary && summaryModal) {
+if (btnSummary) {
   btnSummary.addEventListener('click', () => {
-    updateRunningList();
-    summaryModal.style.display = 'flex';
-  });
-}
-
-if (btnCloseSummary && summaryModal) {
-  btnCloseSummary.addEventListener('click', () => {
-    summaryModal.style.display = 'none';
+    updateSummary();
+    showPanel('summaryPanel');
   });
 }
 
 const btnAddTx = document.getElementById('btnAddTx');
 if (btnAddTx) {
-  btnAddTx.addEventListener('click', () => showOverlay('tx'));
+  btnAddTx.addEventListener('click', () => showPanel('txPanel'));
+}
+
+// Timer controls
+const startBtn = document.getElementById('startBtn');
+if (startBtn) {
+  startBtn.addEventListener('click', startTimer);
+}
+
+const pauseBtn = document.getElementById('pauseBtn');
+if (pauseBtn) {
+  pauseBtn.addEventListener('click', () => {
+    state.running = false;
+    state.pausedTime = state.elapsedSeconds * 1000;
+  });
+}
+
+const resetBtn = document.getElementById('resetBtn');
+if (resetBtn) {
+  resetBtn.addEventListener('click', () => {
+    if (confirm('Reset timer to 0:00?')) {
+      state.elapsedSeconds = 0;
+      state.pausedTime = 0;
+      state.rhythmCheckTarget = 120;
+      state.cprRound = 0;
+      updateDisplay();
+    }
+  });
 }
 
 // PDF Export
@@ -474,11 +487,6 @@ function exportPDF() {
   }
   
   window.print();
-}
-
-const btnPdf = document.getElementById('btnPdf');
-if (btnPdf) {
-  btnPdf.addEventListener('click', exportPDF);
 }
 
 // === INITIALIZE ===
