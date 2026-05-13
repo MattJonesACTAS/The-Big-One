@@ -535,3 +535,25 @@ button:active {
   min-width: 30px;
   text-align: center;
 }
+
+/* Prior Treatment Counter Item - continuous bar */
+.prior-tx-counter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f5f5f5;
+  padding: 14px 18px;
+  margin: 10px 0;
+  border-radius: 10px;
+}
+
+.tx-label {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.prior-tx-counter-item .counter-controls {
+  background: transparent;
+  padding: 0;
+}
