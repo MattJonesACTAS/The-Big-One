@@ -1,4 +1,3 @@
-// Wrap everything in DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
 
 // === STATE ===
@@ -7,288 +6,12 @@ let state = {
   startTime: null,
   pausedTime: 0,
   elapsedSeconds: 0,
-  rhythmCheckTarget: 120, // 2 minutes
-  cprRound: 1,
+  rhythmCheckTarget: 120,
+  cprRound: 0,
   shocks: 0,
-  treatments: [],
-  currentOverlay: null
+  treatments: []
 };
 
-// === ELEMENTS ===
-const el = {
-  mainTimer: document.getElementById('mainTimer'),
-  totalElapsed: document.getElementById('totalElapsed'),
-  cprRound: document.getElementById('cprRound'),
-  adrWarning: document.getElementById('adrWarning'),
-  mainDisplay: document.getElementById('mainDisplay'),
-  centralBox: document.getElementById('centralBox'),
-  
-  overlays: {
-    reversibles: document.getElementById('overlayReversibles'),
-    rosc: document.getElementById('overlayRosc'),
-    phea: document.getElementById('overlayPhea'),
-    summary: document.getElementById('overlaySummary'),
-    treatment: document.getElementById('overlayTreatment')
-  },
-  
-  buttons: {
-    reversibles: document.getElementById('btnReversibles'),
-    rosc: document.getElementById('btnRosc'),
-    phea: document.getElementById('btnPhea'),
-    summary: document.getElementById('btnSummary'),
-    addTx: document.getElementById('btnAddTx'),
-    pause: document.getElementById('btnPause'),
-    reset: document.getElementById('btnReset')
-  }
-};
-
-// === OVERLAY SYSTEM ===
-const topOverlays = ['reversibles', 'rosc', 'phea'];
-const bottomOverlays = ['summary', 'treatment'];
-
-function getOverlayKey(buttonName) {
-  const map = {
-    'reversibles': 'reversibles',
-    'rosc': 'rosc',
-    'phea': 'phea',
-    'summary': 'summary',
-    'addTx': 'treatment'
-  };
-  return map[buttonName];
-}
-
-function getButtonText(buttonName) {
-  const map = {
-    'reversibles': 'Reversibles',
-    'rosc': 'ROSC',
-    'phea': 'PHEA',
-    'summary': 'Running summary',
-    'addTx': 'Add Tx'
-  };
-  return map[buttonName];
-}
-
-function showOverlay(name) {
-  if (state.currentOverlay === name) {
-    closeOverlay();
-    return;
-  }
-  
-  el.mainDisplay.style.visibility = 'hidden';
-  
-  if (state.currentOverlay) {
-    const oldOverlay = el.overlays[getOverlayKey(state.currentOverlay)];
-    const oldBtn = el.buttons[state.currentOverlay];
-    
-    setTimeout(() => {
-      oldOverlay.style.display = 'none';
-      oldBtn.classList.remove('active');
-      oldBtn.textContent = getButtonText(state.currentOverlay);
-    }, 150);
-  }
-  
-  const overlay = el.overlays[getOverlayKey(name)];
-  const btn = el.buttons[name];
-  
-  overlay.classList.remove('slide-out-up', 'slide-out-down');
-  
-  if (topOverlays.includes(getOverlayKey(name))) {
-    overlay.classList.add('slide-in-down');
-  } else {
-    overlay.classList.add('slide-in-up');
-  }
-  
-  overlay.style.display = 'block';
-  btn.classList.add('active');
-  btn.textContent = 'Close';
-  
-  // Update Running Summary when opened
-  if (name === 'summary') {
-    updateRunningSummary();
-  }
-  
-  state.currentOverlay = name;
-}
-
-function updateRunningSummary() {
-  document.getElementById('sumElapsed').textContent = formatTime(state.elapsedSeconds);
-  document.getElementById('sumRounds').textContent = state.cprRound;
-  document.getElementById('sumShocks').textContent = state.shocks;
-  
-  const list = document.getElementById('sumTreatmentsList');
-  if (state.treatments.length === 0) {
-    list.innerHTML = '<div style="color:#999; font-style:italic;">No treatments recorded</div>';
-  } else {
-    list.innerHTML = state.treatments.map(tx => {
-      const timeDisplay = tx.prior ? '< —' : (tx.clock + ' (' + formatTime(tx.elapsed) + ')');
-      return `<div class="treatment-item">
-        <span class="treatment-name">${tx.name}</span>
-        <span class="treatment-time">${timeDisplay}</span>
-      </div>`;
-    }).join('');
-  }
-}
-
-function closeOverlay() {
-  if (!state.currentOverlay) return;
-  
-  const overlayKey = getOverlayKey(state.currentOverlay);
-  const overlay = el.overlays[overlayKey];
-  const btn = el.buttons[state.currentOverlay];
-  const isTop = topOverlays.includes(overlayKey);
-  
-  overlay.classList.remove('slide-in-down', 'slide-in-up');
-  overlay.classList.add(isTop ? 'slide-out-up' : 'slide-out-down');
-  
-  overlay.addEventListener('animationend', function hideAfterAnim() {
-    overlay.style.display = 'none';
-    overlay.classList.remove('slide-out-up', 'slide-out-down');
-    overlay.removeEventListener('animationend', hideAfterAnim);
-  }, { once: true });
-  
-  btn.classList.remove('active');
-  btn.textContent = getButtonText(state.currentOverlay);
-  
-  setTimeout(() => {
-    el.mainDisplay.style.visibility = 'visible';
-  }, 300);
-  
-  state.currentOverlay = null;
-}
-
-// === TIMER SYSTEM ===
-function formatTime(seconds) {
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
-}
-
-function updateDisplay() {
-  // Calculate elapsed time
-  if (state.running) {
-    const now = Date.now();
-    state.elapsedSeconds = Math.floor((now - state.startTime + state.pausedTime) / 1000);
-  }
-  
-  // Update total elapsed
-  el.totalElapsed.textContent = formatTime(state.elapsedSeconds);
-  
-  // Calculate countdown to next rhythm check
-  const countdown = state.rhythmCheckTarget - state.elapsedSeconds;
-  
-  if (countdown <= 0) {
-    el.mainTimer.textContent = '0:00';
-    el.mainTimer.style.color = '#a32d2d';
-    
-    // Auto-advance to next rhythm check
-    if (state.running) {
-      state.rhythmCheckTarget += 120;
-      state.cprRound++;
-      el.cprRound.textContent = state.cprRound;
-    }
-  } else {
-    el.mainTimer.textContent = formatTime(countdown);
-    el.mainTimer.style.color = countdown <= 30 ? '#a32d2d' : '#1a1a1a';
-  }
-  
-  // Adrenaline warning
-  const lastAdr = state.treatments.filter(t => t.name.includes('Adrenaline')).pop();
-  if (lastAdr) {
-    const sinceAdr = state.elapsedSeconds - lastAdr.elapsed;
-    if (sinceAdr >= 180) {
-      el.adrWarning.textContent = 'Adrenaline due';
-    } else if (sinceAdr >= 120) {
-      el.adrWarning.textContent = `Adrenaline in ${formatTime(180 - sinceAdr)}`;
-    } else {
-      el.adrWarning.textContent = '';
-    }
-  }
-}
-
-function startTimer() {
-  if (state.running) return;
-  
-  state.running = true;
-  state.startTime = Date.now();
-  
-  setInterval(() => {
-    if (state.running) {
-      updateDisplay();
-    }
-  }, 100);
-  
-  el.buttons.pause.textContent = 'Pause timer';
-}
-
-function togglePause() {
-  if (state.running) {
-    state.running = false;
-    state.pausedTime += Date.now() - state.startTime;
-    el.buttons.pause.textContent = 'Resume timer';
-  } else {
-    state.running = true;
-    state.startTime = Date.now();
-    el.buttons.pause.textContent = 'Pause timer';
-  }
-}
-
-function resetTimer() {
-  if (!confirm('Reset timer? This will clear all data.')) return;
-  
-  state.running = false;
-  state.startTime = null;
-  state.pausedTime = 0;
-  state.elapsedSeconds = 0;
-  state.rhythmCheckTarget = 120;
-  state.cprRound = 1;
-  state.shocks = 0;
-  state.treatments = [];
-  
-  updateDisplay();
-  el.cprRound.textContent = '1';
-  el.adrWarning.textContent = '';
-  el.buttons.pause.textContent = 'Pause timer';
-}
-
-// === TREATMENT SYSTEM ===
-function addTreatment(name) {
-  const treatment = {
-    name: name,
-    elapsed: state.elapsedSeconds,
-    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })
-  };
-  
-  state.treatments.push(treatment);
-  
-  // Track shocks
-  if (name === 'Shock') {
-    state.shocks++;
-  }
-  
-  closeOverlay();
-  updateDisplay();
-}
-
-// === EVENT LISTENERS ===
-el.buttons.reversibles.addEventListener('click', () => showOverlay('reversibles'));
-el.buttons.rosc.addEventListener('click', () => showOverlay('rosc'));
-el.buttons.phea.addEventListener('click', () => showOverlay('phea'));
-el.buttons.summary.addEventListener('click', () => showOverlay('summary'));
-el.buttons.addTx.addEventListener('click', () => showOverlay('addTx'));
-
-el.buttons.pause.addEventListener('click', togglePause);
-el.buttons.reset.addEventListener('click', resetTimer);
-
-// Treatment buttons
-document.querySelectorAll('.tx-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    addTreatment(btn.dataset.tx);
-  });
-});
-
-// === INITIALIZE (moved to end after catchup code) ===
-
-// === CATCHUP FLOW ===
 let catchupState = {
   elapsedMins: 0,
   elapsedSecs: 0,
@@ -302,260 +25,446 @@ let catchupState = {
   }
 };
 
-const catchupEl = {
-  modal: document.getElementById('catchupModal'),
-  page1: document.getElementById('catchupPage1'),
-  page2: document.getElementById('catchupPage2'),
-  page3: document.getElementById('catchupPage3'),
-  page4: document.getElementById('catchupPage4'),
-  catchupMins: document.getElementById('catchupMins'),
-  catchupSecs: document.getElementById('catchupSecs'),
-  rhythmMins: document.getElementById('rhythmMins'),
-  rhythmSecs: document.getElementById('rhythmSecs')
-};
+// === UTILITY FUNCTIONS ===
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
+function getClockTime() {
+  const now = new Date();
+  return now.toTimeString().substring(0, 5);
+}
+
+// === TIMER FUNCTIONS ===
+function updateDisplay() {
+  const timerEl = document.getElementById('timer');
+  const rhythmTimeEl = document.getElementById('rhythmTime');
+  const roundEl = document.getElementById('round');
+  const shocksEl = document.getElementById('shocks');
+  
+  if (timerEl) timerEl.textContent = formatTime(state.elapsedSeconds);
+  
+  const remaining = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
+  if (rhythmTimeEl) rhythmTimeEl.textContent = formatTime(remaining);
+  
+  if (roundEl) roundEl.textContent = state.cprRound;
+  if (shocksEl) shocksEl.textContent = state.shocks;
+  
+  updateProgress();
+}
+
+function updateProgress() {
+  const progress = ((state.elapsedSeconds % 120) / 120) * 100;
+  const progressRing = document.querySelector('.progress-ring');
+  if (progressRing) {
+    const circumference = 2 * Math.PI * 103;
+    const offset = circumference - (progress / 100) * circumference;
+    progressRing.style.strokeDashoffset = offset;
+  }
+}
+
+function tick() {
+  if (!state.running) return;
+  
+  const now = Date.now();
+  state.elapsedSeconds = Math.floor((now - state.startTime + state.pausedTime) / 1000);
+  
+  if (state.elapsedSeconds >= state.rhythmCheckTarget) {
+    state.rhythmCheckTarget += 120;
+    state.cprRound++;
+    showOverlay('rhythm-check');
+  }
+  
+  updateDisplay();
+  requestAnimationFrame(tick);
+}
+
+function startTimer() {
+  if (state.running) return;
+  state.running = true;
+  state.startTime = Date.now();
+  tick();
+}
+
+// === OVERLAY SYSTEM ===
+let currentOverlay = null;
+let isAnimating = false;
+
+function showOverlay(type) {
+  if (isAnimating) return;
+  
+  const overlays = {
+    'rhythm-check': document.getElementById('overlayRhythmCheck'),
+    'shock': document.getElementById('overlayShock'),
+    'rosc': document.getElementById('overlayRosc'),
+    'phea': document.getElementById('overlayPhea'),
+    'tx': document.getElementById('overlayTx')
+  };
+  
+  const overlay = overlays[type];
+  if (!overlay || currentOverlay === overlay) return;
+  
+  if (currentOverlay) {
+    hideOverlay(currentOverlay, () => {
+      showOverlayAnimation(overlay);
+    });
+  } else {
+    showOverlayAnimation(overlay);
+  }
+}
+
+function showOverlayAnimation(overlay) {
+  isAnimating = true;
+  currentOverlay = overlay;
+  overlay.style.display = 'flex';
+  
+  const isBottom = overlay.classList.contains('bottom');
+  overlay.classList.add(isBottom ? 'slide-up' : 'slide-down');
+  
+  overlay.addEventListener('animationend', function onEnd() {
+    overlay.removeEventListener('animationend', onEnd);
+    overlay.classList.remove(isBottom ? 'slide-up' : 'slide-down');
+    isAnimating = false;
+  });
+}
+
+function hideOverlay(overlay, callback) {
+  if (!overlay || overlay.style.display === 'none') {
+    if (callback) callback();
+    return;
+  }
+  
+  isAnimating = true;
+  const isBottom = overlay.classList.contains('bottom');
+  overlay.classList.add(isBottom ? 'slide-down-hide' : 'slide-up-hide');
+  
+  overlay.addEventListener('animationend', function onEnd() {
+    overlay.removeEventListener('animationend', onEnd);
+    overlay.style.display = 'none';
+    overlay.classList.remove(isBottom ? 'slide-down-hide' : 'slide-up-hide');
+    currentOverlay = null;
+    isAnimating = false;
+    if (callback) callback();
+  });
+}
+
+function closeCurrentOverlay() {
+  if (currentOverlay) {
+    hideOverlay(currentOverlay);
+  }
+}
+
+// === TREATMENT SYSTEM ===
+function addTreatment(name, isPrior = false) {
+  const treatment = {
+    name: name,
+    elapsed: state.elapsedSeconds,
+    clock: getClockTime(),
+    prior: isPrior
+  };
+  
+  state.treatments.push(treatment);
+  
+  if (name === 'Shock' || name === 'Disarm defib') {
+    if (!isPrior) state.shocks++;
+  }
+  
+  updateDisplay();
+  updateRunningList();
+}
+
+function updateRunningList() {
+  const listEl = document.getElementById('runningList');
+  if (!listEl) return;
+  
+  if (state.treatments.length === 0) {
+    listEl.innerHTML = '<div style="color:#666;font-style:italic;text-align:center;padding:20px;">No treatments recorded yet</div>';
+    return;
+  }
+  
+  listEl.innerHTML = state.treatments.map(tx => {
+    const timeStr = tx.prior ? '< —' : tx.clock;
+    const elapsedStr = tx.prior ? '< —' : formatTime(tx.elapsed);
+    return `
+      <div style="display:flex; justify-content:space-between; padding:8px 12px; border-bottom:1px solid #eee;">
+        <span style="font-weight:500;">${tx.name}</span>
+        <span style="color:#666;">${timeStr} (${elapsedStr})</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// === CATCHUP FLOW ===
 function showCatchupPage(pageNum) {
-  catchupEl.page1.style.display = pageNum === 1 ? 'block' : 'none';
-  catchupEl.page2.style.display = pageNum === 2 ? 'block' : 'none';
-  catchupEl.page3.style.display = pageNum === 3 ? 'block' : 'none';
-  catchupEl.page4.style.display = pageNum === 4 ? 'block' : 'none';
+  const pages = [
+    document.getElementById('catchupPage1'),
+    document.getElementById('catchupPage2'),
+    document.getElementById('catchupPage3'),
+    document.getElementById('catchupPage4')
+  ];
+  
+  pages.forEach((page, idx) => {
+    if (page) page.style.display = (idx + 1) === pageNum ? 'block' : 'none';
+  });
 }
 
 function updateCatchupDisplay() {
-  catchupEl.catchupMins.textContent = catchupState.elapsedMins;
-  catchupEl.catchupSecs.textContent = catchupState.elapsedSecs.toString().padStart(2, '0');
-  catchupEl.rhythmMins.textContent = catchupState.rhythmMins;
-  catchupEl.rhythmSecs.textContent = catchupState.rhythmSecs.toString().padStart(2, '0');
+  const elements = {
+    catchupMins: document.getElementById('catchupMins'),
+    catchupSecs: document.getElementById('catchupSecs'),
+    rhythmMins: document.getElementById('rhythmMins'),
+    rhythmSecs: document.getElementById('rhythmSecs'),
+    shockVal: document.getElementById('shockVal'),
+    disarmVal: document.getElementById('disarmVal'),
+    adrenalineVal: document.getElementById('adrenalineVal')
+  };
+  
+  if (elements.catchupMins) elements.catchupMins.textContent = catchupState.elapsedMins;
+  if (elements.catchupSecs) elements.catchupSecs.textContent = catchupState.elapsedSecs.toString().padStart(2, '0');
+  if (elements.rhythmMins) elements.rhythmMins.textContent = catchupState.rhythmMins;
+  if (elements.rhythmSecs) elements.rhythmSecs.textContent = catchupState.rhythmSecs.toString().padStart(2, '0');
+  if (elements.shockVal) elements.shockVal.textContent = catchupState.priorTreatmentCounts.shock;
+  if (elements.disarmVal) elements.disarmVal.textContent = catchupState.priorTreatmentCounts.disarm;
+  if (elements.adrenalineVal) elements.adrenalineVal.textContent = catchupState.priorTreatmentCounts.adrenaline;
 }
 
 function adjustCatchupTime(action) {
-  switch(action) {
-    case 'mins-up':
-      catchupState.elapsedMins++;
-      break;
-    case 'mins-down':
-      if (catchupState.elapsedMins > 0) catchupState.elapsedMins--;
-      break;
-    case 'secs-up':
-      catchupState.elapsedSecs += 10;
-      if (catchupState.elapsedSecs >= 60) {
-        catchupState.elapsedSecs = 0;
-        catchupState.elapsedMins++;
-      }
-      break;
-    case 'secs-down':
-      catchupState.elapsedSecs -= 10;
-      if (catchupState.elapsedSecs < 0) {
-        if (catchupState.elapsedMins > 0) {
-          catchupState.elapsedSecs = 50;
-          catchupState.elapsedMins--;
-        } else {
-          catchupState.elapsedSecs = 0;
-        }
-      }
-      break;
-    case 'rhythm-mins-up':
-      const totalElapsed = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
-      const maxTarget = totalElapsed + 120;
-      if ((catchupState.rhythmMins + 1) * 60 + catchupState.rhythmSecs <= maxTarget) {
-        catchupState.rhythmMins++;
-      }
-      break;
-    case 'rhythm-mins-down':
-      const minTarget = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
-      if (catchupState.rhythmMins * 60 + catchupState.rhythmSecs > minTarget && catchupState.rhythmMins > 0) {
-        catchupState.rhythmMins--;
-      }
-      break;
-    case 'rhythm-secs-up':
-      const totalE = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
-      const maxT = totalE + 120;
-      const newSecs = catchupState.rhythmSecs + 10;
-      if (newSecs >= 60) {
-        if ((catchupState.rhythmMins + 1) * 60 <= maxT) {
-          catchupState.rhythmSecs = 0;
-          catchupState.rhythmMins++;
-        }
-      } else if (catchupState.rhythmMins * 60 + newSecs <= maxT) {
-        catchupState.rhythmSecs = newSecs;
-      }
-      break;
-    case 'rhythm-secs-down':
-      const minT = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
-      const newS = catchupState.rhythmSecs - 10;
-      if (newS < 0) {
-        if (catchupState.rhythmMins > 0 && (catchupState.rhythmMins - 1) * 60 + 50 >= minT) {
-          catchupState.rhythmSecs = 50;
-          catchupState.rhythmMins--;
-        }
-      } else if (catchupState.rhythmMins * 60 + newS >= minT) {
-        catchupState.rhythmSecs = newS;
-      }
-      break;
+  const [field, part, dir] = action.split('-');
+  
+  if (field === 'elapsed') {
+    if (part === 'mins') {
+      catchupState.elapsedMins += (dir === 'up' ? 1 : -1);
+      if (catchupState.elapsedMins < 0) catchupState.elapsedMins = 0;
+    } else {
+      catchupState.elapsedSecs += (dir === 'up' ? 10 : -10);
+      if (catchupState.elapsedSecs >= 60) catchupState.elapsedSecs = 0;
+      if (catchupState.elapsedSecs < 0) catchupState.elapsedSecs = 50;
+    }
+  } else if (field === 'rhythm') {
+    if (part === 'mins') {
+      catchupState.rhythmMins += (dir === 'up' ? 1 : -1);
+      if (catchupState.rhythmMins < 0) catchupState.rhythmMins = 0;
+    } else {
+      catchupState.rhythmSecs += (dir === 'up' ? 10 : -10);
+      if (catchupState.rhythmSecs >= 60) catchupState.rhythmSecs = 0;
+      if (catchupState.rhythmSecs < 0) catchupState.rhythmSecs = 50;
+    }
   }
+  
   updateCatchupDisplay();
 }
 
-// Catchup button handlers
-document.getElementById('btnCatchup').addEventListener('click', () => {
-  showCatchupPage(2);
-});
-
-document.getElementById('btnCatchupNext').addEventListener('click', () => {
-  // Initialize rhythm check to elapsed time
-  catchupState.rhythmMins = catchupState.elapsedMins;
-  catchupState.rhythmSecs = catchupState.elapsedSecs;
-  updateCatchupDisplay();
-  showCatchupPage(3);
-});
-
-document.getElementById('btnCatchupNext2').addEventListener('click', () => {
-  showCatchupPage(4);
-});
-
-document.getElementById('btnCatchupBack1').addEventListener('click', () => {
-  showCatchupPage(1);
-});
-
-document.getElementById('btnCatchupBack2').addEventListener('click', () => {
-  showCatchupPage(2);
-});
-
-document.getElementById('btnCatchupBack3').addEventListener('click', () => {
-  showCatchupPage(3);
-});
-
-document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
-  // Set state from catchup values
-  const elapsedTotal = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
-  const rhythmTotal = catchupState.rhythmMins * 60 + catchupState.rhythmSecs;
+function finalizeCatchup() {
+  // Set timer state from catchup
+  state.elapsedSeconds = (catchupState.elapsedMins * 60) + catchupState.elapsedSecs;
+  state.rhythmCheckTarget = (catchupState.rhythmMins * 60) + catchupState.rhythmSecs;
+  state.pausedTime = state.elapsedSeconds * 1000;
   
-  state.pausedTime = elapsedTotal * 1000;
-  state.rhythmCheckTarget = rhythmTotal;
-  state.cprRound = Math.floor(elapsedTotal / 120) + 1;
+  // Calculate CPR round
+  state.cprRound = Math.floor(state.elapsedSeconds / 120);
   
-  // Add simple prior treatments (BVM, LMA, IO)
-  catchupState.priorTreatments.forEach(txName => {
-    state.treatments.push({
-      name: txName,
-      elapsed: 0,
-      clock: '—',
-      prior: true
-    });
-  });
-  
-  // Add counted treatments (Shock, Disarm, Adrenaline)
-  for (let i = 0; i < catchupState.priorTreatmentCounts.shock; i++) {
-    state.treatments.push({
-      name: `Shock #${i + 1}`,
-      elapsed: 0,
-      clock: '—',
-      prior: true
-    });
-    state.shocks++;
+  // Add prior treatments
+  if (catchupState.priorTreatmentCounts.shock > 0) {
+    for (let i = 0; i < catchupState.priorTreatmentCounts.shock; i++) {
+      addTreatment('Shock', true);
+    }
   }
   
-  for (let i = 0; i < catchupState.priorTreatmentCounts.disarm; i++) {
-    state.treatments.push({
-      name: `Disarm #${i + 1}`,
-      elapsed: 0,
-      clock: '—',
-      prior: true
-    });
+  if (catchupState.priorTreatmentCounts.disarm > 0) {
+    for (let i = 0; i < catchupState.priorTreatmentCounts.disarm; i++) {
+      addTreatment('Disarm defib', true);
+    }
   }
   
-  for (let i = 0; i < catchupState.priorTreatmentCounts.adrenaline; i++) {
-    state.treatments.push({
-      name: `Adrenaline #${i + 1}`,
-      elapsed: 0,
-      clock: '—',
-      prior: true
-    });
+  if (catchupState.priorTreatmentCounts.adrenaline > 0) {
+    for (let i = 0; i < catchupState.priorTreatmentCounts.adrenaline; i++) {
+      addTreatment('Adrenaline (push)', true);
+    }
   }
   
-  catchupEl.modal.style.display = 'none';
+  const bvmActive = document.getElementById('bvmToggle')?.classList.contains('active');
+  const lmaActive = document.getElementById('lmaToggle')?.classList.contains('active');
+  const ioActive = document.getElementById('ioToggle')?.classList.contains('active');
+  
+  if (bvmActive) addTreatment('BVM', true);
+  if (lmaActive) addTreatment('LMA', true);
+  if (ioActive) addTreatment('IO', true);
+  
+  // Close modal and start timer
+  const modal = document.getElementById('catchupModal');
+  if (modal) modal.style.display = 'none';
+  
+  updateDisplay();
   startTimer();
+}
+
+// === EVENT HANDLERS ===
+
+// Catchup navigation
+const btnCatchup = document.getElementById('btnCatchup');
+if (btnCatchup) {
+  btnCatchup.addEventListener('click', () => showCatchupPage(2));
+}
+
+const btnCatchupNext = document.getElementById('btnCatchupNext');
+if (btnCatchupNext) {
+  btnCatchupNext.addEventListener('click', () => {
+    catchupState.rhythmMins = catchupState.elapsedMins;
+    catchupState.rhythmSecs = catchupState.elapsedSecs;
+    updateCatchupDisplay();
+    showCatchupPage(3);
+  });
+}
+
+const btnCatchupNext2 = document.getElementById('btnCatchupNext2');
+if (btnCatchupNext2) {
+  btnCatchupNext2.addEventListener('click', () => showCatchupPage(4));
+}
+
+const btnCatchupBack1 = document.getElementById('btnCatchupBack1');
+if (btnCatchupBack1) {
+  btnCatchupBack1.addEventListener('click', () => showCatchupPage(1));
+}
+
+const btnCatchupBack2 = document.getElementById('btnCatchupBack2');
+if (btnCatchupBack2) {
+  btnCatchupBack2.addEventListener('click', () => showCatchupPage(2));
+}
+
+const btnCatchupBack3 = document.getElementById('btnCatchupBack3');
+if (btnCatchupBack3) {
+  btnCatchupBack3.addEventListener('click', () => showCatchupPage(3));
+}
+
+const btnCatchupConfirm = document.getElementById('btnCatchupConfirm');
+if (btnCatchupConfirm) {
+  btnCatchupConfirm.addEventListener('click', finalizeCatchup);
+}
+
+// Time adjustment
+document.querySelectorAll('.time-btn').forEach(btn => {
+  btn.addEventListener('click', () => adjustCatchupTime(btn.dataset.action));
 });
 
-// Time picker buttons
-document.querySelectorAll('.time-btn').forEach(btn => {
+// Page 4 counters
+document.querySelectorAll('.cu-btn').forEach(btn => {
   btn.addEventListener('click', () => {
-    adjustCatchupTime(btn.dataset.action);
+    const [tx, dir] = btn.dataset.action.split('-');
+    catchupState.priorTreatmentCounts[tx] += (dir === 'plus' ? 1 : -1);
+    if (catchupState.priorTreatmentCounts[tx] < 0) catchupState.priorTreatmentCounts[tx] = 0;
+    updateCatchupDisplay();
   });
 });
 
-// === INITIALIZE ===
-catchupEl.modal.style.display = 'flex';
-showCatchupPage(1);
-updateCatchupDisplay();
-updateDisplay();
+// Page 4 toggles
+['bvm', 'lma', 'io'].forEach(id => {
+  const toggle = document.getElementById(id + 'Toggle');
+  if (toggle) {
+    toggle.addEventListener('click', () => toggle.classList.toggle('active'));
+  }
+});
 
-// Prior treatment selection - simple buttons (BVM, LMA, IO)
-document.querySelectorAll('.prior-tx-btn').forEach(btn => {
+// Main buttons
+const btnResetAll = document.getElementById('btnResetAll');
+if (btnResetAll) {
+  btnResetAll.addEventListener('click', () => {
+    if (confirm('Reset all data and start over?')) {
+      location.reload();
+    }
+  });
+}
+
+const btnCloseCase = document.getElementById('btnCloseCase');
+if (btnCloseCase) {
+  btnCloseCase.addEventListener('click', () => {
+    if (confirm('Close case and export summary?')) {
+      exportPDF();
+    }
+  });
+}
+
+// Banner buttons
+const btnReversibles = document.getElementById('btnReversibles');
+if (btnReversibles) {
+  btnReversibles.addEventListener('click', () => showOverlay('rhythm-check'));
+}
+
+const btnROSC = document.getElementById('btnROSC');
+if (btnROSC) {
+  btnROSC.addEventListener('click', () => showOverlay('rosc'));
+}
+
+const btnPHEA = document.getElementById('btnPHEA');
+if (btnPHEA) {
+  btnPHEA.addEventListener('click', () => showOverlay('phea'));
+}
+
+// Overlay close buttons
+document.querySelectorAll('.overlay-close').forEach(btn => {
+  btn.addEventListener('click', closeCurrentOverlay);
+});
+
+// Treatment accordion
+document.querySelectorAll('.accordion-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const content = header.nextElementSibling;
+    const isOpen = content.style.display === 'block';
+    
+    document.querySelectorAll('.accordion-content').forEach(c => {
+      c.style.display = 'none';
+    });
+    
+    if (!isOpen) {
+      content.style.display = 'block';
+    }
+  });
+});
+
+// Treatment buttons
+document.querySelectorAll('.tx-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const txName = btn.dataset.tx;
-    
-    if (btn.classList.contains('selected')) {
-      btn.classList.remove('selected');
-      catchupState.priorTreatments = catchupState.priorTreatments.filter(t => t !== txName);
-    } else {
-      btn.classList.add('selected');
-      catchupState.priorTreatments.push(txName);
-    }
-    
-    updatePriorTxDisplay();
+    addTreatment(txName);
+    closeCurrentOverlay();
   });
 });
 
-// Counter buttons
-document.querySelectorAll('.counter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const action = btn.dataset.action;
-    const [tx, dir] = action.split('-');
-    
-    if (dir === 'plus') {
-      catchupState.priorTreatmentCounts[tx]++;
-    } else if (dir === 'minus' && catchupState.priorTreatmentCounts[tx] > 0) {
-      catchupState.priorTreatmentCounts[tx]--;
-    }
-    
-    document.getElementById(`count${tx.charAt(0).toUpperCase() + tx.slice(1)}`).textContent = 
-      catchupState.priorTreatmentCounts[tx];
-    
-    updatePriorTxDisplay();
-  });
-});
+// Bottom buttons
+const btnSummary = document.getElementById('btnSummary');
+const summaryModal = document.getElementById('summaryModal');
+const btnCloseSummary = document.getElementById('btnCloseSummary');
 
-function updatePriorTxDisplay() {
-  const total = catchupState.priorTreatments.length + 
-    catchupState.priorTreatmentCounts.shock + 
-    catchupState.priorTreatmentCounts.disarm + 
-    catchupState.priorTreatmentCounts.adrenaline;
-  
-  const display = document.getElementById('priorTxSelected');
-  if (total > 0) {
-    display.textContent = `Selected: ${total} treatment(s)`;
-  } else {
-    display.textContent = '';
-  }
+if (btnSummary && summaryModal) {
+  btnSummary.addEventListener('click', () => {
+    updateRunningList();
+    summaryModal.style.display = 'flex';
+  });
 }
 
-// === PDF EXPORT ===
+if (btnCloseSummary && summaryModal) {
+  btnCloseSummary.addEventListener('click', () => {
+    summaryModal.style.display = 'none';
+  });
+}
+
+const btnAddTx = document.getElementById('btnAddTx');
+if (btnAddTx) {
+  btnAddTx.addEventListener('click', () => showOverlay('tx'));
+}
+
+// PDF Export
 function exportPDF() {
-  // Populate PDF view
-  document.getElementById('pdfDate').textContent = new Date().toLocaleDateString('en-AU');
-  document.getElementById('pdfElapsed').textContent = formatTime(state.elapsedSeconds);
-  document.getElementById('pdfRounds').textContent = state.cprRound;
-  document.getElementById('pdfShocks').textContent = state.shocks;
-  
-  // Populate treatment table
   const tbody = document.getElementById('pdfTableBody');
+  if (!tbody) return;
+  
   if (state.treatments.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; font-style:italic;">No treatments recorded</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;font-style:italic;">No treatments recorded</td></tr>';
   } else {
     tbody.innerHTML = state.treatments.map(tx => {
-      const timeCell = tx.prior ? '&lt; —' : tx.clock;
-      const elapsedCell = tx.prior ? '&lt; —' : formatTime(tx.elapsed);
+      const timeCell = tx.prior ? '< —' : tx.clock;
+      const elapsedCell = tx.prior ? '< —' : formatTime(tx.elapsed);
       return `<tr>
         <td>${tx.name}</td>
         <td>${timeCell}</td>
@@ -564,11 +473,22 @@ function exportPDF() {
     }).join('');
   }
   
-  // Trigger print dialog
   window.print();
 }
 
-document.getElementById('btnPdf').addEventListener('click', exportPDF);
+const btnPdf = document.getElementById('btnPdf');
+if (btnPdf) {
+  btnPdf.addEventListener('click', exportPDF);
+}
 
-// End DOMContentLoaded wrapper
-});
+// === INITIALIZE ===
+const modal = document.getElementById('catchupModal');
+if (modal) {
+  modal.style.display = 'flex';
+  showCatchupPage(1);
+  updateCatchupDisplay();
+}
+
+updateDisplay();
+
+}); // End DOMContentLoaded
