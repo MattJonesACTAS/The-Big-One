@@ -144,7 +144,7 @@ button:active {
   right: 0;
   bottom: 0;
   background: white;
-  padding: 30px;
+  padding: 0 30px 30px 30px;
   overflow-y: auto;
 }
 
@@ -164,6 +164,10 @@ button:active {
   padding: 12px 18px;
   margin: 0 -30px 16px;
   letter-spacing: 0.5px;
+}
+
+.section-header:first-child {
+  margin-top: 0;
 }
 
 .blue-header {
@@ -212,7 +216,8 @@ button:active {
 }
 
 .overlay label {
-  display: block;
+  display: flex;
+  align-items: center;
   padding: 14px 8px;
   font-size: 17px;
   cursor: pointer;
@@ -228,6 +233,7 @@ button:active {
   width: 20px;
   height: 20px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .tx-btn {
