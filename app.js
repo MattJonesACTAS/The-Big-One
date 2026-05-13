@@ -13,6 +13,42 @@ let state = {
   startClockTime: null  // Clock time when case started
 };
 
+// === STATE PERSISTENCE ===
+function saveState() {
+  const stateToSave = {
+    ...state,
+    startTime: state.startTime ? state.startTime : null,
+    startClockTime: state.startClockTime ? state.startClockTime.getTime() : null
+  };
+  localStorage.setItem('theBigOneState', JSON.stringify(stateToSave));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('theBigOneState');
+  if (saved) {
+    const loaded = JSON.parse(saved);
+    state = {
+      ...loaded,
+      startTime: loaded.startTime,
+      startClockTime: loaded.startClockTime ? new Date(loaded.startClockTime) : null,
+      currentOverlay: null
+    };
+    
+    // Update display with loaded state
+    updateDisplay();
+    el.cprRound.textContent = state.cprRound;
+    
+    // Restart timer if it was running
+    if (state.running) {
+      startTimer();
+    }
+  }
+}
+
+function clearState() {
+  localStorage.removeItem('theBigOneState');
+}
+
 // === ELEMENTS ===
 const el = {
   mainTimer: document.getElementById('mainTimer'),
@@ -27,7 +63,8 @@ const el = {
     rosc: document.getElementById('overlayRosc'),
     phea: document.getElementById('overlayPhea'),
     summary: document.getElementById('overlaySummary'),
-    treatment: document.getElementById('overlayTreatment')
+    treatment: document.getElementById('overlayTreatment'),
+    caseSummary: document.getElementById('overlayCaseSummary')
   },
   
   buttons: {
@@ -233,6 +270,7 @@ function updateDisplay() {
       state.rhythmCheckTarget += 120;
       state.cprRound++;
       el.cprRound.textContent = state.cprRound;
+      saveState();
     }
   } else {
     el.mainTimer.textContent = formatTime(countdown);
@@ -278,24 +316,14 @@ function togglePause() {
     state.startTime = Date.now();
     el.buttons.pause.textContent = 'Pause timer';
   }
+  saveState();
 }
 
 function resetTimer() {
-  if (!confirm('Reset timer? This will clear all data.')) return;
-  
-  state.running = false;
-  state.startTime = null;
-  state.pausedTime = 0;
-  state.elapsedSeconds = 0;
-  state.rhythmCheckTarget = 120;
-  state.cprRound = 1;
-  state.shocks = 0;
-  state.treatments = [];
-  
+  // Only reset the rhythm check countdown to 2:00
+  state.rhythmCheckTarget = state.elapsedSeconds + 120;
   updateDisplay();
-  el.cprRound.textContent = '1';
-  el.adrWarning.textContent = '';
-  el.buttons.pause.textContent = 'Pause timer';
+  saveState();
 }
 
 // === TREATMENT SYSTEM ===
@@ -313,6 +341,7 @@ function addTreatment(name) {
     state.shocks++;
   }
   
+  saveState();
   closeOverlay();
   updateDisplay();
 }
@@ -584,6 +613,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
   
   catchupEl.modal.style.display = 'none';
   startTimer();
+  saveState();
 });
 
 // Time picker buttons
@@ -594,6 +624,7 @@ document.querySelectorAll('.time-btn').forEach(btn => {
 });
 
 // === INITIALIZE ===
+loadState();
 updateCatchupDisplay();
 updateDisplay();
 
@@ -675,4 +706,79 @@ function exportPDF() {
   window.print();
 }
 
-document.getElementById('btnPdf').addEventListener('click', exportPDF);
+// === CASE SUMMARY ===
+function showCaseSummary() {
+  // Populate case summary (same as running summary)
+  document.getElementById('caseElapsed').textContent = formatTime(state.elapsedSeconds);
+  document.getElementById('caseRounds').textContent = state.cprRound;
+  document.getElementById('caseShocks').textContent = state.shocks;
+  
+  const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
+  document.getElementById('caseDisarmed').textContent = disarmCount;
+  
+  // Pharma summary
+  const medications = [
+    'Adrenaline push', 'Adrenaline infus.', 'Adrenaline', 'Amiodarone', 
+    'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
+    'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
+  ];
+  
+  const pharmaCounts = {};
+  state.treatments.forEach(tx => {
+    for (const med of medications) {
+      if (tx.name.includes(med)) {
+        pharmaCounts[med] = (pharmaCounts[med] || 0) + 1;
+        break;
+      }
+    }
+  });
+  
+  const pharmaDiv = document.getElementById('casePharmaSummary');
+  if (Object.keys(pharmaCounts).length === 0) {
+    pharmaDiv.innerHTML = '<div style="padding: 12px 18px; color:#999; font-style:italic;">No medications given</div>';
+  } else {
+    pharmaDiv.innerHTML = Object.entries(pharmaCounts).map(([name, count]) => 
+      `<div class="summary-row"><span>${name}</span><span>${count}</span></div>`
+    ).join('');
+  }
+  
+  // Treatment log
+  const tbody = document.getElementById('caseTreatmentsTable');
+  if (state.treatments.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
+  } else {
+    const reversedTreatments = [...state.treatments].reverse();
+    
+    tbody.innerHTML = reversedTreatments.map(tx => {
+      let timeDisplay, elapsedDisplay, ago;
+      
+      if (tx.prior) {
+        timeDisplay = '&lt; ' + tx.clock;
+        elapsedDisplay = '&lt; ' + formatTime(state.catchupElapsed);
+        ago = '&gt; ' + formatTime(state.elapsedSeconds);
+      } else {
+        timeDisplay = tx.clock;
+        elapsedDisplay = formatTime(tx.elapsed);
+        ago = '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
+      }
+      
+      return `<tr>
+        <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
+        <td style="color: #999;">${timeDisplay}</td>
+        <td style="color: #999;">${elapsedDisplay}</td>
+        <td style="color: #999;">${ago}</td>
+      </tr>`;
+    }).join('');
+  }
+  
+  // Show the overlay
+  el.overlays.caseSummary.style.display = 'block';
+  el.mainDisplay.style.visibility = 'hidden';
+}
+
+document.getElementById('btnCloseCase').addEventListener('click', showCaseSummary);
+document.getElementById('btnBackFromCase').addEventListener('click', () => {
+  el.overlays.caseSummary.style.display = 'none';
+  el.mainDisplay.style.visibility = 'visible';
+});
+document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
