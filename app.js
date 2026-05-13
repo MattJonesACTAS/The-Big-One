@@ -482,6 +482,8 @@ document.querySelectorAll('.time-btn').forEach(btn => {
 });
 
 // === INITIALIZE ===
+catchupEl.modal.style.display = 'flex';
+showCatchupPage(1);
 updateCatchupDisplay();
 updateDisplay();
 
