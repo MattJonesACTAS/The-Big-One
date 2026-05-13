@@ -291,7 +291,12 @@ let catchupState = {
   elapsedSecs: 0,
   rhythmMins: 2,
   rhythmSecs: 0,
-  priorTreatments: []
+  priorTreatments: [],
+  priorTreatmentCounts: {
+    shock: 0,
+    disarm: 0,
+    adrenaline: 0
+  }
 };
 
 const catchupEl = {
@@ -431,7 +436,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
   state.rhythmCheckTarget = rhythmTotal;
   state.cprRound = Math.floor(elapsedTotal / 120) + 1;
   
-  // Add prior treatments
+  // Add simple prior treatments (BVM, LMA, IO)
   catchupState.priorTreatments.forEach(txName => {
     state.treatments.push({
       name: txName,
@@ -439,11 +444,36 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
       clock: '—',
       prior: true
     });
-    
-    if (txName === 'Shock') {
-      state.shocks++;
-    }
   });
+  
+  // Add counted treatments (Shock, Disarm, Adrenaline)
+  for (let i = 0; i < catchupState.priorTreatmentCounts.shock; i++) {
+    state.treatments.push({
+      name: `Shock #${i + 1}`,
+      elapsed: 0,
+      clock: '—',
+      prior: true
+    });
+    state.shocks++;
+  }
+  
+  for (let i = 0; i < catchupState.priorTreatmentCounts.disarm; i++) {
+    state.treatments.push({
+      name: `Disarm #${i + 1}`,
+      elapsed: 0,
+      clock: '—',
+      prior: true
+    });
+  }
+  
+  for (let i = 0; i < catchupState.priorTreatmentCounts.adrenaline; i++) {
+    state.treatments.push({
+      name: `Adrenaline #${i + 1}`,
+      elapsed: 0,
+      clock: '—',
+      prior: true
+    });
+  }
   
   catchupEl.modal.style.display = 'none';
   startTimer();
@@ -460,7 +490,7 @@ document.querySelectorAll('.time-btn').forEach(btn => {
 updateCatchupDisplay();
 updateDisplay();
 
-// Prior treatment selection
+// Prior treatment selection - simple buttons (BVM, LMA, IO)
 document.querySelectorAll('.prior-tx-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const txName = btn.dataset.tx;
@@ -473,14 +503,42 @@ document.querySelectorAll('.prior-tx-btn').forEach(btn => {
       catchupState.priorTreatments.push(txName);
     }
     
-    const display = document.getElementById('priorTxSelected');
-    if (catchupState.priorTreatments.length > 0) {
-      display.textContent = `Selected: ${catchupState.priorTreatments.length} treatment(s)`;
-    } else {
-      display.textContent = '';
-    }
+    updatePriorTxDisplay();
   });
 });
+
+// Counter buttons
+document.querySelectorAll('.counter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.action;
+    const [tx, dir] = action.split('-');
+    
+    if (dir === 'plus') {
+      catchupState.priorTreatmentCounts[tx]++;
+    } else if (dir === 'minus' && catchupState.priorTreatmentCounts[tx] > 0) {
+      catchupState.priorTreatmentCounts[tx]--;
+    }
+    
+    document.getElementById(`count${tx.charAt(0).toUpperCase() + tx.slice(1)}`).textContent = 
+      catchupState.priorTreatmentCounts[tx];
+    
+    updatePriorTxDisplay();
+  });
+});
+
+function updatePriorTxDisplay() {
+  const total = catchupState.priorTreatments.length + 
+    catchupState.priorTreatmentCounts.shock + 
+    catchupState.priorTreatmentCounts.disarm + 
+    catchupState.priorTreatmentCounts.adrenaline;
+  
+  const display = document.getElementById('priorTxSelected');
+  if (total > 0) {
+    display.textContent = `Selected: ${total} treatment(s)`;
+  } else {
+    display.textContent = '';
+  }
+}
 
 // === PDF EXPORT ===
 function exportPDF() {

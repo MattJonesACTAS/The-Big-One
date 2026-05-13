@@ -16,15 +16,15 @@
         
         <!-- Page 1: Start fresh or catchup -->
         <div id="catchupPage1" class="catchup-page">
-          <h2>Starting cardiac arrest timer</h2>
-          <p>Are you starting from the beginning?</p>
+          <h2>Welcome to The Big One</h2>
+          <p>Are you starting this timer from the beginning of a cardiac arrest?</p>
           <button id="btnStartFresh" class="modal-btn primary">Yes - Start from 0:00</button>
           <button id="btnCatchup" class="modal-btn">No - Set elapsed time</button>
         </div>
         
         <!-- Page 2: Set elapsed time -->
         <div id="catchupPage2" class="catchup-page" style="display:none;">
-          <h2>Total time already elapsed</h2>
+          <h2>Enter the elapsed case time on the monitor</h2>
           <div class="time-picker">
             <div class="time-column">
               <button class="time-btn" data-action="mins-up">▲</button>
@@ -46,7 +46,7 @@
         
         <!-- Page 3: Set rhythm check target -->
         <div id="catchupPage3" class="catchup-page" style="display:none;">
-          <h2>Elapsed time rhythm check is due</h2>
+          <h2>Enter what the elapsed time will be when the next rhythm check is due</h2>
           <div class="time-picker">
             <div class="time-column">
               <button class="time-btn" data-action="rhythm-mins-up">▲</button>
@@ -71,20 +71,46 @@
           <h2>Add previous treatments</h2>
           <p style="font-size:14px; color:#666;">Select any treatments given before starting this timer</p>
           <div class="prior-tx-list">
-            <button class="prior-tx-btn" data-tx="Shock">Shock</button>
-            <button class="prior-tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
-            <button class="prior-tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
-            <button class="prior-tx-btn" data-tx="Amiodarone">Amiodarone</button>
-            <button class="prior-tx-btn" data-tx="Atropine">Atropine</button>
-            <button class="prior-tx-btn" data-tx="Calcium">Calcium</button>
-            <button class="prior-tx-btn" data-tx="Fluid bolus">Fluid bolus</button>
-            <button class="prior-tx-btn" data-tx="Magnesium">Magnesium</button>
-            <button class="prior-tx-btn" data-tx="Sodium bicarb">Sodium bicarb</button>
-            <button class="prior-tx-btn" data-tx="Thrombolysis">Thrombolysis</button>
+            
+            <!-- Shock with counter -->
+            <div class="prior-tx-item">
+              <button class="prior-tx-btn" data-tx="Shock">Shock</button>
+              <div class="counter-controls">
+                <button class="counter-btn" data-action="shock-minus">−</button>
+                <span class="counter-value" id="countShock">0</span>
+                <button class="counter-btn" data-action="shock-plus">+</button>
+              </div>
+            </div>
+            
+            <!-- Disarm with counter -->
+            <div class="prior-tx-item">
+              <button class="prior-tx-btn" data-tx="Disarm">Disarm</button>
+              <div class="counter-controls">
+                <button class="counter-btn" data-action="disarm-minus">−</button>
+                <span class="counter-value" id="countDisarm">0</span>
+                <button class="counter-btn" data-action="disarm-plus">+</button>
+              </div>
+            </div>
+            
+            <!-- Adrenaline with counter -->
+            <div class="prior-tx-item">
+              <button class="prior-tx-btn" data-tx="Adrenaline">Adrenaline</button>
+              <div class="counter-controls">
+                <button class="counter-btn" data-action="adrenaline-minus">−</button>
+                <span class="counter-value" id="countAdrenaline">0</span>
+                <button class="counter-btn" data-action="adrenaline-plus">+</button>
+              </div>
+            </div>
+            
+            <!-- BVM (no counter) -->
+            <button class="prior-tx-btn" data-tx="BVM">BVM</button>
+            
+            <!-- LMA (no counter) -->
             <button class="prior-tx-btn" data-tx="LMA">LMA</button>
-            <button class="prior-tx-btn" data-tx="ETT">ETT</button>
+            
+            <!-- IO (no counter) -->
             <button class="prior-tx-btn" data-tx="IO">IO</button>
-            <button class="prior-tx-btn" data-tx="Disarm defib">Disarm defib</button>
+            
           </div>
           <div id="priorTxSelected"></div>
           <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
