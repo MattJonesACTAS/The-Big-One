@@ -481,3 +481,33 @@ document.querySelectorAll('.prior-tx-btn').forEach(btn => {
     }
   });
 });
+
+// === PDF EXPORT ===
+function exportPDF() {
+  // Populate PDF view
+  document.getElementById('pdfDate').textContent = new Date().toLocaleDateString('en-AU');
+  document.getElementById('pdfElapsed').textContent = formatTime(state.elapsedSeconds);
+  document.getElementById('pdfRounds').textContent = state.cprRound;
+  document.getElementById('pdfShocks').textContent = state.shocks;
+  
+  // Populate treatment table
+  const tbody = document.getElementById('pdfTableBody');
+  if (state.treatments.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; font-style:italic;">No treatments recorded</td></tr>';
+  } else {
+    tbody.innerHTML = state.treatments.map(tx => {
+      const timeCell = tx.prior ? '&lt; —' : tx.clock;
+      const elapsedCell = tx.prior ? '&lt; —' : formatTime(tx.elapsed);
+      return `<tr>
+        <td>${tx.name}</td>
+        <td>${timeCell}</td>
+        <td>${elapsedCell}</td>
+      </tr>`;
+    }).join('');
+  }
+  
+  // Trigger print dialog
+  window.print();
+}
+
+document.getElementById('btnPdf').addEventListener('click', exportPDF);

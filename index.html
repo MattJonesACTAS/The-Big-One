@@ -190,6 +190,7 @@
     <div class="controls">
       <button id="btnPause">Pause timer</button>
       <button id="btnReset">Reset timer</button>
+      <button id="btnPdf">Export PDF</button>
     </div>
     
   </div>
@@ -197,3 +198,30 @@
   <script src="app.js"></script>
 </body>
 </html>
+
+  <!-- PDF Print View (hidden) -->
+  <div id="pdfView" class="pdf-view">
+    <h1>Case Summary</h1>
+    <div id="pdfDate"></div>
+    
+    <h2>Arrest Summary</h2>
+    <div class="pdf-section">
+      <div>Total time elapsed: <strong id="pdfElapsed"></strong></div>
+      <div>CPR rounds: <strong id="pdfRounds"></strong></div>
+      <div>Shocks given: <strong id="pdfShocks"></strong></div>
+    </div>
+    
+    <h2>Treatment Log</h2>
+    <table id="pdfTable">
+      <thead>
+        <tr>
+          <th>Treatment</th>
+          <th>Time</th>
+          <th>Elapsed</th>
+        </tr>
+      </thead>
+      <tbody id="pdfTableBody">
+      </tbody>
+    </table>
+  </div>
+
