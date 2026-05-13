@@ -113,14 +113,12 @@
               </div>
             </div>
             
-            <!-- BVM (toggle button) -->
-            <button class="prior-tx-btn" data-tx="BVM">BVM</button>
-            
-            <!-- LMA (toggle button) -->
-            <button class="prior-tx-btn" data-tx="LMA">LMA</button>
-            
-            <!-- IO (toggle button) -->
-            <button class="prior-tx-btn" data-tx="IO">IO</button>
+            <!-- BVM, LMA, IO (horizontal toggle buttons) -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px;">
+              <button class="prior-tx-btn" data-tx="BVM">BVM</button>
+              <button class="prior-tx-btn" data-tx="LMA">LMA</button>
+              <button class="prior-tx-btn" data-tx="IO">IO</button>
+            </div>
             
           </div>
           <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
@@ -211,6 +209,38 @@
         <label><input type="checkbox"> BP — cycling</label>
         <label><input type="checkbox"> SpO<sub>2</sub></label>
         <label><input type="checkbox"> EtCO<sub>2</sub></label>
+        
+        <div class="section-header purple-header">DRUGS & ACCESS EQUIPMENT</div>
+        <label><input type="checkbox"> IV/IO access ×2 if possible</label>
+        <label><input type="checkbox"> IV fluids</label>
+        <label><input type="checkbox"> Ketamine drawn up</label>
+        <label><input type="checkbox"> Suxamethonium drawn up</label>
+        <label><input type="checkbox"> Post PHEA sedation medication/s drawn up</label>
+        
+        <div class="section-header purple-header">AIRWAY EQUIPMENT</div>
+        <label><input type="checkbox"> Sufficient oxygen available?</label>
+        <label><input type="checkbox"> Suction</label>
+        <label><input type="checkbox"> BVM</label>
+        <label><input type="checkbox"> OPA / NPA</label>
+        <label><input type="checkbox"> Airtraq — loaded tube, switched on</label>
+        <label><input type="checkbox"> ETT loaded with bougie</label>
+        <label><input type="checkbox"> Laryngoscope checked</label>
+        <label><input type="checkbox"> Syringe</label>
+        <label><input type="checkbox"> Securing method</label>
+        <label><input type="checkbox"> FONA scalpel</label>
+        
+        <div class="section-header purple-header">AIRWAY TEAM BRIEF</div>
+        <label><input type="checkbox"> ELM discussed</label>
+        <label><input type="checkbox"> Fallback plan discussed</label>
+        
+        <div class="section-header purple-header">POST-INTUBATION</div>
+        <label><input type="checkbox"> Confirm ETT placement — EtCO<sub>2</sub>, visualise cords, auscultation, misting, chest rise</label>
+        <label><input type="checkbox"> Colleague confirms placement</label>
+        <label><input type="checkbox"> Secure tube — Thomas block / tube tie</label>
+        <label><input type="checkbox"> Reassessment — ABCs and VSS</label>
+        <label><input type="checkbox"> Sedation plan discussed</label>
+        <label><input type="checkbox"> Deterioration plan discussed</label>
+        <label><input type="checkbox"> Extrication and transport plan discussed</label>
       </div>
       
       <div id="overlaySummary" class="overlay" style="display:none;">
@@ -310,7 +340,13 @@
   <!-- Case Summary Page (Full Screen) -->
   <div id="overlayCaseSummary" style="display:none;">
     <div class="case-summary-page">
-      <h1 style="text-align: center; font-size: 32px; color: #1a1a1a; margin-bottom: 24px; font-weight: 700;">Case Summary</h1>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h1 style="font-size: 32px; color: #1a1a1a; margin: 0; font-weight: 700;">Case Summary</h1>
+        <div style="display: flex; gap: 12px;">
+          <button id="btnExportPdf" class="modal-btn primary">Export PDF</button>
+          <button id="btnDeleteCase" class="modal-btn" style="background: #a32d2d; color: white;">Delete case</button>
+        </div>
+      </div>
       
       <div class="section-header green-header-light">ARREST SUMMARY</div>
       <div class="summary-row">
@@ -346,12 +382,6 @@
         <tbody id="caseTreatmentsTable">
         </tbody>
       </table>
-      
-      <div style="margin-top: 24px; display: grid; grid-template-columns: 1fr; gap: 12px;">
-        <button id="btnBackFromCase" class="modal-btn">Return to active case</button>
-        <button id="btnExportPdf" class="modal-btn primary">Export PDF</button>
-        <button id="btnDeleteCase" class="modal-btn" style="background: #a32d2d; color: white;">Delete case</button>
-      </div>
     </div>
   </div>
   
