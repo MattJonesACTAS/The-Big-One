@@ -99,7 +99,31 @@ function showOverlay(name) {
   btn.classList.add('active');
   btn.textContent = 'Close';
   
+  // Update Running Summary when opened
+  if (name === 'summary') {
+    updateRunningSummary();
+  }
+  
   state.currentOverlay = name;
+}
+
+function updateRunningSummary() {
+  document.getElementById('sumElapsed').textContent = formatTime(state.elapsedSeconds);
+  document.getElementById('sumRounds').textContent = state.cprRound;
+  document.getElementById('sumShocks').textContent = state.shocks;
+  
+  const list = document.getElementById('sumTreatmentsList');
+  if (state.treatments.length === 0) {
+    list.innerHTML = '<div style="color:#999; font-style:italic;">No treatments recorded</div>';
+  } else {
+    list.innerHTML = state.treatments.map(tx => {
+      const timeDisplay = tx.prior ? '< —' : (tx.clock + ' (' + formatTime(tx.elapsed) + ')');
+      return `<div class="treatment-item">
+        <span class="treatment-name">${tx.name}</span>
+        <span class="treatment-time">${timeDisplay}</span>
+      </div>`;
+    }).join('');
+  }
 }
 
 function closeOverlay() {

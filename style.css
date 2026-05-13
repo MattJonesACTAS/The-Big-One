@@ -351,3 +351,46 @@ button {
   font-size: 14px;
   color: #666;
 }
+
+/* Summary */
+.summary-section {
+  margin: 15px 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.summary-section:last-child {
+  border-bottom: none;
+}
+
+.summary-section strong {
+  display: block;
+  margin-bottom: 5px;
+  color: #1a1a1a;
+}
+
+.treatments-list {
+  margin-top: 10px;
+}
+
+.treatment-item {
+  padding: 8px 0;
+  font-size: 14px;
+  color: #666;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.treatment-item:last-child {
+  border-bottom: none;
+}
+
+.treatment-name {
+  color: #1a1a1a;
+  font-weight: 600;
+}
+
+.treatment-time {
+  font-size: 13px;
+  color: #999;
+  margin-left: 10px;
+}

@@ -73,9 +73,18 @@
           <div class="prior-tx-list">
             <button class="prior-tx-btn" data-tx="Shock">Shock</button>
             <button class="prior-tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+            <button class="prior-tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
             <button class="prior-tx-btn" data-tx="Amiodarone">Amiodarone</button>
+            <button class="prior-tx-btn" data-tx="Atropine">Atropine</button>
+            <button class="prior-tx-btn" data-tx="Calcium">Calcium</button>
+            <button class="prior-tx-btn" data-tx="Fluid bolus">Fluid bolus</button>
+            <button class="prior-tx-btn" data-tx="Magnesium">Magnesium</button>
+            <button class="prior-tx-btn" data-tx="Sodium bicarb">Sodium bicarb</button>
+            <button class="prior-tx-btn" data-tx="Thrombolysis">Thrombolysis</button>
             <button class="prior-tx-btn" data-tx="LMA">LMA</button>
+            <button class="prior-tx-btn" data-tx="ETT">ETT</button>
             <button class="prior-tx-btn" data-tx="IO">IO</button>
+            <button class="prior-tx-btn" data-tx="Disarm defib">Disarm defib</button>
           </div>
           <div id="priorTxSelected"></div>
           <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
@@ -136,18 +145,37 @@
       
       <div id="overlaySummary" class="overlay" style="display:none;">
         <h3>Running Summary</h3>
-        <div>CPR rounds: <span id="sumRounds">1</span></div>
-        <div>Shocks: <span id="sumShocks">0</span></div>
-        <div id="sumTreatments"></div>
+        <div class="summary-section">
+          <strong>Total time elapsed:</strong> <span id="sumElapsed">0:00</span>
+        </div>
+        <div class="summary-section">
+          <strong>CPR rounds:</strong> <span id="sumRounds">1</span>
+        </div>
+        <div class="summary-section">
+          <strong>Shocks given:</strong> <span id="sumShocks">0</span>
+        </div>
+        <div class="summary-section">
+          <strong>Treatments:</strong>
+          <div id="sumTreatmentsList" class="treatments-list"></div>
+        </div>
       </div>
       
       <div id="overlayTreatment" class="overlay" style="display:none;">
         <h3>Add Treatment</h3>
         <button class="tx-btn" data-tx="Shock">Shock</button>
         <button class="tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+        <button class="tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
         <button class="tx-btn" data-tx="Amiodarone">Amiodarone</button>
+        <button class="tx-btn" data-tx="Atropine">Atropine</button>
+        <button class="tx-btn" data-tx="Calcium">Calcium</button>
+        <button class="tx-btn" data-tx="Fluid bolus">Fluid bolus</button>
+        <button class="tx-btn" data-tx="Magnesium">Magnesium</button>
+        <button class="tx-btn" data-tx="Sodium bicarb">Sodium bicarb</button>
+        <button class="tx-btn" data-tx="Thrombolysis">Thrombolysis</button>
         <button class="tx-btn" data-tx="LMA">LMA</button>
+        <button class="tx-btn" data-tx="ETT">ETT</button>
         <button class="tx-btn" data-tx="IO">IO</button>
+        <button class="tx-btn" data-tx="Disarm defib">Disarm defib</button>
       </div>
       
     </div>
