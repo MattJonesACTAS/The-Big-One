@@ -5,24 +5,20 @@
 // Animation wrapper
 setTimeout(function(){
   var topOverlays=['tabOverlayRev','tabOverlayRosc','tabOverlayRsi'];
-  var bottomPanels=['summarySheet','txAddPanel'];
+  var bottomPanels=['summaryPanel','txPanel'];
   
   var observer=new MutationObserver(function(mutations){
     mutations.forEach(function(m){
       if(m.attributeName==='style'){
         var el=m.target;
         var isVisible=el.style.display!=='none';
-        if(topOverlays.indexOf(el.id)!==-1){
-          if(isVisible){
-            el.classList.remove('slide-out-up');
-            el.classList.add('slide-in-down');
-          }
+        if(topOverlays.indexOf(el.id)!==-1 && isVisible){
+          el.classList.remove('slide-out-up');
+          el.classList.add('slide-in-down');
         }
-        if(bottomPanels.indexOf(el.id)!==-1){
-          if(isVisible){
-            el.classList.remove('slide-out-down');
-            el.classList.add('slide-in-up');
-          }
+        if(bottomPanels.indexOf(el.id)!==-1 && isVisible){
+          el.classList.remove('slide-out-down');
+          el.classList.add('slide-in-up');
         }
       }
     });
