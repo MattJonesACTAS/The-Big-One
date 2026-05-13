@@ -2,3 +2,64 @@
 #accMeds{background:#e8f5ee!important}#accMeds.open{background:#d4ebe0!important}#accShock{background:#ffe8e8!important}#accShock.open{background:#ffd4d4!important}#accAirway{background:#eaf2fb!important}#accAirway.open{background:#d4e5f7!important}
 .circle-side-btn{text-align:center;line-height:1.2;font-size:9px}
 #elSecsVal,#cdSecsVal{letter-spacing:8px}
+
+/* Slide animations for overlays */
+.slide-down-enter {
+  animation: slideDownIn 0.3s ease-out forwards;
+}
+
+.slide-down-exit {
+  animation: slideDownOut 0.3s ease-in forwards;
+}
+
+.slide-up-enter {
+  animation: slideUpIn 0.3s ease-out forwards;
+}
+
+.slide-up-exit {
+  animation: slideUpOut 0.3s ease-in forwards;
+}
+
+@keyframes slideDownIn {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideDownOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes slideUpIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideUpOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
