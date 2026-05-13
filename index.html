@@ -235,44 +235,52 @@
       </div>
       
       <div id="overlayTreatment" class="overlay" style="display:none;">
-        <div class="section-header green-header">Medications</div>
-        <button class="tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
-        <button class="tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
-        <button class="tx-btn" data-tx="Amiodarone">Amiodarone</button>
-        <button class="tx-btn" data-tx="Atropine">Atropine</button>
-        <button class="tx-btn" data-tx="Calcium">Calcium</button>
-        <button class="tx-btn" data-tx="Glucose">Glucose</button>
-        <button class="tx-btn" data-tx="Ketamine">Ketamine</button>
-        <button class="tx-btn" data-tx="Magnesium">Magnesium</button>
-        <button class="tx-btn" data-tx="Midazolam">Midazolam</button>
-        <button class="tx-btn" data-tx="Normal Saline">Normal Saline</button>
-        <button class="tx-btn" data-tx="Sodium Bicarbonate">Sodium Bicarbonate</button>
-        <button class="tx-btn" data-tx="Suxamethonium">Suxamethonium</button>
+        <div class="section-header green-header" data-section="medications">Medications</div>
+        <div class="tx-section" data-section="medications">
+          <button class="tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+          <button class="tx-btn" data-tx="Adrenaline infus.">Adrenaline infus.</button>
+          <button class="tx-btn" data-tx="Amiodarone">Amiodarone</button>
+          <button class="tx-btn" data-tx="Atropine">Atropine</button>
+          <button class="tx-btn" data-tx="Calcium">Calcium</button>
+          <button class="tx-btn" data-tx="Glucose">Glucose</button>
+          <button class="tx-btn" data-tx="Ketamine">Ketamine</button>
+          <button class="tx-btn" data-tx="Magnesium">Magnesium</button>
+          <button class="tx-btn" data-tx="Midazolam">Midazolam</button>
+          <button class="tx-btn" data-tx="Normal Saline">Normal Saline</button>
+          <button class="tx-btn" data-tx="Sodium Bicarbonate">Sodium Bicarbonate</button>
+          <button class="tx-btn" data-tx="Suxamethonium">Suxamethonium</button>
+        </div>
         
-        <div class="section-header pink-header">Shock</div>
-        <button class="tx-btn" data-tx="Shock">Shock</button>
-        <button class="tx-btn" data-tx="Shock — VF">Shock — VF</button>
-        <button class="tx-btn" data-tx="Shock — VT">Shock — VT</button>
-        <button class="tx-btn" data-tx="Disarm — Asystole">Disarm — Asystole</button>
-        <button class="tx-btn" data-tx="Disarm — PEA">Disarm — PEA</button>
-        <button class="tx-btn" data-tx="Disarm — ROSC">Disarm — ROSC</button>
+        <div class="section-header pink-header" data-section="shock">Shock</div>
+        <div class="tx-section" data-section="shock">
+          <button class="tx-btn" data-tx="Shock">Shock</button>
+          <button class="tx-btn" data-tx="Shock — VF">Shock — VF</button>
+          <button class="tx-btn" data-tx="Shock — VT">Shock — VT</button>
+          <button class="tx-btn" data-tx="Disarm — Asystole">Disarm — Asystole</button>
+          <button class="tx-btn" data-tx="Disarm — PEA">Disarm — PEA</button>
+          <button class="tx-btn" data-tx="Disarm — ROSC">Disarm — ROSC</button>
+        </div>
         
-        <div class="section-header blue-header">Airway</div>
-        <button class="tx-btn" data-tx="ETT">ETT</button>
-        <button class="tx-btn" data-tx="FONA">FONA</button>
-        <button class="tx-btn" data-tx="IGT">IGT</button>
-        <button class="tx-btn" data-tx="LMA">LMA</button>
+        <div class="section-header blue-header" data-section="airway">Airway</div>
+        <div class="tx-section" data-section="airway">
+          <button class="tx-btn" data-tx="ETT">ETT</button>
+          <button class="tx-btn" data-tx="FONA">FONA</button>
+          <button class="tx-btn" data-tx="IGT">IGT</button>
+          <button class="tx-btn" data-tx="LMA">LMA</button>
+        </div>
         
-        <div class="section-header gray-header">Other Tx</div>
-        <button class="tx-btn" data-tx="Corpuls">Corpuls</button>
-        <button class="tx-btn" data-tx="Extrication">Extrication</button>
-        <button class="tx-btn" data-tx="IO">IO</button>
-        <button class="tx-btn" data-tx="IV access">IV access</button>
-        <button class="tx-btn" data-tx="Pacing">Pacing</button>
-        
-        <div style="display: flex; gap: 10px; margin-top: 16px;">
-          <input type="text" id="customTx" placeholder="Other — type here..." style="flex: 1; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px;">
-          <button id="btnAddCustomTx" style="background: #1D9E75; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Add</button>
+        <div class="section-header gray-header" data-section="other">Other Tx</div>
+        <div class="tx-section" data-section="other">
+          <button class="tx-btn" data-tx="Corpuls">Corpuls</button>
+          <button class="tx-btn" data-tx="Extrication">Extrication</button>
+          <button class="tx-btn" data-tx="IO">IO</button>
+          <button class="tx-btn" data-tx="IV access">IV access</button>
+          <button class="tx-btn" data-tx="Pacing">Pacing</button>
+          
+          <div style="display: flex; gap: 10px; margin-top: 16px;">
+            <input type="text" id="customTx" placeholder="Other — type here..." style="flex: 1; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 8px;">
+            <button id="btnAddCustomTx" style="background: #1D9E75; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;">Add</button>
+          </div>
         </div>
       </div>
       

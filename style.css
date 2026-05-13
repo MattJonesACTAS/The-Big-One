@@ -170,6 +170,26 @@ button:active {
   margin-top: 0;
 }
 
+/* Larger headers in treatment menu */
+#overlayTreatment .section-header {
+  font-size: 16px;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  padding-right: 40px;
+}
+
+#overlayTreatment .section-header::after {
+  content: '▼';
+  position: absolute;
+  right: 18px;
+  transition: transform 0.2s;
+}
+
+#overlayTreatment .section-header.collapsed::after {
+  transform: rotate(-90deg);
+}
+
 .blue-header {
   background: #E3F2FD;
   color: #1565C0;
@@ -251,6 +271,15 @@ button:active {
 
 .tx-btn:active {
   background: #e0e0e0;
+}
+
+.tx-section {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out;
+}
+
+.tx-section.collapsed {
+  max-height: 0 !important;
 }
 
 /* Animations */

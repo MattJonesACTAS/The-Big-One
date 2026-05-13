@@ -140,9 +140,9 @@ function updateRunningSummary() {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
   } else {
     tbody.innerHTML = state.treatments.map(tx => {
-      const timeDisplay = tx.prior ? '< —' : tx.clock;
-      const elapsedDisplay = tx.prior ? '< —' : formatTime(tx.elapsed);
-      const ago = tx.prior ? '> —' : '> ' + formatTime(state.elapsedSeconds - tx.elapsed);
+      const timeDisplay = tx.prior ? '&lt; —' : tx.clock;
+      const elapsedDisplay = tx.prior ? '&lt; —' : formatTime(tx.elapsed);
+      const ago = tx.prior ? '&gt; —' : '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
       
       return `<tr>
         <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
@@ -333,6 +333,33 @@ if (customTxInput && btnAddCustomTx) {
     }
   });
 }
+
+// Collapsible treatment sections
+document.querySelectorAll('#overlayTreatment .section-header').forEach(header => {
+  header.addEventListener('click', () => {
+    const sectionName = header.dataset.section;
+    const section = document.querySelector(`.tx-section[data-section="${sectionName}"]`);
+    
+    if (section) {
+      const isCollapsed = section.classList.contains('collapsed');
+      
+      if (isCollapsed) {
+        section.style.maxHeight = section.scrollHeight + 'px';
+        section.classList.remove('collapsed');
+        header.classList.remove('collapsed');
+      } else {
+        section.style.maxHeight = '0';
+        section.classList.add('collapsed');
+        header.classList.add('collapsed');
+      }
+    }
+  });
+});
+
+// Initialize section max-heights
+document.querySelectorAll('.tx-section').forEach(section => {
+  section.style.maxHeight = section.scrollHeight + 'px';
+});
 
 // === INITIALIZE (moved to end after catchup code) ===
 
