@@ -821,46 +821,39 @@ document.getElementById('btnDeleteCase').addEventListener('click', () => {
 });
 
 // Delete case warning handlers
-const deleteCaseCancel = document.getElementById('deleteCaseCancel');
-const deleteCaseConfirm = document.getElementById('deleteCaseConfirm');
+document.getElementById('deleteCaseCancel').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
+});
 
-if (deleteCaseCancel) {
-  deleteCaseCancel.addEventListener('click', () => {
-    document.getElementById('deleteCaseWarning').style.display = 'none';
-  });
-}
-
-if (deleteCaseConfirm) {
-  deleteCaseConfirm.addEventListener('click', () => {
-    document.getElementById('deleteCaseWarning').style.display = 'none';
-    
-    // Clear all state
-    state.running = false;
-    state.startTime = null;
-    state.pausedTime = 0;
-    state.elapsedSeconds = 0;
-    state.rhythmCheckTarget = 120;
-    state.cprRound = 1;
-    state.shocks = 0;
-    state.treatments = [];
-    state.catchupElapsed = 0;
-    state.startClockTime = null;
-    
-    clearState();
-    
-    // Reset UI
-    updateDisplay();
-    el.cprRound.textContent = '1';
-    el.adrWarning.textContent = '';
-    el.buttons.pause.textContent = 'Pause timer';
-    
-    // Hide case summary
-    el.overlays.caseSummary.style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    
-    // Show catchup modal page 1
-    catchupEl.modal.style.display = 'flex';
-    catchupEl.pages.forEach(p => p.style.display = 'none');
-    catchupEl.page1.style.display = 'block';
-  });
-}
+document.getElementById('deleteCaseConfirm').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
+  
+  // Clear all state
+  state.running = false;
+  state.startTime = null;
+  state.pausedTime = 0;
+  state.elapsedSeconds = 0;
+  state.rhythmCheckTarget = 120;
+  state.cprRound = 1;
+  state.shocks = 0;
+  state.treatments = [];
+  state.catchupElapsed = 0;
+  state.startClockTime = null;
+  
+  clearState();
+  
+  // Reset UI
+  updateDisplay();
+  el.cprRound.textContent = '1';
+  el.adrWarning.textContent = '';
+  el.buttons.pause.textContent = 'Pause timer';
+  
+  // Hide case summary
+  el.overlays.caseSummary.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  // Show catchup modal page 1
+  catchupEl.modal.style.display = 'flex';
+  Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
+  catchupEl.page1.style.display = 'block';
+});
