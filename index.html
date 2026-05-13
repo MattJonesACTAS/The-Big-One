@@ -10,6 +10,65 @@
   
   <div id="app">
     
+    <!-- Catchup Modal -->
+    <div id="catchupModal" class="modal">
+      <div class="modal-content">
+        
+        <!-- Page 1: Start fresh or catchup -->
+        <div id="catchupPage1" class="catchup-page">
+          <h2>Starting cardiac arrest timer</h2>
+          <p>Are you starting from the beginning?</p>
+          <button id="btnStartFresh" class="modal-btn primary">Yes - Start from 0:00</button>
+          <button id="btnCatchup" class="modal-btn">No - Set elapsed time</button>
+        </div>
+        
+        <!-- Page 2: Set elapsed time -->
+        <div id="catchupPage2" class="catchup-page" style="display:none;">
+          <h2>Total time already elapsed</h2>
+          <div class="time-picker">
+            <div class="time-column">
+              <button class="time-btn" data-action="mins-up">▲</button>
+              <div id="catchupMins" class="time-value">0</div>
+              <button class="time-btn" data-action="mins-down">▼</button>
+              <div class="time-label">min</div>
+            </div>
+            <div class="time-colon">:</div>
+            <div class="time-column">
+              <button class="time-btn" data-action="secs-up">▲</button>
+              <div id="catchupSecs" class="time-value">00</div>
+              <button class="time-btn" data-action="secs-down">▼</button>
+              <div class="time-label">sec</div>
+            </div>
+          </div>
+          <button id="btnCatchupNext" class="modal-btn primary">Next</button>
+          <button id="btnCatchupBack1" class="modal-btn">Back</button>
+        </div>
+        
+        <!-- Page 3: Set rhythm check target -->
+        <div id="catchupPage3" class="catchup-page" style="display:none;">
+          <h2>Elapsed time rhythm check is due</h2>
+          <div class="time-picker">
+            <div class="time-column">
+              <button class="time-btn" data-action="rhythm-mins-up">▲</button>
+              <div id="rhythmMins" class="time-value">2</div>
+              <button class="time-btn" data-action="rhythm-mins-down">▼</button>
+              <div class="time-label">min</div>
+            </div>
+            <div class="time-colon">:</div>
+            <div class="time-column">
+              <button class="time-btn" data-action="rhythm-secs-up">▲</button>
+              <div id="rhythmSecs" class="time-value">00</div>
+              <button class="time-btn" data-action="rhythm-secs-down">▼</button>
+              <div class="time-label">sec</div>
+            </div>
+          </div>
+          <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
+          <button id="btnCatchupBack2" class="modal-btn">Back</button>
+        </div>
+        
+      </div>
+    </div>
+    
     <!-- Top Buttons -->
     <div class="top-buttons">
       <button id="btnReversibles">Reversibles</button>

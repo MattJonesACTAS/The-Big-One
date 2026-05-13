@@ -260,5 +260,151 @@ document.querySelectorAll('.tx-btn').forEach(btn => {
 });
 
 // === INITIALIZE ===
-startTimer();
+updateCatchupDisplay();
 updateDisplay();
+
+// === CATCHUP FLOW ===
+let catchupState = {
+  elapsedMins: 0,
+  elapsedSecs: 0,
+  rhythmMins: 2,
+  rhythmSecs: 0
+};
+
+const catchupEl = {
+  modal: document.getElementById('catchupModal'),
+  page1: document.getElementById('catchupPage1'),
+  page2: document.getElementById('catchupPage2'),
+  page3: document.getElementById('catchupPage3'),
+  catchupMins: document.getElementById('catchupMins'),
+  catchupSecs: document.getElementById('catchupSecs'),
+  rhythmMins: document.getElementById('rhythmMins'),
+  rhythmSecs: document.getElementById('rhythmSecs')
+};
+
+function showCatchupPage(pageNum) {
+  catchupEl.page1.style.display = pageNum === 1 ? 'block' : 'none';
+  catchupEl.page2.style.display = pageNum === 2 ? 'block' : 'none';
+  catchupEl.page3.style.display = pageNum === 3 ? 'block' : 'none';
+}
+
+function updateCatchupDisplay() {
+  catchupEl.catchupMins.textContent = catchupState.elapsedMins;
+  catchupEl.catchupSecs.textContent = catchupState.elapsedSecs.toString().padStart(2, '0');
+  catchupEl.rhythmMins.textContent = catchupState.rhythmMins;
+  catchupEl.rhythmSecs.textContent = catchupState.rhythmSecs.toString().padStart(2, '0');
+}
+
+function adjustCatchupTime(action) {
+  switch(action) {
+    case 'mins-up':
+      catchupState.elapsedMins++;
+      break;
+    case 'mins-down':
+      if (catchupState.elapsedMins > 0) catchupState.elapsedMins--;
+      break;
+    case 'secs-up':
+      catchupState.elapsedSecs += 10;
+      if (catchupState.elapsedSecs >= 60) {
+        catchupState.elapsedSecs = 0;
+        catchupState.elapsedMins++;
+      }
+      break;
+    case 'secs-down':
+      catchupState.elapsedSecs -= 10;
+      if (catchupState.elapsedSecs < 0) {
+        if (catchupState.elapsedMins > 0) {
+          catchupState.elapsedSecs = 50;
+          catchupState.elapsedMins--;
+        } else {
+          catchupState.elapsedSecs = 0;
+        }
+      }
+      break;
+    case 'rhythm-mins-up':
+      const totalElapsed = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
+      const maxTarget = totalElapsed + 120;
+      if ((catchupState.rhythmMins + 1) * 60 + catchupState.rhythmSecs <= maxTarget) {
+        catchupState.rhythmMins++;
+      }
+      break;
+    case 'rhythm-mins-down':
+      const minTarget = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
+      if (catchupState.rhythmMins * 60 + catchupState.rhythmSecs > minTarget && catchupState.rhythmMins > 0) {
+        catchupState.rhythmMins--;
+      }
+      break;
+    case 'rhythm-secs-up':
+      const totalE = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
+      const maxT = totalE + 120;
+      const newSecs = catchupState.rhythmSecs + 10;
+      if (newSecs >= 60) {
+        if ((catchupState.rhythmMins + 1) * 60 <= maxT) {
+          catchupState.rhythmSecs = 0;
+          catchupState.rhythmMins++;
+        }
+      } else if (catchupState.rhythmMins * 60 + newSecs <= maxT) {
+        catchupState.rhythmSecs = newSecs;
+      }
+      break;
+    case 'rhythm-secs-down':
+      const minT = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
+      const newS = catchupState.rhythmSecs - 10;
+      if (newS < 0) {
+        if (catchupState.rhythmMins > 0 && (catchupState.rhythmMins - 1) * 60 + 50 >= minT) {
+          catchupState.rhythmSecs = 50;
+          catchupState.rhythmMins--;
+        }
+      } else if (catchupState.rhythmMins * 60 + newS >= minT) {
+        catchupState.rhythmSecs = newS;
+      }
+      break;
+  }
+  updateCatchupDisplay();
+}
+
+// Catchup button handlers
+document.getElementById('btnStartFresh').addEventListener('click', () => {
+  catchupEl.modal.style.display = 'none';
+  startTimer();
+});
+
+document.getElementById('btnCatchup').addEventListener('click', () => {
+  showCatchupPage(2);
+});
+
+document.getElementById('btnCatchupNext').addEventListener('click', () => {
+  // Initialize rhythm check to elapsed time
+  catchupState.rhythmMins = catchupState.elapsedMins;
+  catchupState.rhythmSecs = catchupState.elapsedSecs;
+  updateCatchupDisplay();
+  showCatchupPage(3);
+});
+
+document.getElementById('btnCatchupBack1').addEventListener('click', () => {
+  showCatchupPage(1);
+});
+
+document.getElementById('btnCatchupBack2').addEventListener('click', () => {
+  showCatchupPage(2);
+});
+
+document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
+  // Set state from catchup values
+  const elapsedTotal = catchupState.elapsedMins * 60 + catchupState.elapsedSecs;
+  const rhythmTotal = catchupState.rhythmMins * 60 + catchupState.rhythmSecs;
+  
+  state.pausedTime = elapsedTotal * 1000;
+  state.rhythmCheckTarget = rhythmTotal;
+  state.cprRound = Math.floor(elapsedTotal / 120) + 1;
+  
+  catchupEl.modal.style.display = 'none';
+  startTimer();
+});
+
+// Time picker buttons
+document.querySelectorAll('.time-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    adjustCatchupTime(btn.dataset.action);
+  });
+});
