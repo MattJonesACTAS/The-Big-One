@@ -184,10 +184,11 @@ button:active {
   position: absolute;
   right: 18px;
   transition: transform 0.2s;
+  transform: rotate(-90deg);
 }
 
-#overlayTreatment .section-header.collapsed::after {
-  transform: rotate(-90deg);
+#overlayTreatment .section-header:not(.collapsed)::after {
+  transform: rotate(0deg);
 }
 
 .blue-header {

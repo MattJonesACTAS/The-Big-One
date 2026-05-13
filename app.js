@@ -8,7 +8,9 @@ let state = {
   cprRound: 1,
   shocks: 0,
   treatments: [],
-  currentOverlay: null
+  currentOverlay: null,
+  catchupElapsed: 0,  // Elapsed time from catchup
+  startClockTime: null  // Clock time when case started
 };
 
 // === ELEMENTS ===
@@ -143,9 +145,9 @@ function updateRunningSummary() {
       let timeDisplay, elapsedDisplay, ago;
       
       if (tx.prior) {
-        // Prior treatments show < symbol with placeholder values
-        timeDisplay = '&lt; 0:00';
-        elapsedDisplay = '&lt; 0:00';
+        // Prior treatments show < symbol with catchup times
+        timeDisplay = '&lt; ' + tx.clock;
+        elapsedDisplay = '&lt; ' + formatTime(state.catchupElapsed);
         ago = '&gt; ' + formatTime(state.elapsedSeconds);
       } else {
         timeDisplay = tx.clock;
@@ -345,6 +347,9 @@ if (customTxInput && btnAddCustomTx) {
 
 // Collapsible treatment sections
 document.querySelectorAll('#overlayTreatment .section-header').forEach(header => {
+  // Initialize as collapsed
+  header.classList.add('collapsed');
+  
   header.addEventListener('click', () => {
     const sectionName = header.dataset.section;
     const section = document.querySelector(`.tx-section[data-section="${sectionName}"]`);
@@ -367,14 +372,11 @@ document.querySelectorAll('#overlayTreatment .section-header').forEach(header =>
   });
 });
 
-// Initialize sections - all expanded by default
-setTimeout(() => {
-  document.querySelectorAll('.tx-section').forEach(section => {
-    if (!section.classList.contains('collapsed')) {
-      section.style.maxHeight = section.scrollHeight + 'px';
-    }
-  });
-}, 100);
+// Initialize sections as collapsed
+document.querySelectorAll('.tx-section').forEach(section => {
+  section.classList.add('collapsed');
+  section.style.maxHeight = '0';
+});
 
 // === INITIALIZE (moved to end after catchup code) ===
 
@@ -524,12 +526,17 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
   state.rhythmCheckTarget = rhythmTotal;
   state.cprRound = Math.floor(elapsedTotal / 120) + 1;
   
+  // Store catchup info for prior treatments
+  state.catchupElapsed = elapsedTotal;
+  const now = new Date();
+  state.startClockTime = new Date(now.getTime() - (elapsedTotal * 1000));
+  
   // Add simple prior treatments (BVM, LMA, IO)
   catchupState.priorTreatments.forEach(txName => {
     state.treatments.push({
       name: txName,
       elapsed: 0,
-      clock: '—',
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
       prior: true
     });
   });
@@ -539,7 +546,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Shock #${i + 1}`,
       elapsed: 0,
-      clock: '—',
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
       prior: true
     });
     state.shocks++;
@@ -549,7 +556,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Disarm #${i + 1}`,
       elapsed: 0,
-      clock: '—',
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
       prior: true
     });
   }
@@ -558,7 +565,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
     state.treatments.push({
       name: `Adrenaline #${i + 1}`,
       elapsed: 0,
-      clock: '—',
+      clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' }),
       prior: true
     });
   }
