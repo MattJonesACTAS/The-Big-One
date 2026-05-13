@@ -45,8 +45,36 @@ button:active {
   color: white;
 }
 
+/* Specific button colors */
+#btnReversibles {
+  background: #90CAF9;
+  color: #1565C0;
+}
+
+#btnRosc {
+  background: #FFCC80;
+  color: #E65100;
+}
+
+#btnPhea {
+  background: #CE93D8;
+  color: #6A1B9A;
+}
+
 .top-buttons button:active, .bottom-buttons button:active {
   background: #177d5e;
+}
+
+#btnReversibles:active {
+  background: #64B5F6;
+}
+
+#btnRosc:active {
+  background: #FFB74D;
+}
+
+#btnPhea:active {
+  background: #BA68C8;
 }
 
 .top-buttons button.active, .bottom-buttons button.active {
