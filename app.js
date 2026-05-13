@@ -703,9 +703,17 @@ function exportPDF() {
 
 // === CASE SUMMARY ===
 function showCaseSummary() {
-  if (!confirm('Close this case? This will end the timer and show the case summary.')) {
-    return;
-  }
+  // Show custom warning modal
+  document.getElementById('closeCaseWarning').style.display = 'flex';
+}
+
+// Close case warning handlers
+document.getElementById('closeCaseCancel').addEventListener('click', () => {
+  document.getElementById('closeCaseWarning').style.display = 'none';
+});
+
+document.getElementById('closeCaseConfirm').addEventListener('click', () => {
+  document.getElementById('closeCaseWarning').style.display = 'none';
   
   // Add "Close case" as a treatment
   const closeTreatment = {
@@ -791,11 +799,18 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Delete case button - clear everything and return to page 4 (prior treatments)
+// Delete case button - show warning modal
 document.getElementById('btnDeleteCase').addEventListener('click', () => {
-  if (!confirm('Delete this case? All data will be lost and you will return to the start screen.')) {
-    return;
-  }
+  document.getElementById('deleteCaseWarning').style.display = 'flex';
+});
+
+// Delete case warning handlers
+document.getElementById('deleteCaseCancel').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
+});
+
+document.getElementById('deleteCaseConfirm').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
   
   // Clear all state
   state.running = false;
