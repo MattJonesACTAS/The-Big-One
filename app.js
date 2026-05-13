@@ -140,9 +140,18 @@ function updateRunningSummary() {
     tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
   } else {
     tbody.innerHTML = state.treatments.map(tx => {
-      const timeDisplay = tx.prior ? '&lt; —' : tx.clock;
-      const elapsedDisplay = tx.prior ? '&lt; —' : formatTime(tx.elapsed);
-      const ago = tx.prior ? '&gt; —' : '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
+      let timeDisplay, elapsedDisplay, ago;
+      
+      if (tx.prior) {
+        // Prior treatments show < symbol with placeholder values
+        timeDisplay = '&lt; 0:00';
+        elapsedDisplay = '&lt; 0:00';
+        ago = '&gt; ' + formatTime(state.elapsedSeconds);
+      } else {
+        timeDisplay = tx.clock;
+        elapsedDisplay = formatTime(tx.elapsed);
+        ago = '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
+      }
       
       return `<tr>
         <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
@@ -341,13 +350,15 @@ document.querySelectorAll('#overlayTreatment .section-header').forEach(header =>
     const section = document.querySelector(`.tx-section[data-section="${sectionName}"]`);
     
     if (section) {
-      const isCollapsed = section.classList.contains('collapsed');
+      const isCollapsed = header.classList.contains('collapsed');
       
       if (isCollapsed) {
+        // Expand
         section.style.maxHeight = section.scrollHeight + 'px';
         section.classList.remove('collapsed');
         header.classList.remove('collapsed');
       } else {
+        // Collapse
         section.style.maxHeight = '0';
         section.classList.add('collapsed');
         header.classList.add('collapsed');
@@ -356,10 +367,14 @@ document.querySelectorAll('#overlayTreatment .section-header').forEach(header =>
   });
 });
 
-// Initialize section max-heights
-document.querySelectorAll('.tx-section').forEach(section => {
-  section.style.maxHeight = section.scrollHeight + 'px';
-});
+// Initialize sections - all expanded by default
+setTimeout(() => {
+  document.querySelectorAll('.tx-section').forEach(section => {
+    if (!section.classList.contains('collapsed')) {
+      section.style.maxHeight = section.scrollHeight + 'px';
+    }
+  });
+}, 100);
 
 // === INITIALIZE (moved to end after catchup code) ===
 
