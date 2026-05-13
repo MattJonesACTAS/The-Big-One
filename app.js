@@ -157,7 +157,7 @@ function updateRunningSummary() {
   
   // Pharma summary - count all medication types
   const medications = [
-    'Adrenaline push', 'Adrenaline infus.', 'Adrenaline', 'Amiodarone', 
+    'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 
     'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
     'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
   ];
@@ -604,7 +604,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
   
   for (let i = 0; i < catchupState.priorTreatmentCounts.adrenaline; i++) {
     state.treatments.push({
-      name: `Adrenaline #${i + 1}`,
+      name: `Adrenaline push #${i + 1}`,
       elapsed: 0,
       clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
       prior: true
@@ -707,6 +707,14 @@ function showCaseSummary() {
     return;
   }
   
+  // Add "Close case" as a treatment
+  const closeTreatment = {
+    name: 'Close case',
+    elapsed: state.elapsedSeconds,
+    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false })
+  };
+  state.treatments.push(closeTreatment);
+  
   // Stop the timer
   state.running = false;
   saveState();
@@ -721,7 +729,7 @@ function showCaseSummary() {
   
   // Pharma summary
   const medications = [
-    'Adrenaline push', 'Adrenaline infus.', 'Adrenaline', 'Amiodarone', 
+    'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 
     'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
     'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
   ];
@@ -783,19 +791,7 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Return to active case - continue timer as it was
-document.getElementById('btnBackFromCase').addEventListener('click', () => {
-  // Just hide case summary and show main app - timer continues as it was
-  el.overlays.caseSummary.style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  
-  // If timer was running when case was closed, resume it
-  if (state.running) {
-    state.startTime = Date.now();
-  }
-});
-
-// Delete case button - clear everything and return to page 1
+// Delete case button - clear everything and return to page 4 (prior treatments)
 document.getElementById('btnDeleteCase').addEventListener('click', () => {
   if (!confirm('Delete this case? All data will be lost and you will return to the start screen.')) {
     return;
