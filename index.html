@@ -62,8 +62,24 @@
               <div class="time-label">sec</div>
             </div>
           </div>
-          <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
+          <button id="btnCatchupNext2" class="modal-btn primary">Next</button>
           <button id="btnCatchupBack2" class="modal-btn">Back</button>
+        </div>
+        
+        <!-- Page 4: Add prior treatments -->
+        <div id="catchupPage4" class="catchup-page" style="display:none;">
+          <h2>Add previous treatments</h2>
+          <p style="font-size:14px; color:#666;">Select any treatments given before starting this timer</p>
+          <div class="prior-tx-list">
+            <button class="prior-tx-btn" data-tx="Shock">Shock</button>
+            <button class="prior-tx-btn" data-tx="Adrenaline push">Adrenaline push</button>
+            <button class="prior-tx-btn" data-tx="Amiodarone">Amiodarone</button>
+            <button class="prior-tx-btn" data-tx="LMA">LMA</button>
+            <button class="prior-tx-btn" data-tx="IO">IO</button>
+          </div>
+          <div id="priorTxSelected"></div>
+          <button id="btnCatchupConfirm" class="modal-btn primary">Start timer</button>
+          <button id="btnCatchupBack3" class="modal-btn">Back</button>
         </div>
         
       </div>

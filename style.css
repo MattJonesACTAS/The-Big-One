@@ -324,3 +324,30 @@ button {
   color: #1a1a1a;
   margin-bottom: 20px;
 }
+
+/* Prior Treatments */
+.prior-tx-list {
+  margin: 20px 0;
+}
+
+.prior-tx-btn {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  padding: 12px;
+  background: #e8e8e8;
+  color: #1a1a1a;
+  text-align: left;
+  font-size: 15px;
+}
+
+.prior-tx-btn.selected {
+  background: #1D9E75;
+  color: white;
+}
+
+#priorTxSelected {
+  margin: 15px 0;
+  font-size: 14px;
+  color: #666;
+}

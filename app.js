@@ -266,7 +266,8 @@ let catchupState = {
   elapsedMins: 0,
   elapsedSecs: 0,
   rhythmMins: 2,
-  rhythmSecs: 0
+  rhythmSecs: 0,
+  priorTreatments: []
 };
 
 const catchupEl = {
@@ -274,6 +275,7 @@ const catchupEl = {
   page1: document.getElementById('catchupPage1'),
   page2: document.getElementById('catchupPage2'),
   page3: document.getElementById('catchupPage3'),
+  page4: document.getElementById('catchupPage4'),
   catchupMins: document.getElementById('catchupMins'),
   catchupSecs: document.getElementById('catchupSecs'),
   rhythmMins: document.getElementById('rhythmMins'),
@@ -284,6 +286,7 @@ function showCatchupPage(pageNum) {
   catchupEl.page1.style.display = pageNum === 1 ? 'block' : 'none';
   catchupEl.page2.style.display = pageNum === 2 ? 'block' : 'none';
   catchupEl.page3.style.display = pageNum === 3 ? 'block' : 'none';
+  catchupEl.page4.style.display = pageNum === 4 ? 'block' : 'none';
 }
 
 function updateCatchupDisplay() {
@@ -379,12 +382,20 @@ document.getElementById('btnCatchupNext').addEventListener('click', () => {
   showCatchupPage(3);
 });
 
+document.getElementById('btnCatchupNext2').addEventListener('click', () => {
+  showCatchupPage(4);
+});
+
 document.getElementById('btnCatchupBack1').addEventListener('click', () => {
   showCatchupPage(1);
 });
 
 document.getElementById('btnCatchupBack2').addEventListener('click', () => {
   showCatchupPage(2);
+});
+
+document.getElementById('btnCatchupBack3').addEventListener('click', () => {
+  showCatchupPage(3);
 });
 
 document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
@@ -395,6 +406,20 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
   state.pausedTime = elapsedTotal * 1000;
   state.rhythmCheckTarget = rhythmTotal;
   state.cprRound = Math.floor(elapsedTotal / 120) + 1;
+  
+  // Add prior treatments
+  catchupState.priorTreatments.forEach(txName => {
+    state.treatments.push({
+      name: txName,
+      elapsed: 0,
+      clock: '—',
+      prior: true
+    });
+    
+    if (txName === 'Shock') {
+      state.shocks++;
+    }
+  });
   
   catchupEl.modal.style.display = 'none';
   startTimer();
@@ -410,3 +435,25 @@ document.querySelectorAll('.time-btn').forEach(btn => {
 // === INITIALIZE ===
 updateCatchupDisplay();
 updateDisplay();
+
+// Prior treatment selection
+document.querySelectorAll('.prior-tx-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const txName = btn.dataset.tx;
+    
+    if (btn.classList.contains('selected')) {
+      btn.classList.remove('selected');
+      catchupState.priorTreatments = catchupState.priorTreatments.filter(t => t !== txName);
+    } else {
+      btn.classList.add('selected');
+      catchupState.priorTreatments.push(txName);
+    }
+    
+    const display = document.getElementById('priorTxSelected');
+    if (catchupState.priorTreatments.length > 0) {
+      display.textContent = `Selected: ${catchupState.priorTreatments.length} treatment(s)`;
+    } else {
+      display.textContent = '';
+    }
+  });
+});
