@@ -847,16 +847,16 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Delete case functions - called from onclick attributes in HTML
-function showDeleteWarning() {
+// Delete case functions - must be on window object for onclick to work
+window.showDeleteWarning = function() {
   document.getElementById('deleteCaseWarning').style.display = 'flex';
-}
+};
 
-function hideDeleteWarning() {
+window.hideDeleteWarning = function() {
   document.getElementById('deleteCaseWarning').style.display = 'none';
-}
+};
 
-function confirmDeleteCase() {
+window.confirmDeleteCase = function() {
   document.getElementById('deleteCaseWarning').style.display = 'none';
   
   // Clear all state
@@ -887,4 +887,4 @@ function confirmDeleteCase() {
   catchupEl.modal.style.display = 'flex';
   Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
   catchupEl.page1.style.display = 'block';
-}
+};
