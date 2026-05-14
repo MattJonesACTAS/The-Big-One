@@ -51,7 +51,8 @@ const DOSE_CONFIG: Record<string, { doses: Array<{dose: string, population: 'adu
   'Adrenaline push': { 
     doses: [
       { dose: '1mg', population: 'adult' },
-      { dose: '0.01mg/kg', population: 'paed' }
+      { dose: '0.01mg/kg', population: 'paed' },
+      { dose: 'Other', population: 'both' }
     ], 
     weightBased: true 
   },
@@ -1258,17 +1259,11 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
     const config = DOSE_CONFIG[selectedMed];
     const allDoses = config?.doses || [];
     
-    console.log('Selected medication:', selectedMed);
-    console.log('Patient type:', state.patientType);
-    console.log('All doses:', allDoses);
-    
     // Filter doses based on patient type
     const filteredDoses = allDoses.filter(d => {
       if (!state.patientType) return true; // Show all if no type selected
       return d.population === 'both' || d.population === state.patientType;
     });
-    
-    console.log('Filtered doses:', filteredDoses);
     
     const doses = filteredDoses.map(d => d.dose);
     const showOther = doses.includes('Other');
@@ -1288,9 +1283,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
             <p className="text-neutral-500 text-sm mb-2">Patient weight: {state.patientWeight}kg</p>
           )}
           {state.patientType && (
-            <p className="text-neutral-500 text-sm mb-2">Patient type: {state.patientType}</p>
+            <p className="text-neutral-500 text-sm mb-6">Patient type: {state.patientType}</p>
           )}
-          <p className="text-neutral-500 text-sm mb-6">Showing {doses.filter(d => d !== 'Other').length} dose options</p>
           
           <div className="space-y-3">
             {doses.filter(d => d !== 'Other').map(dose => (
