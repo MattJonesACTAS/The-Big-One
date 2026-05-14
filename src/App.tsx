@@ -716,7 +716,7 @@ export default function App() {
 
 
       {/* Catchup Modal */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence>
         {showCatchup && (
           <div className="fixed inset-0 bg-black/90 z-[1000] flex items-center justify-center p-4">
             <motion.div 
@@ -725,7 +725,7 @@ export default function App() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-              className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden"
+              className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden absolute"
             >
               {catchupStep === 1 && (
                 <div className="text-center space-y-6">
