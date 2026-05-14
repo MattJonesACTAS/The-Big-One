@@ -36,7 +36,8 @@ const INITIAL_STATE: AppState = {
   currentOverlay: null,
   catchupElapsed: 0,
   startClockTime: null,
-  patientWeight: null
+  patientWeight: null,
+  patientType: null
 };
 
 const MEDICATIONS = [
@@ -46,20 +47,115 @@ const MEDICATIONS = [
 ];
 
 // Dose configurations for each medication
-const DOSE_CONFIG: Record<string, { doses: string[], weightBased?: boolean }> = {
-  'Adrenaline push': { doses: ['1mg'] },
-  'Adrenaline infus.': { doses: ['1mg/500mL', '3mg/50mL', 'Other'] },
-  'Amiodarone': { doses: ['300mg', '150mg', 'Other'] },
-  'Atropine': { doses: ['600mcg', 'Other'] },
-  'Calcium': { doses: ['10mg/kg', '1g', 'Other'], weightBased: true },
-  'Glucose': { doses: ['0.25g/kg', 'Other'], weightBased: true },
-  'Ketamine': { doses: ['0.5mg/kg', 'Other'], weightBased: true },
-  'Lignocaine': { doses: ['1mg/kg', 'Other'], weightBased: true },
-  'Magnesium': { doses: ['2.5g', 'Other'] },
-  'Midazolam': { doses: ['0.05mg/kg', 'Other'], weightBased: true },
-  'Normal Saline': { doses: ['100ml', '250ml', '500ml', 'Other'] },
-  'Sodium Bicarbonate': { doses: ['Other'] },
-  'Suxamethonium': { doses: ['Other'] }
+const DOSE_CONFIG: Record<string, { doses: Array<{dose: string, population: 'adult' | 'paed' | 'both'}>, weightBased?: boolean }> = {
+  'Adrenaline push': { 
+    doses: [
+      { dose: '1mg', population: 'adult' },
+      { dose: '0.01mg/kg', population: 'paed' }
+    ], 
+    weightBased: true 
+  },
+  'Adrenaline infus.': { 
+    doses: [
+      { dose: '1mg/500mL', population: 'both' },
+      { dose: '3mg/50mL', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Amiodarone': { 
+    doses: [
+      { dose: '300mg', population: 'adult' },
+      { dose: '150mg', population: 'adult' },
+      { dose: '5mg/kg', population: 'paed' },
+      { dose: 'Other', population: 'both' }
+    ],
+    weightBased: true
+  },
+  'Atropine': { 
+    doses: [
+      { dose: '600mcg', population: 'adult' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Calcium': { 
+    doses: [
+      { dose: '10mg/kg', population: 'both' },
+      { dose: '1g', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ], 
+    weightBased: true 
+  },
+  'Glucose': { 
+    doses: [
+      { dose: '0.25g/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ], 
+    weightBased: true 
+  },
+  'Ketamine': { 
+    doses: [
+      { dose: '0.5mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ], 
+    weightBased: true 
+  },
+  'Lignocaine': { 
+    doses: [
+      { dose: '1mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ], 
+    weightBased: true 
+  },
+  'Magnesium': { 
+    doses: [
+      { dose: '2.5g', population: 'adult' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Midazolam': { 
+    doses: [
+      { dose: '0.05mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ], 
+    weightBased: true 
+  },
+  'Normal Saline': { 
+    doses: [
+      { dose: '100ml', population: 'both' },
+      { dose: '250ml', population: 'both' },
+      { dose: '500ml', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Sodium Bicarbonate': { 
+    doses: [
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Suxamethonium': { 
+    doses: [
+      { dose: 'Other', population: 'both' }
+    ] 
+  }
+};
+
+// Paediatric age to weight lookup
+const PAED_WEIGHT_LOOKUP: Record<string, number> = {
+  'Newborn': 3,
+  '3 months': 5,
+  '6 months': 7,
+  '1 year': 11,
+  '2 years': 13,
+  '3 years': 15,
+  '4 years': 17,
+  '5 years': 19,
+  '6 years': 21,
+  '7 years': 23,
+  '8 years': 25,
+  '9 years': 27,
+  '10 years': 30,
+  '11 years': 33,
+  '12 years': 35
 };
 
 // --- Utilities ---
@@ -153,6 +249,8 @@ export default function App() {
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [isShockForced, setIsShockForced] = useState(false);
   const [weightInput, setWeightInput] = useState('');
+  const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
+  const [paedWeightMethod, setPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt15 = useRef<boolean>(false);
 
@@ -440,59 +538,6 @@ export default function App() {
 
   return (
     <div className="h-screen bg-neutral-100 flex flex-col p-4 max-w-2xl mx-auto overflow-hidden relative">
-      {/* Weight Input */}
-      {!state.patientWeight && (
-        <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2">
-          <span className="text-emerald-800 text-sm font-medium">Patient weight:</span>
-          <input
-            type="number"
-            placeholder="kg"
-            value={weightInput}
-            className="w-20 bg-white border border-emerald-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-            onChange={(e) => setWeightInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const weight = parseFloat(weightInput);
-                if (weight > 0) {
-                  setState(p => ({ ...p, patientWeight: weight }));
-                  setWeightInput('');
-                }
-              }
-            }}
-          />
-          <button 
-            onClick={() => {
-              const weight = parseFloat(weightInput);
-              if (weight > 0) {
-                setState(p => ({ ...p, patientWeight: weight }));
-                setWeightInput('');
-              }
-            }}
-            disabled={!weightInput || parseFloat(weightInput) <= 0}
-            className="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Set
-          </button>
-          <button 
-            onClick={() => setState(p => ({ ...p, patientWeight: -1 }))}
-            className="ml-auto text-emerald-600 text-xs font-bold"
-          >
-            Skip
-          </button>
-        </div>
-      )}
-      {state.patientWeight && state.patientWeight > 0 && (
-        <div className="mb-3 bg-neutral-100 border border-neutral-200 rounded-xl p-2 px-3 flex items-center justify-between">
-          <span className="text-neutral-600 text-sm">Weight: <strong>{state.patientWeight}kg</strong></span>
-          <button 
-            onClick={() => setState(p => ({ ...p, patientWeight: null }))}
-            className="text-emerald-600 text-xs font-bold"
-          >
-            Edit
-          </button>
-        </div>
-      )}
-
       {/* Top Controls */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
         <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
@@ -681,28 +726,165 @@ export default function App() {
               )}
 
               {catchupStep === 2 && (
-                <div className="text-center space-y-8">
-                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
-                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(1)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(3); }} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
-                  </div>
+                <div className="text-center space-y-6">
+                  {!weightType ? (
+                    <>
+                      <h2 className="text-2xl font-bold text-neutral-900">Patient type</h2>
+                      <p className="text-neutral-500">Select patient category for weight entry</p>
+                      <div className="grid grid-cols-2 gap-4">
+                        <button 
+                          onClick={() => {
+                            setWeightType('adult');
+                            setState(p => ({ ...p, patientType: 'adult' }));
+                          }}
+                          className="bg-emerald-600 text-white p-8 rounded-2xl text-xl font-bold btn-base"
+                        >
+                          Adult
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setWeightType('paed');
+                            setState(p => ({ ...p, patientType: 'paed' }));
+                          }}
+                          className="bg-blue-600 text-white p-8 rounded-2xl text-xl font-bold btn-base"
+                        >
+                          Paediatric
+                        </button>
+                      </div>
+                      <button onClick={() => setCatchupStep(1)} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                    </>
+                  ) : weightType === 'adult' ? (
+                    <>
+                      <h2 className="text-2xl font-bold text-neutral-900">Adult weight (optional)</h2>
+                      <p className="text-neutral-500">Enter estimated weight for dose calculations</p>
+                      <div className="flex justify-center">
+                        <div className="relative">
+                          <input
+                            type="number"
+                            placeholder="Enter weight"
+                            value={weightInput}
+                            onChange={(e) => setWeightInput(e.target.value)}
+                            className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
+                          />
+                          <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <button onClick={() => { setWeightType(null); setWeightInput(''); }} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                        <button 
+                          onClick={() => {
+                            if (weightInput) {
+                              setState(p => ({ ...p, patientWeight: parseFloat(weightInput) }));
+                            }
+                            setCatchupStep(3);
+                          }}
+                          className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
+                        >
+                          {weightInput ? 'Next' : 'Skip'}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {!paedWeightMethod ? (
+                        <>
+                          <h2 className="text-2xl font-bold text-neutral-900">Paediatric weight entry</h2>
+                          <p className="text-neutral-500">Choose how to enter weight</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <button 
+                              onClick={() => setPaedWeightMethod('weight')}
+                              className="bg-blue-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                            >
+                              Enter Weight
+                            </button>
+                            <button 
+                              onClick={() => setPaedWeightMethod('age')}
+                              className="bg-purple-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                            >
+                              Select Age
+                            </button>
+                          </div>
+                          <button onClick={() => { setWeightType(null); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                        </>
+                      ) : paedWeightMethod === 'weight' ? (
+                        <>
+                          <h2 className="text-2xl font-bold text-neutral-900">Paediatric weight</h2>
+                          <div className="flex justify-center">
+                            <div className="relative">
+                              <input
+                                type="number"
+                                placeholder="Enter weight"
+                                value={weightInput}
+                                onChange={(e) => setWeightInput(e.target.value)}
+                                className="w-48 bg-white border-2 border-blue-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-blue-500 outline-none"
+                              />
+                              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => { setPaedWeightMethod(null); setWeightInput(''); }} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                            <button 
+                              onClick={() => {
+                                if (weightInput) {
+                                  setState(p => ({ ...p, patientWeight: parseFloat(weightInput) }));
+                                }
+                                setCatchupStep(3);
+                              }}
+                              className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
+                            >
+                              {weightInput ? 'Next' : 'Skip'}
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <h2 className="text-2xl font-bold text-neutral-900">Select age</h2>
+                          <div className="max-h-[400px] overflow-y-auto space-y-2 px-2">
+                            {Object.entries(PAED_WEIGHT_LOOKUP).map(([age, weight]) => (
+                              <button
+                                key={age}
+                                onClick={() => {
+                                  setState(p => ({ ...p, patientWeight: weight }));
+                                  setCatchupStep(3);
+                                }}
+                                className="w-full bg-purple-100 hover:bg-purple-200 text-purple-900 p-4 rounded-xl font-bold text-lg btn-base flex justify-between items-center"
+                              >
+                                <span>{age}</span>
+                                <span className="text-purple-600">{weight}kg</span>
+                              </button>
+                            ))}
+                          </div>
+                          <button onClick={() => { setPaedWeightMethod(null); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base mt-4">Back</button>
+                        </>
+                      )}
+                    </>
+                  )}
                 </div>
               )}
 
               {catchupStep === 3 && (
                 <div className="text-center space-y-8">
-                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
-                  <TimePicker value={catchupRhythm} onChange={setCatchupRhythm} />
+                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
+                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => setCatchupStep(4)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(4); }} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
                   </div>
                 </div>
               )}
 
               {catchupStep === 4 && (
+                <div className="text-center space-y-8">
+                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
+                  <TimePicker value={catchupRhythm} onChange={setCatchupRhythm} />
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+                  </div>
+                </div>
+              )}
+
+              {catchupStep === 5 && (
                 <div className="text-center space-y-6">
                   <h2 className="text-2xl font-bold text-neutral-900">Enter already administered Tx</h2>
                   <div className="space-y-3 py-4 max-h-[300px] overflow-y-auto px-2">
@@ -722,40 +904,8 @@ export default function App() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
-                  </div>
-                </div>
-              )}
-
-              {catchupStep === 5 && (
-                <div className="text-center space-y-8">
-                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Patient weight (optional)</h2>
-                  <p className="text-neutral-500 text-base">This enables weight-based dose calculations</p>
-                  <div className="flex justify-center">
-                    <div className="relative">
-                      <input
-                        type="number"
-                        placeholder="Enter weight"
-                        className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
-                        onChange={(e) => {
-                          const weight = parseFloat(e.target.value);
-                          if (weight > 0) {
-                            setState(p => ({ ...p, patientWeight: weight }));
-                          } else if (e.target.value === '') {
-                            setState(p => ({ ...p, patientWeight: null }));
-                          }
-                        }}
-                        value={state.patientWeight || ''}
-                      />
-                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">
-                      {state.patientWeight ? 'Start Timer' : 'Skip & Start'}
-                    </button>
+                    <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Start Timer</button>
                   </div>
                 </div>
               )}
@@ -1104,7 +1254,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
   // If a medication is selected, show dose selection
   if (selectedMed) {
     const config = DOSE_CONFIG[selectedMed];
-    const doses = config?.doses || [];
+    const allDoses = config?.doses || [];
+    
+    // Filter doses based on patient type
+    const filteredDoses = allDoses.filter(d => {
+      if (!state.patientType) return true; // Show all if no type selected
+      return d.population === 'both' || d.population === state.patientType;
+    });
+    
+    const doses = filteredDoses.map(d => d.dose);
     const showOther = doses.includes('Other');
     
     return (
