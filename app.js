@@ -141,6 +141,17 @@ function showOverlay(name) {
   btn.classList.add('active');
   btn.textContent = 'Close';
   
+  // Change central box border color based on overlay
+  const centralBox = document.getElementById('centralBox');
+  centralBox.classList.remove('border-blue', 'border-orange', 'border-purple');
+  if (name === 'reversibles') {
+    centralBox.classList.add('border-blue');
+  } else if (name === 'rosc') {
+    centralBox.classList.add('border-orange');
+  } else if (name === 'phea') {
+    centralBox.classList.add('border-purple');
+  }
+  
   // Update Running Summary when opened
   if (name === 'summary') {
     updateRunningSummary();
@@ -236,6 +247,10 @@ function closeOverlay() {
   
   btn.classList.remove('active');
   btn.textContent = getButtonText(state.currentOverlay);
+  
+  // Reset central box border color
+  const centralBox = document.getElementById('centralBox');
+  centralBox.classList.remove('border-blue', 'border-orange', 'border-purple');
   
   setTimeout(() => {
     el.mainDisplay.style.visibility = 'visible';

@@ -113,6 +113,19 @@ button:active {
   min-height: 550px;
   position: relative;
   overflow: hidden;
+  transition: border-color 0.3s ease;
+}
+
+#centralBox.border-blue {
+  border-color: #64B5F6;
+}
+
+#centralBox.border-orange {
+  border-color: #FFB74D;
+}
+
+#centralBox.border-purple {
+  border-color: #BA68C8;
 }
 
 /* Main Display */
@@ -164,18 +177,6 @@ button:active {
   background: white;
   padding: 0 30px 30px 30px;
   overflow-y: auto;
-}
-
-#overlayReversibles {
-  background: #E3F2FD;
-}
-
-#overlayRosc {
-  background: #FFF3E0;
-}
-
-#overlayPhea {
-  background: #F3E5F5;
 }
 
 .overlay h3 {
@@ -707,7 +708,6 @@ button:active {
 .prior-tx-btn.selected {
   background: #FFF9C4;
   color: #1a1a1a;
-  border: 2px solid #F9A825;
 }
 
 #priorTxSelected {
