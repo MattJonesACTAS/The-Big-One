@@ -262,24 +262,15 @@
         <div id="sumPharmaSummary"></div>
         
         <div class="section-header green-header-light">TREATMENT LOG</div>
-        <table class="summary-table">
-          <colgroup>
-            <col style="width: 20% !important">
-            <col style="width: 20% !important">
-            <col style="width: 30% !important">
-            <col style="width: 30% !important">
-          </colgroup>
-          <thead>
-            <tr>
-              <th>TREATMENT</th>
-              <th>TIME</th>
-              <th>ELAPSED</th>
-              <th>AGO</th>
-            </tr>
-          </thead>
-          <tbody id="sumTreatmentsTable">
-          </tbody>
-        </table>
+        <div class="treatment-table">
+          <div class="treatment-row treatment-header-row">
+            <div class="col-treatment">TREATMENT</div>
+            <div class="col-time">TIME</div>
+            <div class="col-elapsed">ELAPSED</div>
+            <div class="col-ago">AGO</div>
+          </div>
+          <div id="sumTreatmentsTable"></div>
+        </div>
       </div>
       
       

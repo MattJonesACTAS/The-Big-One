@@ -1,4 +1,4 @@
-const CACHE_NAME = 'the-big-one-v15';
+const CACHE_NAME = 'the-big-one-v17';
 const urlsToCache = [
   './',
   './index.html',

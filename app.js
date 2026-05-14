@@ -199,7 +199,7 @@ function updateRunningSummary() {
   // Treatment log table - most recent first
   const tbody = document.getElementById('sumTreatmentsTable');
   if (state.treatments.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
+    tbody.innerHTML = '<div class="treatment-row" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</div>';
   } else {
     // Reverse array to show most recent first
     const reversedTreatments = [...state.treatments].reverse();
@@ -218,12 +218,12 @@ function updateRunningSummary() {
         ago = '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
       }
       
-      return `<tr>
-        <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
-        <td style="color: #999;">${timeDisplay}</td>
-        <td style="color: #999;">${elapsedDisplay}</td>
-        <td style="color: #999;">${ago}</td>
-      </tr>`;
+      return `<div class="treatment-row">
+        <div class="col-treatment" style="font-weight: 600; color: #1a1a1a;">${tx.name}</div>
+        <div class="col-time" style="color: #999;">${timeDisplay}</div>
+        <div class="col-elapsed" style="color: #999;">${elapsedDisplay}</div>
+        <div class="col-ago" style="color: #999;">${ago}</div>
+      </div>`;
     }).join('');
   }
 }
