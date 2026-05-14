@@ -12,7 +12,30 @@ A professional cardiac arrest management tool with precision timers, treatment l
 
 ## Deploy to GitHub Pages
 
-### 1. Create Repository
+**IMPORTANT:** Before deploying, update the base path in `vite.config.ts` and `public/manifest.json` to match your repository name.
+
+### 1. Update Configuration Files
+
+If your repository name is different from "The-Big-One", update these files:
+
+**vite.config.ts** - Line 10:
+```typescript
+base: mode === 'production' ? '/YOUR-REPO-NAME/' : './',
+```
+
+**public/manifest.json** - Lines 4-5:
+```json
+"start_url": "/YOUR-REPO-NAME/",
+"scope": "/YOUR-REPO-NAME/",
+```
+
+**public/manifest.json** - Lines 11 and 15:
+```json
+"src": "/YOUR-REPO-NAME/icon-192.png",
+"src": "/YOUR-REPO-NAME/icon-512.png",
+```
+
+### 2. Create Repository
 
 1. Create a new repository on GitHub
 2. Push this code to the repository
@@ -26,14 +49,14 @@ git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
 git push -u origin main
 ```
 
-### 2. Enable GitHub Pages
+### 3. Enable GitHub Pages
 
 1. Go to your repository on GitHub
 2. Click **Settings** → **Pages**
 3. Under **Source**, select **GitHub Actions**
 4. The workflow will automatically deploy your app
 
-### 3. Access Your App
+### 4. Access Your App
 
 Your app will be available at:
 `https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/`

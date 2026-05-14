@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({mode}) => {
   const env = loadEnv(mode, '.', '');
   return {
-    base: './',
+    base: mode === 'production' ? '/The-Big-One/' : './',
     plugins: [
       react(), 
       tailwindcss(),
