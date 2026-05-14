@@ -847,56 +847,44 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Delete case button handlers - wait for DOM to be fully ready
-window.addEventListener('load', () => {
-  const btnDelete = document.getElementById('btnDeleteCase');
-  const modalDelete = document.getElementById('deleteCaseWarning');
-  const btnCancel = document.getElementById('deleteCaseCancel');
-  const btnConfirm = document.getElementById('deleteCaseConfirm');
+// Delete case functions - called from onclick attributes in HTML
+function showDeleteWarning() {
+  document.getElementById('deleteCaseWarning').style.display = 'flex';
+}
+
+function hideDeleteWarning() {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
+}
+
+function confirmDeleteCase() {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
   
-  if (!btnDelete || !modalDelete || !btnCancel || !btnConfirm) {
-    console.error('Delete button elements not found:', { btnDelete, modalDelete, btnCancel, btnConfirm });
-    return;
-  }
+  // Clear all state
+  state.running = false;
+  state.startTime = null;
+  state.pausedTime = 0;
+  state.elapsedSeconds = 0;
+  state.rhythmCheckTarget = 120;
+  state.cprRound = 1;
+  state.shocks = 0;
+  state.treatments = [];
+  state.catchupElapsed = 0;
+  state.startClockTime = null;
   
-  btnDelete.addEventListener('click', () => {
-    modalDelete.style.display = 'flex';
-  });
+  clearState();
   
-  btnCancel.addEventListener('click', () => {
-    modalDelete.style.display = 'none';
-  });
+  // Reset UI
+  updateDisplay();
+  el.cprRound.textContent = '1';
+  el.adrWarning.textContent = '';
+  el.buttons.pause.textContent = 'Pause timer';
   
-  btnConfirm.addEventListener('click', () => {
-    modalDelete.style.display = 'none';
-    
-    // Clear all state
-    state.running = false;
-    state.startTime = null;
-    state.pausedTime = 0;
-    state.elapsedSeconds = 0;
-    state.rhythmCheckTarget = 120;
-    state.cprRound = 1;
-    state.shocks = 0;
-    state.treatments = [];
-    state.catchupElapsed = 0;
-    state.startClockTime = null;
-    
-    clearState();
-    
-    // Reset UI
-    updateDisplay();
-    el.cprRound.textContent = '1';
-    el.adrWarning.textContent = '';
-    el.buttons.pause.textContent = 'Pause timer';
-    
-    // Hide case summary
-    el.overlays.caseSummary.style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-    
-    // Show catchup modal page 1
-    catchupEl.modal.style.display = 'flex';
-    Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
-    catchupEl.page1.style.display = 'block';
-  });
-});
+  // Hide case summary
+  el.overlays.caseSummary.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  // Show catchup modal page 1
+  catchupEl.modal.style.display = 'flex';
+  Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
+  catchupEl.page1.style.display = 'block';
+}

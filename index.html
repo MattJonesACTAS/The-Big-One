@@ -355,8 +355,8 @@
       <h2 style="font-size: 24px; margin-bottom: 16px; color: #a32d2d;">Delete this case?</h2>
       <p style="font-size: 16px; color: #666; margin-bottom: 24px;">All data will be lost and you will return to the start screen.</p>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-        <button id="deleteCaseCancel" class="modal-btn">Cancel</button>
-        <button id="deleteCaseConfirm" class="modal-btn" style="background: #a32d2d; color: white;">Delete</button>
+        <button id="deleteCaseCancel" class="modal-btn" onclick="hideDeleteWarning()">Cancel</button>
+        <button id="deleteCaseConfirm" class="modal-btn" style="background: #a32d2d; color: white;" onclick="confirmDeleteCase()">Delete</button>
       </div>
     </div>
   </div>
@@ -368,7 +368,7 @@
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
         <button id="btnExportPdf" class="case-summary-btn primary">Export PDF</button>
-        <button id="btnDeleteCase" class="case-summary-btn delete">Delete case</button>
+        <button id="btnDeleteCase" class="case-summary-btn delete" onclick="showDeleteWarning()">Delete case</button>
       </div>
       
       <div class="section-header green-header-light">ARREST SUMMARY</div>
