@@ -1238,8 +1238,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
     const showOther = doses.includes('Other');
     
     return (
-      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto">
-        <div className="p-6 pb-24">
+      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto pb-4">
+        <div className="p-6 mb-4">
           <button 
             onClick={() => { setSelectedMed(null); setCustomDose(''); }}
             className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
@@ -1291,7 +1291,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   }
   
   return (
-    <div className="max-h-[calc(100vh-18rem)] overflow-y-auto">
+    <div className="max-h-[calc(100vh-18rem)] overflow-y-auto pb-4">
       {isShockForced && (
         <div className="bg-[#b91c1c] text-white p-4 text-center font-bold sticky top-0 z-[100] animate-pulse">
            RHYTHM CHECK: SELECT SHOCK STATUS
@@ -1316,7 +1316,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           
           <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
           
-          <div className="p-6 pb-24 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6">
+          <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6 mb-4">
             <div className="flex gap-2">
               <input 
                 type="text" 
