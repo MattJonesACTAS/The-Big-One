@@ -416,7 +416,7 @@ button:active {
 
 .summary-table th,
 .summary-table td {
-  padding: 8px 12px;
+  padding: 8px 4px;
   text-align: left;
   vertical-align: middle;
   line-height: 1.4;
@@ -424,24 +424,24 @@ button:active {
 
 .summary-table th:nth-child(1),
 .summary-table td:nth-child(1) {
-  width: 28%;
+  width: 25%;
 }
 
 .summary-table th:nth-child(2),
 .summary-table td:nth-child(2) {
-  width: 24%;
+  width: 25%;
   text-align: right;
 }
 
 .summary-table th:nth-child(3),
 .summary-table td:nth-child(3) {
-  width: 24%;
+  width: 25%;
   text-align: center;
 }
 
 .summary-table th:nth-child(4),
 .summary-table td:nth-child(4) {
-  width: 24%;
+  width: 25%;
   text-align: right;
 }
 
