@@ -723,7 +723,7 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[28px] p-6 max-w-md w-full shadow-2xl overflow-hidden"
+              className="bg-white rounded-[28px] p-6 max-w-md w-[80%] shadow-2xl overflow-hidden"
             >
               {catchupStep === 1 && (
                 <div className="text-center space-y-6">
