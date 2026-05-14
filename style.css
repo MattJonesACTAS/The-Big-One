@@ -403,15 +403,15 @@ button:active {
 }
 
 .summary-table {
-  width: calc(100% + 60px);
-  margin: 0 -30px;
+  width: 100%;
+  margin: 0;
   border-collapse: collapse;
   font-size: 14px;
   table-layout: fixed;
 }
 
 .summary-table thead {
-  background: #f5f5f5;
+  background: #ffeb3b;
 }
 
 .summary-table th,
