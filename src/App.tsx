@@ -437,11 +437,11 @@ export default function App() {
         <div className="h-full flex flex-col items-center justify-between p-4 relative">
           {/* Corner Cards */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
-            <div className="bg-green-50 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+            <div className="bg-emerald-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">Total time</span>
               <span className="text-4xl sm:text-7xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
             </div>
-            <div className="bg-green-50 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+            <div className="bg-emerald-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
               <span className="text-4xl sm:text-7xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
             </div>
@@ -512,7 +512,7 @@ export default function App() {
             className={`w-full max-w-[240px] sm:max-w-[280px] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 mb-2 sm:mb-4 ${
               adrenalineRoundStatus.isDue 
                 ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                : 'bg-green-50 text-neutral-400 border-neutral-100'
+                : 'bg-emerald-100 text-neutral-400 border-neutral-100'
             }`}
           >
             <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
