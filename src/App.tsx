@@ -813,7 +813,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
       <div className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.5fr_1fr_1.3fr_0.9fr]'} bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
-        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>
+        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center pl-[2px]">Elapsed</div>
         {!isSummary && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>}
       </div>
       
@@ -837,7 +837,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
                   'text-neutral-900'
                 }`} title={tx.name}>{tx.name}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
-                <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
+                <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center pl-[2px]">{elapsedDisplay}</div>
                 {!isSummary && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
               </div>
             );
