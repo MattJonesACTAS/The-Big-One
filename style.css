@@ -407,6 +407,7 @@ button:active {
   margin: 0 -30px;
   border-collapse: collapse;
   font-size: 14px;
+  table-layout: fixed;
 }
 
 .summary-table thead {
