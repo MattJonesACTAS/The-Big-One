@@ -152,6 +152,7 @@ export default function App() {
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [isShockForced, setIsShockForced] = useState(false);
+  const [weightInput, setWeightInput] = useState('');
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt15 = useRef<boolean>(false);
 
@@ -446,14 +447,32 @@ export default function App() {
           <input
             type="number"
             placeholder="kg"
+            value={weightInput}
             className="w-20 bg-white border border-emerald-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-            onChange={(e) => {
-              const weight = parseFloat(e.target.value);
-              if (weight > 0) {
-                setState(p => ({ ...p, patientWeight: weight }));
+            onChange={(e) => setWeightInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                const weight = parseFloat(weightInput);
+                if (weight > 0) {
+                  setState(p => ({ ...p, patientWeight: weight }));
+                  setWeightInput('');
+                }
               }
             }}
           />
+          <button 
+            onClick={() => {
+              const weight = parseFloat(weightInput);
+              if (weight > 0) {
+                setState(p => ({ ...p, patientWeight: weight }));
+                setWeightInput('');
+              }
+            }}
+            disabled={!weightInput || parseFloat(weightInput) <= 0}
+            className="bg-emerald-600 text-white px-3 py-1 rounded-lg text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Set
+          </button>
           <button 
             onClick={() => setState(p => ({ ...p, patientWeight: -1 }))}
             className="ml-auto text-emerald-600 text-xs font-bold"
@@ -704,7 +723,39 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Start Timer</button>
+                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+                  </div>
+                </div>
+              )}
+
+              {catchupStep === 5 && (
+                <div className="text-center space-y-8">
+                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Patient weight (optional)</h2>
+                  <p className="text-neutral-500 text-base">This enables weight-based dose calculations</p>
+                  <div className="flex justify-center">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        placeholder="Enter weight"
+                        className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
+                        onChange={(e) => {
+                          const weight = parseFloat(e.target.value);
+                          if (weight > 0) {
+                            setState(p => ({ ...p, patientWeight: weight }));
+                          } else if (e.target.value === '') {
+                            setState(p => ({ ...p, patientWeight: null }));
+                          }
+                        }}
+                        value={state.patientWeight || ''}
+                      />
+                      <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">
+                      {state.patientWeight ? 'Start Timer' : 'Skip & Start'}
+                    </button>
                   </div>
                 </div>
               )}
