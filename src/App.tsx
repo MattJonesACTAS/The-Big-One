@@ -402,7 +402,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'reversibles' ? null : 'reversibles' }))
           }}
           disabled={isShockForced}
-          className={`p-2 sm:p-4 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-3 sm:p-5 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'reversibles' ? 'Close' : 'Reversibles'}
         </button>
@@ -412,7 +412,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'rosc' ? null : 'rosc' }))
           }}
           disabled={isShockForced}
-          className={`p-2 sm:p-4 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'rosc' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-3 sm:p-5 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'rosc' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'rosc' ? 'Close' : 'ROSC'}
         </button>
@@ -422,7 +422,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'phea' ? null : 'phea' }))
           }}
           disabled={isShockForced}
-          className={`p-2 sm:p-4 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'phea' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-3 sm:p-5 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'phea' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'phea' ? 'Close' : 'PHEA'}
         </button>
@@ -439,17 +439,17 @@ export default function App() {
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
             <div className="bg-white border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">Total time</span>
-              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
+              <span className="text-3xl sm:text-6xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
             </div>
             <div className="bg-white border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
+              <span className="text-3xl sm:text-6xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
             </div>
           </div>
 
           {/* Rhythm Check - Centered vertically and responsive size */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full pt-8 sm:pt-12">
-            <div className="relative flex items-center justify-center w-[180px] h-[180px] sm:w-[250px] sm:h-[250px]">
+          <div className="flex-1 flex flex-col items-center justify-center w-full pt-6 sm:pt-8">
+            <div className="relative flex items-center justify-center w-[160px] h-[160px] sm:w-[220px] sm:h-[220px]">
               <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
                 <circle
                   cx="150"
@@ -480,7 +480,7 @@ export default function App() {
               
               <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
                 <div 
-                  className={`text-7xl sm:text-[130px] font-bold tabular-nums tracking-tighter leading-none ${
+                  className={`text-8xl sm:text-[160px] font-bold tabular-nums tracking-tighter leading-none ${
                     (state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-600' : 'text-neutral-900'
                   }`}
                 >
@@ -782,7 +782,7 @@ function CheckItem({ label }: CheckItemProps) {
       <div className={`w-4 h-4 rounded border-2 flex items-center justify-center mr-2.5 transition-colors ${checked ? 'bg-emerald-500 border-emerald-500' : 'border-neutral-300 bg-white'}`}>
         {checked && <CheckCircle2 size={12} className="text-white" />}
       </div>
-      <span className={`text-[15px] font-medium ${checked ? 'text-emerald-900' : 'text-neutral-700'}`}>{label}</span>
+      <span className={`text-[13px] font-medium ${checked ? 'text-emerald-900' : 'text-neutral-700'}`}>{label}</span>
     </label>
   );
 }
@@ -797,7 +797,7 @@ function SectionGroup({ title, color, items }: { title: string, color: string, i
   };
   return (
     <>
-      <div className={`p-2.5 px-4 z-10 font-bold text-[15px] tracking-wide border-b uppercase sticky top-0 text-center ${colorMap[color]}`}>{title}</div>
+      <div className={`p-2.5 px-4 z-10 font-bold text-[13px] tracking-wide border-b uppercase sticky top-0 text-center ${colorMap[color]}`}>{title}</div>
       <div className="p-1 space-y-0.5">
         {items.map(item => <CheckItem key={item} label={item} />)}
       </div>
@@ -831,10 +831,10 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             
             return (
               <div key={i} className={`grid ${isSummary ? 'grid-cols-[1.5fr_1fr_1fr]' : 'grid-cols-[1.5fr_1fr_1fr_1fr]'} px-4 py-4 items-center gap-1`}>
-                <div className="text-[14px] font-bold text-neutral-900 pr-1 overflow-hidden text-ellipsis whitespace-nowrap" title={tx.name}>{tx.name}</div>
-                <div className="text-[14px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
-                <div className="text-[14px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
-                {!isSummary && <div className="text-[14px] text-neutral-800 font-medium tabular-nums text-center">{ago}</div>}
+                <div className="text-[11px] font-bold text-neutral-900 pr-1 overflow-hidden text-ellipsis whitespace-nowrap" title={tx.name}>{tx.name}</div>
+                <div className="text-[11px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
+                <div className="text-[11px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
+                {!isSummary && <div className="text-[11px] text-neutral-800 font-medium tabular-nums text-center">{ago}</div>}
               </div>
             );
           })
@@ -896,8 +896,8 @@ interface StatRowProps {
 function StatRow({ label, value, color = "text-neutral-900" }: StatRowProps) {
   return (
     <div className="flex justify-between items-center p-2 px-3">
-      <span className="text-neutral-500 text-[11px] font-medium">{label}</span>
-      <span className={`text-[13px] font-black tabular-nums ${color}`}>{value}</span>
+      <span className="text-neutral-500 text-[14px] font-medium">{label}</span>
+      <span className={`text-[16px] font-black tabular-nums ${color}`}>{value}</span>
     </div>
   );
 }
