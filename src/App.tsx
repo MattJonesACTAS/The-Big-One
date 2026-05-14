@@ -185,6 +185,15 @@ const calculateDose = (doseStr: string, weight: number | null): string => {
   return `${amount}${unit}/kg (${rounded}${unit})`;
 };
 
+const cleanDoseForLog = (doseStr: string): string => {
+  // Extract calculated dose from parentheses if present: "0.01mg/kg (0.3mg)" -> "0.3mg"
+  const match = doseStr.match(/\(([\d.]+(?:mg|g|mcg|ml|mL))\)/);
+  if (match) {
+    return match[1];
+  }
+  return doseStr;
+};
+
 export default function App() {
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('theBigOneState');
@@ -1214,7 +1223,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   const handleDoseSelect = (dose: string) => {
     if (selectedMed) {
       const displayDose = calculateDose(dose, state.patientWeight);
-      addTreatment(`${selectedMed} ${displayDose}`);
+      const cleanDose = cleanDoseForLog(displayDose);
+      addTreatment(`${selectedMed} ${cleanDose}`);
       setSelectedMed(null);
       setCustomDose('');
     }
