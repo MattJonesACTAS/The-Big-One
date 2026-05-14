@@ -266,6 +266,13 @@ function formatTime(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function formatTimeWithSeconds(seconds) {
+  const hours = Math.floor(seconds / 3600);
+  const mins = Math.floor((seconds % 3600) / 60);
+  const secs = seconds % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 function updateDisplay() {
   // Calculate elapsed time
   if (state.running) {
@@ -725,10 +732,10 @@ function exportPDF() {
       if (tx.prior) {
         // Show prior treatment times with < symbol
         timeCell = '&lt; ' + (tx.clockSeconds || tx.clock);
-        elapsedCell = '&lt; ' + formatTime(state.catchupElapsed);
+        elapsedCell = '&lt; ' + formatTimeWithSeconds(state.catchupElapsed);
       } else {
         timeCell = tx.clockSeconds || tx.clock;
-        elapsedCell = formatTime(tx.elapsed);
+        elapsedCell = formatTimeWithSeconds(tx.elapsed);
       }
       
       return `<tr>
@@ -817,10 +824,10 @@ document.getElementById('closeCaseConfirm').addEventListener('click', () => {
       
       if (tx.prior) {
         timeDisplay = '&lt; ' + (tx.clockSeconds || tx.clock);
-        elapsedDisplay = '&lt; ' + formatTime(state.catchupElapsed);
+        elapsedDisplay = '&lt; ' + formatTimeWithSeconds(state.catchupElapsed);
       } else {
         timeDisplay = tx.clockSeconds || tx.clock;
-        elapsedDisplay = formatTime(tx.elapsed);
+        elapsedDisplay = formatTimeWithSeconds(tx.elapsed);
       }
       
       return `<tr>
@@ -840,53 +847,44 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Delete case button handlers - ensure DOM is ready
-setTimeout(() => {
-  const btnDeleteCase = document.getElementById('btnDeleteCase');
-  const deleteCaseWarning = document.getElementById('deleteCaseWarning');
-  const deleteCaseCancel = document.getElementById('deleteCaseCancel');
-  const deleteCaseConfirm = document.getElementById('deleteCaseConfirm');
+// Delete case button handlers
+document.getElementById('btnDeleteCase').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'flex';
+});
+
+document.getElementById('deleteCaseCancel').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
+});
+
+document.getElementById('deleteCaseConfirm').addEventListener('click', () => {
+  document.getElementById('deleteCaseWarning').style.display = 'none';
   
-  if (btnDeleteCase && deleteCaseWarning && deleteCaseCancel && deleteCaseConfirm) {
-    btnDeleteCase.addEventListener('click', () => {
-      deleteCaseWarning.style.display = 'flex';
-    });
-    
-    deleteCaseCancel.addEventListener('click', () => {
-      deleteCaseWarning.style.display = 'none';
-    });
-    
-    deleteCaseConfirm.addEventListener('click', () => {
-      deleteCaseWarning.style.display = 'none';
-      
-      // Clear all state
-      state.running = false;
-      state.startTime = null;
-      state.pausedTime = 0;
-      state.elapsedSeconds = 0;
-      state.rhythmCheckTarget = 120;
-      state.cprRound = 1;
-      state.shocks = 0;
-      state.treatments = [];
-      state.catchupElapsed = 0;
-      state.startClockTime = null;
-      
-      clearState();
-      
-      // Reset UI
-      updateDisplay();
-      el.cprRound.textContent = '1';
-      el.adrWarning.textContent = '';
-      el.buttons.pause.textContent = 'Pause timer';
-      
-      // Hide case summary
-      el.overlays.caseSummary.style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      
-      // Show catchup modal page 1
-      catchupEl.modal.style.display = 'flex';
-      Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
-      catchupEl.page1.style.display = 'block';
-    });
-  }
-}, 100);
+  // Clear all state
+  state.running = false;
+  state.startTime = null;
+  state.pausedTime = 0;
+  state.elapsedSeconds = 0;
+  state.rhythmCheckTarget = 120;
+  state.cprRound = 1;
+  state.shocks = 0;
+  state.treatments = [];
+  state.catchupElapsed = 0;
+  state.startClockTime = null;
+  
+  clearState();
+  
+  // Reset UI
+  updateDisplay();
+  el.cprRound.textContent = '1';
+  el.adrWarning.textContent = '';
+  el.buttons.pause.textContent = 'Pause timer';
+  
+  // Hide case summary
+  el.overlays.caseSummary.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  
+  // Show catchup modal page 1
+  catchupEl.modal.style.display = 'flex';
+  Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
+  catchupEl.page1.style.display = 'block';
+});
