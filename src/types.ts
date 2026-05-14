@@ -24,6 +24,8 @@ export interface AppState {
   currentOverlay: string | null;
   catchupElapsed: number;
   startClockTime: number | null;
+  patientWeight: number | null;
+  patientType: 'adult' | 'paed' | null;
 }
 
 export type OverlayType = 'reversibles' | 'rosc' | 'phea' | 'summary' | 'treatment' | 'caseSummary';

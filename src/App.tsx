@@ -35,14 +35,112 @@ const INITIAL_STATE: AppState = {
   treatments: [],
   currentOverlay: null,
   catchupElapsed: 0,
-  startClockTime: null
+  startClockTime: null,
+  patientWeight: null,
+  patientType: null
 };
 
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
-  'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
-  'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
+  'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Lignocaine',
+  'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
 ];
+
+type DoseOption = {
+  dose: string;
+  population: 'adult' | 'paed' | 'both';
+};
+
+const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
+  'Adrenaline push': { 
+    doses: [
+      { dose: '1mg', population: 'adult' },
+      { dose: '0.01mg/kg', population: 'paed' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Adrenaline infusion': { 
+    doses: [
+      { dose: '1mg/500mL', population: 'both' },
+      { dose: '3mg/50mL', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Amiodarone': { 
+    doses: [
+      { dose: '300mg', population: 'adult' },
+      { dose: '150mg', population: 'adult' },
+      { dose: '5mg/kg', population: 'paed' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Atropine': { 
+    doses: [
+      { dose: '600mcg', population: 'adult' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Calcium': { 
+    doses: [
+      { dose: '10mL 10%', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Glucose': { 
+    doses: [
+      { dose: '100mL 10%', population: 'both' },
+      { dose: '50mL 50%', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Ketamine': { 
+    doses: [
+      { dose: '1mg/kg', population: 'both' },
+      { dose: '2mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Lignocaine': { 
+    doses: [
+      { dose: '100mg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Magnesium': { 
+    doses: [
+      { dose: '2.5g', population: 'adult' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Midazolam': { 
+    doses: [
+      { dose: '5mg', population: 'both' },
+      { dose: '0.1mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Normal Saline': { 
+    doses: [
+      { dose: '250mL', population: 'both' },
+      { dose: '500mL', population: 'both' },
+      { dose: '1000mL', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Sodium Bicarbonate': { 
+    doses: [
+      { dose: '50mL 8.4%', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  },
+  'Suxamethonium': { 
+    doses: [
+      { dose: '100mg', population: 'both' },
+      { dose: '1.5mg/kg', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ] 
+  }
+};
 
 // --- Utilities ---
 const formatTime = (seconds: number) => {
@@ -74,6 +172,19 @@ const getLocalTimeWithSeconds = (date?: Date) => {
   return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
 };
 
+const calculateDose = (doseStr: string, weight: number | null): string => {
+  if (!weight || !doseStr.includes('/kg')) return doseStr;
+  
+  const match = doseStr.match(/([\d.]+)(mg|g|mcg|ml)\/kg/);
+  if (!match) return doseStr;
+  
+  const [_, amount, unit] = match;
+  const calculated = parseFloat(amount) * weight;
+  const rounded = Math.round(calculated * 10) / 10;
+  
+  return `${amount}${unit}/kg (${rounded}${unit})`;
+};
+
 export default function App() {
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('theBigOneState');
@@ -95,6 +206,9 @@ export default function App() {
   const [catchupStep, setCatchupStep] = useState(1);
   const [catchupElapsed, setCatchupElapsed] = useState({ mins: 0, secs: 0 });
   const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
+  const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
+  const [paedWeightMethod, setPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
+  const [weightInput, setWeightInput] = useState('');
   const [priorCounts, setPriorCounts] = useState({ shock: 0, disarm: 0, adrenaline: 0 });
   const [priorTxs, setPriorTxs] = useState<string[]>([]);
   const [isCaseClosed, setIsCaseClosed] = useState(false);
@@ -319,7 +433,9 @@ export default function App() {
       shocks: priorCounts.shock,
       treatments: initialTxs,
       catchupElapsed: elapsedTotal,
-      startClockTime: startClockTime
+      startClockTime: startClockTime,
+      patientWeight: weightInput ? parseFloat(weightInput) : null,
+      patientType: weightType
     });
     setShowCatchup(false);
   };
@@ -567,31 +683,157 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && (
-                <div className="text-center space-y-8">
-                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
-                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(1)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(3); }} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+              {catchupStep === 2 && !weightType && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Patient Type</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setWeightType('adult')}
+                      className="bg-emerald-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                    >
+                      Adult
+                    </button>
+                    <button 
+                      onClick={() => setWeightType('paed')}
+                      className="bg-blue-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                    >
+                      Paediatric
+                    </button>
                   </div>
+                  <button onClick={() => setCatchupStep(1)} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                </div>
+              )}
+
+              {catchupStep === 2 && weightType === 'adult' && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Patient Weight (Optional)</h2>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        placeholder="Enter weight"
+                        value={weightInput}
+                        onChange={(e) => setWeightInput(e.target.value)}
+                        className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
+                      />
+                      {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
+                    </div>
+                    <button 
+                      onClick={() => setCatchupStep(3)}
+                      className="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold btn-base"
+                    >
+                      {weightInput ? 'Set' : 'Skip'}
+                    </button>
+                  </div>
+                  <button onClick={() => { setWeightType(null); setWeightInput(''); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                </div>
+              )}
+
+              {catchupStep === 2 && weightType === 'paed' && !paedWeightMethod && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Patient Weight</h2>
+                  <p className="text-neutral-500">Choose how to enter weight</p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setPaedWeightMethod('weight')}
+                      className="bg-blue-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                    >
+                      Enter weight
+                    </button>
+                    <button 
+                      onClick={() => setPaedWeightMethod('age')}
+                      className="bg-purple-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
+                    >
+                      Age based weight
+                    </button>
+                  </div>
+                  <button onClick={() => { setWeightType(null); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                </div>
+              )}
+
+              {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'weight' && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-2xl font-bold text-neutral-900">Enter Patient Weight</h2>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative">
+                      <input
+                        type="number"
+                        placeholder="Enter weight"
+                        value={weightInput}
+                        onChange={(e) => setWeightInput(e.target.value)}
+                        className="w-48 bg-white border-2 border-blue-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-blue-500 outline-none"
+                      />
+                      {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
+                    </div>
+                    {weightInput && (
+                      <button 
+                        onClick={() => setCatchupStep(3)}
+                        className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold btn-base"
+                      >
+                        Set
+                      </button>
+                    )}
+                  </div>
+                  <button onClick={() => { setPaedWeightMethod(null); setWeightInput(''); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                </div>
+              )}
+
+              {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'age' && (
+                <div className="text-center space-y-6">
+                  <h2 className="text-2xl font-bold text-neutral-900 mb-4">Select Age</h2>
+                  <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-2">
+                    {[
+                      ['Newborn', 3], ['1mo', 4], ['3mo', 6], ['6mo', 8],
+                      ['9mo', 9], ['1yr', 10], ['18mo', 11], ['2yr', 12],
+                      ['3yr', 15], ['4yr', 17], ['5yr', 19], ['6yr', 21],
+                      ['7yr', 23], ['8yr', 26], ['9yr', 29], ['10yr', 32],
+                      ['11yr', 35], ['12yr', 38]
+                    ].map(([age, weight]) => (
+                      <button
+                        key={age}
+                        onClick={() => { setWeightInput(String(weight)); setCatchupStep(3); }}
+                        className="bg-purple-600 text-white p-4 rounded-xl font-bold btn-base"
+                      >
+                        {age}<br/><span className="text-purple-600">{weight}kg</span>
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { setPaedWeightMethod(null); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
                 </div>
               )}
 
               {catchupStep === 3 && (
                 <div className="text-center space-y-8">
-                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
-                  <TimePicker value={catchupRhythm} onChange={setCatchupRhythm} />
+                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
+                  {weightInput && weightType && (
+                    <p className="text-neutral-600">Patient: <span className="text-purple-600">{weightInput}kg</span> {weightType}</p>
+                  )}
+                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => setCatchupStep(4)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(4); }} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
                   </div>
                 </div>
               )}
 
               {catchupStep === 4 && (
+                <div className="text-center space-y-8">
+                  <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
+                  <TimePicker 
+                    value={catchupRhythm} 
+                    onChange={setCatchupRhythm} 
+                    maxSeconds={catchupElapsed.mins * 60 + catchupElapsed.secs + 120}
+                  />
+                  <div className="grid grid-cols-2 gap-3">
+                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
+                  </div>
+                </div>
+              )}
+
+              {catchupStep === 5 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-2xl font-bold text-neutral-900">Enter already administered Tx</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900">What treatments have you already applied?</h2>
                   <div className="space-y-3 py-4 max-h-[300px] overflow-y-auto px-2">
                     <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} />
                     <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} />
@@ -609,7 +851,7 @@ export default function App() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Start Timer</button>
                   </div>
                 </div>
@@ -664,7 +906,7 @@ export default function App() {
 
 // --- Sub-components ---
 
-function TimePicker({ value, onChange }: { value: { mins: number, secs: number }, onChange: (v: { mins: number, secs: number }) => void }) {
+function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, secs: number }, onChange: (v: { mins: number, secs: number }) => void, maxSeconds?: number }) {
   const adjust = (type: 'mins' | 'secs', delta: number) => {
     const newVal = { ...value };
     if (type === 'mins') {
@@ -672,6 +914,15 @@ function TimePicker({ value, onChange }: { value: { mins: number, secs: number }
     } else {
       newVal.secs = (newVal.secs + delta + 60) % 60;
     }
+    
+    // Enforce max limit if provided
+    if (maxSeconds !== undefined) {
+      const totalSeconds = newVal.mins * 60 + newVal.secs;
+      if (totalSeconds > maxSeconds) {
+        return; // Don't update if exceeds max
+      }
+    }
+    
     onChange(newVal);
   };
 
@@ -731,7 +982,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection />}
         {type === 'phea' && <PHEASelection />}
         {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
-        {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} isShockForced={isShockForced} />}
+        {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
   );
@@ -906,11 +1157,100 @@ function StatRow({ label, value, color = "text-neutral-900" }: StatRowProps) {
   );
 }
 
-function TreatmentSelection({ addTreatment, isShockForced }: { addTreatment: (n: string) => void, isShockForced?: boolean }) {
+function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatment: (n: string) => void, state: AppState, isShockForced?: boolean }) {
   const [customTx, setCustomTx] = useState('');
+  const [selectedMed, setSelectedMed] = useState<string | null>(null);
+  const [customDose, setCustomDose] = useState('');
+  
+  const handleMedClick = (med: string) => {
+    if (DOSE_CONFIG[med]) {
+      setSelectedMed(med);
+    } else {
+      addTreatment(med);
+    }
+  };
+  
+  const handleDoseSelect = (dose: string) => {
+    if (selectedMed) {
+      const displayDose = calculateDose(dose, state.patientWeight);
+      addTreatment(`${selectedMed} ${displayDose}`);
+      setSelectedMed(null);
+      setCustomDose('');
+    }
+  };
+  
+  const handleCustomDoseAdd = () => {
+    if (selectedMed && customDose) {
+      addTreatment(`${selectedMed} ${customDose}`);
+      setSelectedMed(null);
+      setCustomDose('');
+    }
+  };
+  
+  if (selectedMed && DOSE_CONFIG[selectedMed]) {
+    const allDoses = DOSE_CONFIG[selectedMed].doses;
+    const filteredDoses = state.patientType 
+      ? allDoses.filter(d => d.population === 'both' || d.population === state.patientType)
+      : allDoses;
+    
+    const doses = filteredDoses.map(d => d.dose);
+    const showOther = doses.includes('Other');
+    
+    return (
+      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto">
+        <div className="p-6 pb-24">
+          <button 
+            onClick={() => { setSelectedMed(null); setCustomDose(''); }}
+            className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
+          >
+            Back
+          </button>
+          
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
+          {state.patientWeight && (
+            <p className="text-neutral-500 text-sm mb-2">Patient weight: {state.patientWeight}kg</p>
+          )}
+          {state.patientType && (
+            <p className="text-neutral-500 text-sm mb-6">Patient type: {state.patientType}</p>
+          )}
+          
+          <div className="space-y-3">
+            {doses.filter(d => d !== 'Other').map(dose => (
+              <button
+                key={dose}
+                onClick={() => handleDoseSelect(dose)}
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+              >
+                {calculateDose(dose, state.patientWeight)}
+              </button>
+            ))}
+            
+            {showOther && (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={customDose}
+                  onChange={e => setCustomDose(e.target.value)}
+                  placeholder="Custom dose..."
+                  className="w-full bg-white border border-neutral-200 rounded-xl p-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <button
+                  onClick={handleCustomDoseAdd}
+                  className="w-full bg-neutral-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+                  disabled={!customDose}
+                >
+                  Add Custom Dose
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
-    <div className="h-full pb-20">
+    <div className="max-h-[calc(100vh-18rem)] overflow-y-auto">
       {isShockForced && (
         <div className="bg-[#b91c1c] text-white p-4 text-center font-bold sticky top-0 z-[100] animate-pulse">
            RHYTHM CHECK: SELECT SHOCK STATUS
@@ -929,15 +1269,13 @@ function TreatmentSelection({ addTreatment, isShockForced }: { addTreatment: (n:
 
       {!isShockForced && (
         <>
-          <TxSection title="Medications" color="emerald" items={[
-            'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
-          ]} onSelect={addTreatment} />
+          <TxSection title="Medications" color="emerald" items={MEDICATIONS} onSelect={handleMedClick} />
           
           <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
           
           <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
           
-          <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6">
+          <div className="p-6 pb-24 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6">
             <div className="flex gap-2">
               <input 
                 type="text" 
