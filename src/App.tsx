@@ -41,7 +41,7 @@ const INITIAL_STATE: AppState = {
 };
 
 const MEDICATIONS = [
-  'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 
+  'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
   'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Lignocaine',
   'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
 ];
@@ -56,7 +56,7 @@ const DOSE_CONFIG: Record<string, { doses: Array<{dose: string, population: 'adu
     ], 
     weightBased: true 
   },
-  'Adrenaline infus.': { 
+  'Adrenaline infusion': { 
     doses: [
       { dose: '1mg/500mL', population: 'both' },
       { dose: '3mg/50mL', population: 'both' },
@@ -798,13 +798,13 @@ export default function App() {
                               onClick={() => setPaedWeightMethod('weight')}
                               className="bg-blue-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
                             >
-                              Enter Weight
+                              Enter weight
                             </button>
                             <button 
                               onClick={() => setPaedWeightMethod('age')}
                               className="bg-purple-600 text-white p-6 rounded-2xl text-lg font-bold btn-base"
                             >
-                              Select Age
+                              Age based weight
                             </button>
                           </div>
                           <button onClick={() => { setWeightType(null); }} className="w-full bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
@@ -879,7 +879,11 @@ export default function App() {
               {catchupStep === 4 && (
                 <div className="text-center space-y-8">
                   <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
-                  <TimePicker value={catchupRhythm} onChange={setCatchupRhythm} />
+                  <TimePicker 
+                    value={catchupRhythm} 
+                    onChange={setCatchupRhythm} 
+                    maxSeconds={catchupElapsed.mins * 60 + catchupElapsed.secs + 120}
+                  />
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base">Next</button>
@@ -889,7 +893,7 @@ export default function App() {
 
               {catchupStep === 5 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-2xl font-bold text-neutral-900">Enter already administered Tx</h2>
+                  <h2 className="text-2xl font-bold text-neutral-900">What treatments have you already applied?</h2>
                   <div className="space-y-3 py-4 max-h-[300px] overflow-y-auto px-2">
                     <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} />
                     <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} />
@@ -962,7 +966,7 @@ export default function App() {
 
 // --- Sub-components ---
 
-function TimePicker({ value, onChange }: { value: { mins: number, secs: number }, onChange: (v: { mins: number, secs: number }) => void }) {
+function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, secs: number }, onChange: (v: { mins: number, secs: number }) => void, maxSeconds?: number }) {
   const adjust = (type: 'mins' | 'secs', delta: number) => {
     const newVal = { ...value };
     if (type === 'mins') {
@@ -970,6 +974,15 @@ function TimePicker({ value, onChange }: { value: { mins: number, secs: number }
     } else {
       newVal.secs = (newVal.secs + delta + 60) % 60;
     }
+    
+    // Enforce max limit if provided
+    if (maxSeconds !== undefined) {
+      const totalSeconds = newVal.mins * 60 + newVal.secs;
+      if (totalSeconds > maxSeconds) {
+        return; // Don't update if exceeds max
+      }
+    }
+    
     onChange(newVal);
   };
 
@@ -1275,7 +1288,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
             onClick={() => { setSelectedMed(null); setCustomDose(''); }}
             className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
           >
-            ← Back
+            Back
           </button>
           
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
