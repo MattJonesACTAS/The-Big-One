@@ -407,7 +407,17 @@ button:active {
   margin: 0;
   border-collapse: collapse;
   font-size: 14px;
-  table-layout: fixed;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
+.summary-table thead,
+.summary-table tbody {
+  display: contents;
+}
+
+.summary-table tr {
+  display: contents;
 }
 
 .summary-table thead {
