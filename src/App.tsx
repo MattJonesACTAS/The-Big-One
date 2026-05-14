@@ -769,7 +769,7 @@ export default function App() {
                             onChange={(e) => setWeightInput(e.target.value)}
                             className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
                           />
-                          <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
+                          {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
@@ -821,7 +821,7 @@ export default function App() {
                                 onChange={(e) => setWeightInput(e.target.value)}
                                 className="w-48 bg-white border-2 border-blue-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-blue-500 outline-none"
                               />
-                              <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>
+                              {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
@@ -1269,8 +1269,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
     const showOther = doses.includes('Other');
     
     return (
-      <div className="h-full pb-20">
-        <div className="p-6">
+      <div className="max-h-[calc(100vh-10rem)] overflow-y-auto">
+        <div className="p-6 pb-24">
           <button 
             onClick={() => { setSelectedMed(null); setCustomDose(''); }}
             className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
@@ -1322,7 +1322,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
   }
   
   return (
-    <div className="h-full pb-20">
+    <div className="max-h-[calc(100vh-10rem)] overflow-y-auto">
       {isShockForced && (
         <div className="bg-[#b91c1c] text-white p-4 text-center font-bold sticky top-0 z-[100] animate-pulse">
            RHYTHM CHECK: SELECT SHOCK STATUS
@@ -1350,9 +1350,9 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
           
           <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
           
-          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing']} onSelect={addTreatment} />
+          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
           
-          <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6">
+          <div className="p-6 pb-24 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6">
             <div className="flex gap-2">
               <input 
                 type="text" 
