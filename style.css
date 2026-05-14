@@ -425,10 +425,6 @@ button:active {
   text-align: center;
 }
 
-.summary-table th:nth-child(4) {
-  text-align: right;
-}
-
 .summary-table td {
   padding: 8px 12px;
   border-bottom: 1px solid #f5f5f5;
@@ -438,10 +434,6 @@ button:active {
 
 .summary-table td:nth-child(3) {
   text-align: center;
-}
-
-.summary-table td:nth-child(4) {
-  text-align: right;
 }
 
 .summary-table tbody tr:last-child td {

@@ -346,10 +346,12 @@ function resetTimer() {
 
 // === TREATMENT SYSTEM ===
 function addTreatment(name) {
+  const now = new Date();
   const treatment = {
     name: name,
     elapsed: state.elapsedSeconds,
-    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false })
+    clock: now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    clockSeconds: now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   };
   
   state.treatments.push(treatment);
@@ -597,6 +599,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
       name: txName,
       elapsed: 0,
       clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      clockSeconds: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       prior: true
     });
   });
@@ -607,6 +610,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
       name: `Shock #${i + 1}`,
       elapsed: 0,
       clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      clockSeconds: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       prior: true
     });
     state.shocks++;
@@ -617,6 +621,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
       name: `Disarm #${i + 1}`,
       elapsed: 0,
       clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      clockSeconds: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       prior: true
     });
   }
@@ -626,6 +631,7 @@ document.getElementById('btnCatchupConfirm').addEventListener('click', () => {
       name: `Adrenaline push #${i + 1}`,
       elapsed: 0,
       clock: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      clockSeconds: state.startClockTime.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }),
       prior: true
     });
   }
@@ -718,10 +724,10 @@ function exportPDF() {
       
       if (tx.prior) {
         // Show prior treatment times with < symbol
-        timeCell = '&lt; ' + tx.clock;
+        timeCell = '&lt; ' + (tx.clockSeconds || tx.clock);
         elapsedCell = '&lt; ' + formatTime(state.catchupElapsed);
       } else {
-        timeCell = tx.clock;
+        timeCell = tx.clockSeconds || tx.clock;
         elapsedCell = formatTime(tx.elapsed);
       }
       
@@ -752,10 +758,12 @@ document.getElementById('closeCaseConfirm').addEventListener('click', () => {
   document.getElementById('closeCaseWarning').style.display = 'none';
   
   // Add "Close case" as a treatment
+  const now = new Date();
   const closeTreatment = {
     name: 'Close case',
     elapsed: state.elapsedSeconds,
-    clock: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false })
+    clock: now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false }),
+    clockSeconds: now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false })
   };
   state.treatments.push(closeTreatment);
   
@@ -800,28 +808,25 @@ document.getElementById('closeCaseConfirm').addEventListener('click', () => {
   // Treatment log
   const tbody = document.getElementById('caseTreatmentsTable');
   if (state.treatments.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; font-style:italic; padding: 20px;">No treatments recorded</td></tr>';
   } else {
     const reversedTreatments = [...state.treatments].reverse();
     
     tbody.innerHTML = reversedTreatments.map(tx => {
-      let timeDisplay, elapsedDisplay, ago;
+      let timeDisplay, elapsedDisplay;
       
       if (tx.prior) {
-        timeDisplay = '&lt; ' + tx.clock;
+        timeDisplay = '&lt; ' + (tx.clockSeconds || tx.clock);
         elapsedDisplay = '&lt; ' + formatTime(state.catchupElapsed);
-        ago = '&gt; ' + formatTime(state.elapsedSeconds);
       } else {
-        timeDisplay = tx.clock;
+        timeDisplay = tx.clockSeconds || tx.clock;
         elapsedDisplay = formatTime(tx.elapsed);
-        ago = '&gt; ' + formatTime(state.elapsedSeconds - tx.elapsed);
       }
       
       return `<tr>
         <td style="font-weight: 600; color: #1a1a1a;">${tx.name}</td>
         <td style="color: #999;">${timeDisplay}</td>
         <td style="color: #999;">${elapsedDisplay}</td>
-        <td style="color: #999;">${ago}</td>
       </tr>`;
     }).join('');
   }
@@ -835,45 +840,53 @@ document.getElementById('btnCloseCase').addEventListener('click', showCaseSummar
 
 document.getElementById('btnExportPdf').addEventListener('click', exportPDF);
 
-// Delete case button - show warning modal
-document.getElementById('btnDeleteCase').addEventListener('click', () => {
-  document.getElementById('deleteCaseWarning').style.display = 'flex';
-});
-
-// Delete case warning handlers
-document.getElementById('deleteCaseCancel').addEventListener('click', () => {
-  document.getElementById('deleteCaseWarning').style.display = 'none';
-});
-
-document.getElementById('deleteCaseConfirm').addEventListener('click', () => {
-  document.getElementById('deleteCaseWarning').style.display = 'none';
+// Delete case button handlers - ensure DOM is ready
+setTimeout(() => {
+  const btnDeleteCase = document.getElementById('btnDeleteCase');
+  const deleteCaseWarning = document.getElementById('deleteCaseWarning');
+  const deleteCaseCancel = document.getElementById('deleteCaseCancel');
+  const deleteCaseConfirm = document.getElementById('deleteCaseConfirm');
   
-  // Clear all state
-  state.running = false;
-  state.startTime = null;
-  state.pausedTime = 0;
-  state.elapsedSeconds = 0;
-  state.rhythmCheckTarget = 120;
-  state.cprRound = 1;
-  state.shocks = 0;
-  state.treatments = [];
-  state.catchupElapsed = 0;
-  state.startClockTime = null;
-  
-  clearState();
-  
-  // Reset UI
-  updateDisplay();
-  el.cprRound.textContent = '1';
-  el.adrWarning.textContent = '';
-  el.buttons.pause.textContent = 'Pause timer';
-  
-  // Hide case summary
-  el.overlays.caseSummary.style.display = 'none';
-  document.getElementById('app').style.display = 'block';
-  
-  // Show catchup modal page 1
-  catchupEl.modal.style.display = 'flex';
-  Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
-  catchupEl.page1.style.display = 'block';
-});
+  if (btnDeleteCase && deleteCaseWarning && deleteCaseCancel && deleteCaseConfirm) {
+    btnDeleteCase.addEventListener('click', () => {
+      deleteCaseWarning.style.display = 'flex';
+    });
+    
+    deleteCaseCancel.addEventListener('click', () => {
+      deleteCaseWarning.style.display = 'none';
+    });
+    
+    deleteCaseConfirm.addEventListener('click', () => {
+      deleteCaseWarning.style.display = 'none';
+      
+      // Clear all state
+      state.running = false;
+      state.startTime = null;
+      state.pausedTime = 0;
+      state.elapsedSeconds = 0;
+      state.rhythmCheckTarget = 120;
+      state.cprRound = 1;
+      state.shocks = 0;
+      state.treatments = [];
+      state.catchupElapsed = 0;
+      state.startClockTime = null;
+      
+      clearState();
+      
+      // Reset UI
+      updateDisplay();
+      el.cprRound.textContent = '1';
+      el.adrWarning.textContent = '';
+      el.buttons.pause.textContent = 'Pause timer';
+      
+      // Hide case summary
+      el.overlays.caseSummary.style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      
+      // Show catchup modal page 1
+      catchupEl.modal.style.display = 'flex';
+      Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
+      catchupEl.page1.style.display = 'block';
+    });
+  }
+}, 100);
