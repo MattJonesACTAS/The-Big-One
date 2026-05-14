@@ -609,7 +609,7 @@ export default function App() {
           </div>
 
           {/* Rhythm Check - Centered vertically and responsive size */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full pt-8 sm:pt-10">
+          <div className="flex flex-col items-center justify-center w-full pt-8 sm:pt-10 max-h-[calc(100vh-26rem)]">
             <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
               <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
                 <circle
