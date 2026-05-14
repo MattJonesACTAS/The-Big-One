@@ -35,14 +35,32 @@ const INITIAL_STATE: AppState = {
   treatments: [],
   currentOverlay: null,
   catchupElapsed: 0,
-  startClockTime: null
+  startClockTime: null,
+  patientWeight: null
 };
 
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 
-  'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 
-  'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
+  'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Lignocaine',
+  'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
 ];
+
+// Dose configurations for each medication
+const DOSE_CONFIG: Record<string, { doses: string[], weightBased?: boolean }> = {
+  'Adrenaline push': { doses: ['1mg'] },
+  'Adrenaline infus.': { doses: ['1mg/500mL', '3mg/50mL', 'Other'] },
+  'Amiodarone': { doses: ['300mg', '150mg', 'Other'] },
+  'Atropine': { doses: ['600mcg', 'Other'] },
+  'Calcium': { doses: ['10mg/kg', '1g', 'Other'], weightBased: true },
+  'Glucose': { doses: ['0.25g/kg', 'Other'], weightBased: true },
+  'Ketamine': { doses: ['0.5mg/kg', 'Other'], weightBased: true },
+  'Lignocaine': { doses: ['1mg/kg', 'Other'], weightBased: true },
+  'Magnesium': { doses: ['2.5g', 'Other'] },
+  'Midazolam': { doses: ['0.05mg/kg', 'Other'], weightBased: true },
+  'Normal Saline': { doses: ['100ml', '250ml', '500ml', 'Other'] },
+  'Sodium Bicarbonate': { doses: ['Other'] },
+  'Suxamethonium': { doses: ['Other'] }
+};
 
 // --- Utilities ---
 const formatTime = (seconds: number) => {
@@ -72,6 +90,37 @@ const getLocalTime = (date?: Date) => {
 const getLocalTimeWithSeconds = (date?: Date) => {
   const d = date || new Date();
   return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+};
+
+// Calculate weight-based dose
+const calculateDose = (doseStr: string, weight: number | null): string => {
+  if (!weight || !doseStr.includes('/kg')) return doseStr;
+  
+  const match = doseStr.match(/([\d.]+)(mg|g|mcg|ml)\/kg/);
+  if (!match) return doseStr;
+  
+  const amount = parseFloat(match[1]);
+  const unit = match[2];
+  const calculated = amount * weight;
+  
+  return `${doseStr} (${calculated}${unit})`;
+};
+
+// Parse dose from treatment name for summing
+const parseDose = (treatmentName: string): { amount: number; unit: string } | null => {
+  // Match patterns like "1mg", "2.5g", "100ml", "0.5mg/kg (35mg)"
+  const patterns = [
+    /\((\d+\.?\d*)(mg|g|mcg|ml)\)/,  // Extract from parentheses for weight-based
+    /(\d+\.?\d*)(mg|g|mcg|ml)(?!\/)/ // Direct dose (not /kg)
+  ];
+  
+  for (const pattern of patterns) {
+    const match = treatmentName.match(pattern);
+    if (match) {
+      return { amount: parseFloat(match[1]), unit: match[2] };
+    }
+  }
+  return null;
 };
 
 export default function App() {
@@ -265,16 +314,26 @@ export default function App() {
 
 
   const pharmaSummary = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const summary: Record<string, { count: number; totalDose: number; unit: string }> = {};
+    
     state.treatments.forEach(tx => {
       for (const med of MEDICATIONS) {
         if (tx.name.includes(med)) {
-          counts[med] = (counts[med] || 0) + 1;
+          if (!summary[med]) {
+            summary[med] = { count: 0, totalDose: 0, unit: '' };
+          }
+          summary[med].count += 1;
+          
+          const parsed = parseDose(tx.name);
+          if (parsed) {
+            summary[med].totalDose += parsed.amount;
+            summary[med].unit = parsed.unit;
+          }
           break;
         }
       }
     });
-    return counts;
+    return summary;
   }, [state.treatments]);
 
   // --- Catchup Handlers ---
@@ -380,6 +439,41 @@ export default function App() {
 
   return (
     <div className="h-screen bg-neutral-100 flex flex-col p-4 max-w-2xl mx-auto overflow-hidden relative">
+      {/* Weight Input */}
+      {!state.patientWeight && (
+        <div className="mb-3 bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center gap-2">
+          <span className="text-emerald-800 text-sm font-medium">Patient weight:</span>
+          <input
+            type="number"
+            placeholder="kg"
+            className="w-20 bg-white border border-emerald-300 rounded-lg px-2 py-1 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+            onChange={(e) => {
+              const weight = parseFloat(e.target.value);
+              if (weight > 0) {
+                setState(p => ({ ...p, patientWeight: weight }));
+              }
+            }}
+          />
+          <button 
+            onClick={() => setState(p => ({ ...p, patientWeight: -1 }))}
+            className="ml-auto text-emerald-600 text-xs font-bold"
+          >
+            Skip
+          </button>
+        </div>
+      )}
+      {state.patientWeight && state.patientWeight > 0 && (
+        <div className="mb-3 bg-neutral-100 border border-neutral-200 rounded-xl p-2 px-3 flex items-center justify-between">
+          <span className="text-neutral-600 text-sm">Weight: <strong>{state.patientWeight}kg</strong></span>
+          <button 
+            onClick={() => setState(p => ({ ...p, patientWeight: null }))}
+            className="text-emerald-600 text-xs font-bold"
+          >
+            Edit
+          </button>
+        </div>
+      )}
+
       {/* Top Controls */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4">
         <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
@@ -713,7 +807,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onClose: () => void, 
   addTreatment: (n: string) => void,
   state: AppState,
-  pharmaSummary: Record<string, number>,
+  pharmaSummary: Record<string, { count: number; totalDose: number; unit: string }>,
   isShockForced: boolean
 }) {
   const isTop = ['reversibles', 'rosc', 'phea'].includes(type);
@@ -731,7 +825,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection />}
         {type === 'phea' && <PHEASelection />}
         {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
-        {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} isShockForced={isShockForced} />}
+        {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
   );
@@ -848,7 +942,10 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   );
 }
 
-function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, number> }) {
+function SummaryStats({ state, pharmaSummary }: { 
+  state: AppState, 
+  pharmaSummary: Record<string, { count: number; totalDose: number; unit: string }> 
+}) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   
   return (
@@ -868,9 +965,12 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
           {Object.keys(pharmaSummary).length === 0 ? (
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
           ) : (
-            Object.entries(pharmaSummary).map(([name, count]) => (
-              <StatRow key={name} label={name} value={count} />
-            ))
+            Object.entries(pharmaSummary).map(([name, data]) => {
+              const valueText = data.totalDose > 0 
+                ? `${data.totalDose}${data.unit} (${data.count})`
+                : `${data.count}`;
+              return <StatRow key={name} label={name} value={valueText} />;
+            })
           )}
         </div>
       </div>
@@ -878,7 +978,10 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, number> }) {
+function SummaryOverlay({ state, pharmaSummary }: { 
+  state: AppState, 
+  pharmaSummary: Record<string, { count: number; totalDose: number; unit: string }> 
+}) {
   return (
     <div className="space-y-6 pb-20">
       <SummaryStats state={state} pharmaSummary={pharmaSummary} />
@@ -906,8 +1009,102 @@ function StatRow({ label, value, color = "text-neutral-900" }: StatRowProps) {
   );
 }
 
-function TreatmentSelection({ addTreatment, isShockForced }: { addTreatment: (n: string) => void, isShockForced?: boolean }) {
+function TreatmentSelection({ addTreatment, state, isShockForced }: { 
+  addTreatment: (n: string) => void, 
+  state: AppState,
+  isShockForced?: boolean 
+}) {
   const [customTx, setCustomTx] = useState('');
+  const [selectedMed, setSelectedMed] = useState<string | null>(null);
+  const [customDose, setCustomDose] = useState('');
+  
+  const handleMedicationClick = (med: string) => {
+    const config = DOSE_CONFIG[med];
+    if (!config || config.doses.length === 0) {
+      // No dose configuration, add directly
+      addTreatment(med);
+    } else {
+      // Show dose selection
+      setSelectedMed(med);
+    }
+  };
+  
+  const handleDoseSelect = (dose: string) => {
+    if (!selectedMed) return;
+    
+    if (dose === 'Other') {
+      // Keep dose selection open for custom input
+      return;
+    }
+    
+    const calculated = calculateDose(dose, state.patientWeight);
+    addTreatment(`${selectedMed} ${calculated}`);
+    setSelectedMed(null);
+    setCustomDose('');
+  };
+  
+  const handleCustomDoseAdd = () => {
+    if (!selectedMed || !customDose) return;
+    addTreatment(`${selectedMed} ${customDose}`);
+    setSelectedMed(null);
+    setCustomDose('');
+  };
+  
+  // If a medication is selected, show dose selection
+  if (selectedMed) {
+    const config = DOSE_CONFIG[selectedMed];
+    const doses = config?.doses || [];
+    const showOther = doses.includes('Other');
+    
+    return (
+      <div className="h-full pb-20">
+        <div className="p-6">
+          <button 
+            onClick={() => { setSelectedMed(null); setCustomDose(''); }}
+            className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
+          >
+            ← Back
+          </button>
+          
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
+          {state.patientWeight && (
+            <p className="text-neutral-500 text-sm mb-6">Patient weight: {state.patientWeight}kg</p>
+          )}
+          
+          <div className="space-y-3">
+            {doses.filter(d => d !== 'Other').map(dose => (
+              <button
+                key={dose}
+                onClick={() => handleDoseSelect(dose)}
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+              >
+                {calculateDose(dose, state.patientWeight)}
+              </button>
+            ))}
+            
+            {showOther && (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={customDose}
+                  onChange={e => setCustomDose(e.target.value)}
+                  placeholder="Custom dose..."
+                  className="w-full bg-white border border-neutral-200 rounded-xl p-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
+                />
+                <button
+                  onClick={handleCustomDoseAdd}
+                  className="w-full bg-neutral-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+                  disabled={!customDose}
+                >
+                  Add Custom Dose
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="h-full pb-20">
@@ -929,9 +1126,12 @@ function TreatmentSelection({ addTreatment, isShockForced }: { addTreatment: (n:
 
       {!isShockForced && (
         <>
-          <TxSection title="Medications" color="emerald" items={[
-            'Adrenaline push', 'Adrenaline infus.', 'Amiodarone', 'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
-          ]} onSelect={addTreatment} />
+          <TxSection 
+            title="Medications" 
+            color="emerald" 
+            items={MEDICATIONS} 
+            onSelect={handleMedicationClick} 
+          />
           
           <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
           
