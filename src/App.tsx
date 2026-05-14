@@ -590,7 +590,7 @@ export default function App() {
       </div>
 
       {/* Main Center Display */}
-      <div className={`bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 max-h-[calc(100vh-20rem)] ${
+      <div className={`bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 max-h-[calc(100vh-14rem)] ${
         state.currentOverlay === 'reversibles' ? 'border-blue-400' :
         state.currentOverlay === 'rosc' ? 'border-orange-400' :
         state.currentOverlay === 'phea' ? 'border-purple-400' : 'border-emerald-500'
