@@ -10,6 +10,11 @@
   body {
     @apply bg-neutral-100 text-neutral-900 font-sans antialiased select-none;
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  
+  html {
+    overscroll-behavior-y: none;
   }
 }
 
