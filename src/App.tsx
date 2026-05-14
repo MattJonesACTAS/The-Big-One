@@ -477,7 +477,9 @@ export default function App() {
       shocks: priorCounts.shock,
       treatments: initialTxs,
       catchupElapsed: elapsedTotal,
-      startClockTime: startClockTime
+      startClockTime: startClockTime,
+      patientWeight: state.patientWeight,
+      patientType: state.patientType
     });
     setShowCatchup(false);
   };
@@ -1256,11 +1258,17 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
     const config = DOSE_CONFIG[selectedMed];
     const allDoses = config?.doses || [];
     
+    console.log('Selected medication:', selectedMed);
+    console.log('Patient type:', state.patientType);
+    console.log('All doses:', allDoses);
+    
     // Filter doses based on patient type
     const filteredDoses = allDoses.filter(d => {
       if (!state.patientType) return true; // Show all if no type selected
       return d.population === 'both' || d.population === state.patientType;
     });
+    
+    console.log('Filtered doses:', filteredDoses);
     
     const doses = filteredDoses.map(d => d.dose);
     const showOther = doses.includes('Other');
@@ -1277,8 +1285,12 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: {
           
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
           {state.patientWeight && (
-            <p className="text-neutral-500 text-sm mb-6">Patient weight: {state.patientWeight}kg</p>
+            <p className="text-neutral-500 text-sm mb-2">Patient weight: {state.patientWeight}kg</p>
           )}
+          {state.patientType && (
+            <p className="text-neutral-500 text-sm mb-2">Patient type: {state.patientType}</p>
+          )}
+          <p className="text-neutral-500 text-sm mb-6">Showing {doses.filter(d => d !== 'Other').length} dose options</p>
           
           <div className="space-y-3">
             {doses.filter(d => d !== 'Other').map(dose => (
