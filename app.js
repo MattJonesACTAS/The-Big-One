@@ -705,14 +705,26 @@ function exportPDF() {
   document.getElementById('pdfRounds').textContent = state.cprRound;
   document.getElementById('pdfShocks').textContent = state.shocks;
   
-  // Populate treatment table
+  // Populate treatment table - most recent first
   const tbody = document.getElementById('pdfTableBody');
   if (state.treatments.length === 0) {
     tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; font-style:italic;">No treatments recorded</td></tr>';
   } else {
-    tbody.innerHTML = state.treatments.map(tx => {
-      const timeCell = tx.prior ? '&lt; —' : tx.clock;
-      const elapsedCell = tx.prior ? '&lt; —' : formatTime(tx.elapsed);
+    // Reverse to show most recent first
+    const reversedTreatments = [...state.treatments].reverse();
+    
+    tbody.innerHTML = reversedTreatments.map(tx => {
+      let timeCell, elapsedCell;
+      
+      if (tx.prior) {
+        // Show prior treatment times with < symbol
+        timeCell = '&lt; ' + tx.clock;
+        elapsedCell = '&lt; ' + formatTime(state.catchupElapsed);
+      } else {
+        timeCell = tx.clock;
+        elapsedCell = formatTime(tx.elapsed);
+      }
+      
       return `<tr>
         <td>${tx.name}</td>
         <td>${timeCell}</td>
@@ -732,18 +744,12 @@ function showCaseSummary() {
 }
 
 // Close case warning handlers
-const closeCaseCancel = document.getElementById('closeCaseCancel');
-const closeCaseConfirm = document.getElementById('closeCaseConfirm');
+document.getElementById('closeCaseCancel').addEventListener('click', () => {
+  document.getElementById('closeCaseWarning').style.display = 'none';
+});
 
-if (closeCaseCancel) {
-  closeCaseCancel.addEventListener('click', () => {
-    document.getElementById('closeCaseWarning').style.display = 'none';
-  });
-}
-
-if (closeCaseConfirm) {
-  closeCaseConfirm.addEventListener('click', () => {
-    document.getElementById('closeCaseWarning').style.display = 'none';
+document.getElementById('closeCaseConfirm').addEventListener('click', () => {
+  document.getElementById('closeCaseWarning').style.display = 'none';
   
   // Add "Close case" as a treatment
   const closeTreatment = {
@@ -823,8 +829,7 @@ if (closeCaseConfirm) {
   // Hide main app, show case summary
   document.getElementById('app').style.display = 'none';
   el.overlays.caseSummary.style.display = 'block';
-  });
-}
+});
 
 document.getElementById('btnCloseCase').addEventListener('click', showCaseSummary);
 
