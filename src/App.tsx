@@ -1248,7 +1248,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
     const showOther = doses.includes('Other');
     
     return (
-      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto pb-4">
+      <div className="h-full overflow-y-auto pb-4">
         <div className="p-6 mb-4">
           <button 
             onClick={() => { setSelectedMed(null); setCustomDose(''); }}
@@ -1301,7 +1301,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   }
   
   return (
-    <div className="max-h-[calc(100vh-18rem)] overflow-y-auto pb-4">
+    <div className="h-full overflow-y-auto pb-4">
       {isShockForced && (
         <div className="bg-[#b91c1c] text-white p-4 text-center font-bold sticky top-0 z-[100] animate-pulse">
            RHYTHM CHECK: SELECT SHOCK STATUS
