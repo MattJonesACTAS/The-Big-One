@@ -379,31 +379,53 @@ export default function App() {
 
 
   const pharmaSummary = useMemo(() => {
-    const summary: Record<string, { doses: string[], count: number }> = {};
+    const summary: Record<string, { totalDose: number, unit: string, count: number, display: string }> = {};
     
     state.treatments.forEach(tx => {
       for (const med of MEDICATIONS) {
         if (tx.name.startsWith(med)) {
           if (!summary[med]) {
-            summary[med] = { doses: [], count: 0 };
+            summary[med] = { totalDose: 0, unit: '', count: 0, display: '' };
           }
           
           // Extract dose from treatment name (everything after medication name)
-          const doseMatch = tx.name.substring(med.length).trim();
+          const doseStr = tx.name.substring(med.length).trim();
           
-          if (doseMatch) {
-            // Try to extract numeric dose with unit
-            const numericMatch = doseMatch.match(/([\d.]+)(mg|g|mcg|ml|mL)/);
-            if (numericMatch) {
-              summary[med].doses.push(doseMatch);
+          if (doseStr) {
+            // For weight-based doses with calculated value: "0.01mg/kg (3.5mg)"
+            // Extract the calculated value in parentheses
+            const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|g|mcg|ml|mL)\)/);
+            if (calculatedMatch) {
+              const [_, amount, unit] = calculatedMatch;
+              if (!summary[med].unit) summary[med].unit = unit;
+              if (summary[med].unit === unit) {
+                summary[med].totalDose += parseFloat(amount);
+              }
             } else {
-              // Non-numeric dose or complex dose
-              summary[med].doses.push(doseMatch);
+              // Direct dose: "1mg", "300mg", "100mL", etc.
+              const directMatch = doseStr.match(/([\d.]+)(mg|g|mcg|ml|mL)/);
+              if (directMatch) {
+                const [_, amount, unit] = directMatch;
+                if (!summary[med].unit) summary[med].unit = unit;
+                if (summary[med].unit === unit) {
+                  summary[med].totalDose += parseFloat(amount);
+                }
+              }
             }
           }
           summary[med].count++;
           break;
         }
+      }
+    });
+    
+    // Format display strings
+    Object.keys(summary).forEach(med => {
+      const { totalDose, unit, count } = summary[med];
+      if (totalDose > 0 && unit) {
+        summary[med].display = `${totalDose}${unit} (${count})`;
+      } else {
+        summary[med].display = `${count}`;
       }
     });
     
@@ -983,7 +1005,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onClose: () => void, 
   addTreatment: (n: string) => void,
   state: AppState,
-  pharmaSummary: Record<string, { doses: string[], count: number }>,
+  pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
   isShockForced: boolean
 }) {
   const isTop = ['reversibles', 'rosc', 'phea'].includes(type);
@@ -1118,7 +1140,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   );
 }
 
-function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { doses: string[], count: number }> }) {
+function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   
   return (
@@ -1139,7 +1161,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
           ) : (
             Object.entries(pharmaSummary).map(([name, info]) => (
-              <StatRow key={name} label={name} value={info.doses.join(', ')} />
+              <StatRow key={name} label={name} value={info.display} />
             ))
           )}
         </div>
@@ -1148,7 +1170,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { doses: string[], count: number }> }) {
+function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
   return (
     <div className="space-y-6 pb-20">
       <SummaryStats state={state} pharmaSummary={pharmaSummary} />
