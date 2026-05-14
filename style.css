@@ -421,6 +421,29 @@ button:active {
   line-height: 1.4;
 }
 
+.summary-table th:nth-child(1),
+.summary-table td:nth-child(1) {
+  width: 28%;
+}
+
+.summary-table th:nth-child(2),
+.summary-table td:nth-child(2) {
+  width: 24%;
+  text-align: right;
+}
+
+.summary-table th:nth-child(3),
+.summary-table td:nth-child(3) {
+  width: 24%;
+  text-align: center;
+}
+
+.summary-table th:nth-child(4),
+.summary-table td:nth-child(4) {
+  width: 24%;
+  text-align: right;
+}
+
 .summary-table th {
   font-weight: 700;
   font-size: 12px;
@@ -431,21 +454,6 @@ button:active {
   border-bottom: 1px solid #f5f5f5;
   color: #666;
   font-size: 15px;
-}
-
-.summary-table th:nth-child(2),
-.summary-table td:nth-child(2) {
-  text-align: right;
-}
-
-.summary-table th:nth-child(3),
-.summary-table td:nth-child(3) {
-  text-align: center;
-}
-
-.summary-table th:nth-child(4),
-.summary-table td:nth-child(4) {
-  text-align: right;
 }
 
 .summary-table tbody tr:last-child td {
