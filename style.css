@@ -433,8 +433,9 @@ button:active {
   font-size: 15px;
 }
 
-.summary-table th:nth-child(2) {
-  padding-left: 16px;
+.summary-table th:nth-child(2),
+.summary-table td:nth-child(2) {
+  text-align: right;
 }
 
 .summary-table th:nth-child(3),
@@ -495,6 +496,7 @@ button:active {
 
 .case-summary-page .summary-table th:nth-child(2) {
   width: 30%;
+  text-align: right;
 }
 
 .case-summary-page .summary-table th:nth-child(3) {
@@ -512,6 +514,7 @@ button:active {
 
 .case-summary-page .summary-table td:nth-child(2) {
   width: 30%;
+  text-align: right;
 }
 
 .case-summary-page .summary-table td:nth-child(3) {
@@ -819,6 +822,7 @@ button:active {
   
   #pdfTable th:nth-child(2) {
     width: 30%;
+    text-align: right;
   }
   
   #pdfTable th:nth-child(3) {
@@ -838,6 +842,7 @@ button:active {
   
   #pdfTable td:nth-child(2) {
     width: 30%;
+    text-align: right;
   }
   
   #pdfTable td:nth-child(3) {
