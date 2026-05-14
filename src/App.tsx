@@ -723,18 +723,33 @@ export default function App() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-[28px] p-6 max-w-md w-[80%] shadow-2xl overflow-hidden"
+              className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden"
             >
+              <AnimatePresence mode="wait">
               {catchupStep === 1 && (
-                <div className="text-center space-y-6">
+                <motion.div
+                  key="step1"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-6"
+                >
                   <h2 className="text-2xl font-extrabold text-neutral-900">Arrest Started</h2>
                   <p className="text-neutral-500 text-base leading-relaxed">Let's calibrate the timer with the monitor for accurate logging.</p>
                   <button onClick={() => setCatchupStep(2)} className="w-full bg-emerald-600 text-white p-5 rounded-2xl text-lg font-bold btn-base">Calibrate</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 2 && !weightType && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step2-type"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900">Patient Type</h2>
                   <div className="grid grid-cols-2 gap-3">
                     <button 
@@ -751,11 +766,18 @@ export default function App() {
                     </button>
                   </div>
                   <button onClick={() => setCatchupStep(1)} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 2 && weightType === 'adult' && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step2-adult"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900">Patient Weight (Optional)</h2>
                   <div className="flex flex-col items-center gap-3">
                     <div className="relative">
@@ -777,11 +799,18 @@ export default function App() {
                     </button>
                   </div>
                   <button onClick={() => { setWeightType(null); setWeightInput(''); }} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 2 && weightType === 'paed' && !paedWeightMethod && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step2-paed-method"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900">Patient Weight</h2>
                   <p className="text-neutral-500 text-sm">Choose how to enter weight</p>
                   <div className="grid grid-cols-2 gap-3">
@@ -799,11 +828,18 @@ export default function App() {
                     </button>
                   </div>
                   <button onClick={() => { setWeightType(null); }} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'weight' && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step2-paed-weight"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900">Enter Patient Weight</h2>
                   <div className="flex flex-col items-center gap-3">
                     <div className="relative">
@@ -827,11 +863,18 @@ export default function App() {
                     )}
                   </div>
                   <button onClick={() => { setPaedWeightMethod(null); setWeightInput(''); }} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'age' && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step2-paed-age"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900 mb-3">Select Age</h2>
                   <div className="space-y-2 max-h-[340px] overflow-y-auto p-2">
                     {[
@@ -852,22 +895,36 @@ export default function App() {
                     ))}
                   </div>
                   <button onClick={() => { setPaedWeightMethod(null); }} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 3 && (
-                <div className="text-center space-y-6">
+                <motion.div
+                  key="step3"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-6"
+                >
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
                   <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(4); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 4 && (
-                <div className="text-center space-y-6">
+                <motion.div
+                  key="step4"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-6"
+                >
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
                   <TimePicker 
                     value={catchupRhythm} 
@@ -878,11 +935,18 @@ export default function App() {
                     <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                   </div>
-                </div>
+                </motion.div>
               )}
 
               {catchupStep === 5 && (
-                <div className="text-center space-y-5">
+                <motion.div
+                  key="step5"
+                  initial={{ x: 300, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  exit={{ x: -300, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  className="text-center space-y-5"
+                >
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
                   <div className="space-y-2 py-3 max-h-[260px] overflow-y-auto px-2">
                     <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} />
@@ -904,8 +968,9 @@ export default function App() {
                     <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Start Timer</button>
                   </div>
-                </div>
+                </motion.div>
               )}
+              </AnimatePresence>
             </motion.div>
           </div>
         )}
