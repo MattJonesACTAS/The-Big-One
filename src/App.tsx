@@ -379,16 +379,35 @@ export default function App() {
 
 
   const pharmaSummary = useMemo(() => {
-    const counts: Record<string, number> = {};
+    const summary: Record<string, { doses: string[], count: number }> = {};
+    
     state.treatments.forEach(tx => {
       for (const med of MEDICATIONS) {
-        if (tx.name.includes(med)) {
-          counts[med] = (counts[med] || 0) + 1;
+        if (tx.name.startsWith(med)) {
+          if (!summary[med]) {
+            summary[med] = { doses: [], count: 0 };
+          }
+          
+          // Extract dose from treatment name (everything after medication name)
+          const doseMatch = tx.name.substring(med.length).trim();
+          
+          if (doseMatch) {
+            // Try to extract numeric dose with unit
+            const numericMatch = doseMatch.match(/([\d.]+)(mg|g|mcg|ml|mL)/);
+            if (numericMatch) {
+              summary[med].doses.push(doseMatch);
+            } else {
+              // Non-numeric dose or complex dose
+              summary[med].doses.push(doseMatch);
+            }
+          }
+          summary[med].count++;
           break;
         }
       }
     });
-    return counts;
+    
+    return summary;
   }, [state.treatments]);
 
   // --- Catchup Handlers ---
@@ -714,6 +733,7 @@ export default function App() {
                         placeholder="Enter weight"
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && setCatchupStep(3)}
                         className="w-48 bg-white border-2 border-emerald-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
                       />
                       {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
@@ -761,6 +781,7 @@ export default function App() {
                         placeholder="Enter weight"
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && weightInput && setCatchupStep(3)}
                         className="w-48 bg-white border-2 border-blue-300 rounded-xl px-6 py-4 text-2xl font-bold text-center focus:ring-4 focus:ring-blue-500 outline-none"
                       />
                       {weightInput && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-neutral-400 text-xl font-bold pointer-events-none">kg</span>}
@@ -781,20 +802,21 @@ export default function App() {
               {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'age' && (
                 <div className="text-center space-y-6">
                   <h2 className="text-2xl font-bold text-neutral-900 mb-4">Select Age</h2>
-                  <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto p-2">
+                  <div className="space-y-2 max-h-[400px] overflow-y-auto p-2">
                     {[
-                      ['Newborn', 3], ['1mo', 4], ['3mo', 6], ['6mo', 8],
-                      ['9mo', 9], ['1yr', 10], ['18mo', 11], ['2yr', 12],
-                      ['3yr', 15], ['4yr', 17], ['5yr', 19], ['6yr', 21],
-                      ['7yr', 23], ['8yr', 26], ['9yr', 29], ['10yr', 32],
-                      ['11yr', 35], ['12yr', 38]
+                      ['Newborn', 3], ['1 month', 4], ['3 months', 6], ['6 months', 8],
+                      ['9 months', 9], ['1 year', 10], ['18 months', 11], ['2 years', 12],
+                      ['3 years', 15], ['4 years', 17], ['5 years', 19], ['6 years', 21],
+                      ['7 years', 23], ['8 years', 26], ['9 years', 29], ['10 years', 32],
+                      ['11 years', 35], ['12 years', 38]
                     ].map(([age, weight]) => (
                       <button
                         key={age}
                         onClick={() => { setWeightInput(String(weight)); setCatchupStep(3); }}
-                        className="bg-purple-600 text-white p-4 rounded-xl font-bold btn-base"
+                        className="w-full bg-purple-600 text-white p-4 rounded-xl font-bold btn-base flex justify-between items-center"
                       >
-                        {age}<br/><span className="text-purple-600">{weight}kg</span>
+                        <span>{age}</span>
+                        <span>{weight}kg</span>
                       </button>
                     ))}
                   </div>
@@ -805,9 +827,6 @@ export default function App() {
               {catchupStep === 3 && (
                 <div className="text-center space-y-8">
                   <h2 className="text-2xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
-                  {weightInput && weightType && (
-                    <p className="text-neutral-600">Patient: <span className="text-purple-600">{weightInput}kg</span> {weightType}</p>
-                  )}
                   <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-4 rounded-xl font-bold btn-base">Back</button>
@@ -964,7 +983,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onClose: () => void, 
   addTreatment: (n: string) => void,
   state: AppState,
-  pharmaSummary: Record<string, number>,
+  pharmaSummary: Record<string, { doses: string[], count: number }>,
   isShockForced: boolean
 }) {
   const isTop = ['reversibles', 'rosc', 'phea'].includes(type);
@@ -1099,7 +1118,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   );
 }
 
-function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, number> }) {
+function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { doses: string[], count: number }> }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   
   return (
@@ -1119,8 +1138,8 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
           {Object.keys(pharmaSummary).length === 0 ? (
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
           ) : (
-            Object.entries(pharmaSummary).map(([name, count]) => (
-              <StatRow key={name} label={name} value={count} />
+            Object.entries(pharmaSummary).map(([name, info]) => (
+              <StatRow key={name} label={name} value={info.doses.join(', ')} />
             ))
           )}
         </div>
@@ -1129,7 +1148,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, number> }) {
+function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { doses: string[], count: number }> }) {
   return (
     <div className="space-y-6 pb-20">
       <SummaryStats state={state} pharmaSummary={pharmaSummary} />
