@@ -13,7 +13,8 @@ import {
   FileText, 
   Plus, 
   Trash2, 
-  ChevronDown, 
+  ChevronDown,
+  ChevronRight,
   AlertCircle,
   XCircle,
   Clock,
@@ -428,28 +429,30 @@ export default function App() {
         </button>
       </div>
 
-      {/* Main Center Display */}
-      <div className={`flex-1 bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 ${
-        state.currentOverlay === 'reversibles' ? 'border-blue-400' :
-        state.currentOverlay === 'rosc' ? 'border-orange-400' :
-        state.currentOverlay === 'phea' ? 'border-purple-400' : 'border-emerald-500'
-      }`}>
-        <div className="h-full flex flex-col items-center justify-between p-4 relative">
-          {/* Corner Cards */}
-          <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
-            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">Total time</span>
-              <span className="text-4xl sm:text-7xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
-            </div>
-            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-4xl sm:text-7xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
-            </div>
+      {/* Session Overview */}
+      <div className="bg-white border border-neutral-200 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm">
+        <h2 className="text-emerald-700 text-lg sm:text-xl font-bold text-center mb-4 sm:mb-6 tracking-wide">SESSION OVERVIEW</h2>
+        <div className="grid grid-cols-2 gap-4 sm:gap-6">
+          <div className="flex flex-col items-center">
+            <span className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 sm:mb-3">Total time</span>
+            <span className="text-4xl sm:text-6xl font-bold text-neutral-900 tabular-nums">{formatTime(state.elapsedSeconds)}</span>
           </div>
+          <div className="flex flex-col items-center border-l border-neutral-200 pl-4 sm:pl-6">
+            <span className="text-xs sm:text-sm text-neutral-500 font-medium mb-2 sm:mb-3">CPR round</span>
+            <span className="text-4xl sm:text-6xl font-bold text-neutral-900">{state.cprRound}</span>
+          </div>
+        </div>
+      </div>
 
-          {/* Rhythm Check - Centered vertically and responsive size */}
-          <div className="flex-1 flex flex-col items-center justify-center w-full pt-8 sm:pt-10">
-            <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
+      {/* Main Rhythm Check Display */}
+      <div className="flex-1 bg-emerald-600 rounded-2xl sm:rounded-3xl relative overflow-hidden shadow-lg">
+        <div className="h-full flex flex-col items-center justify-center p-6 sm:p-8 relative">
+          {/* Rhythm Check Title */}
+          <div className="text-white text-sm sm:text-base font-bold tracking-widest mb-4 sm:mb-6">RHYTHM CHECK</div>
+
+          {/* Rhythm Check Timer Circle */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full">
+            <div className="relative flex items-center justify-center w-[220px] h-[220px] sm:w-[280px] sm:h-[280px]">
               <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
                 <circle
                   cx="150"
@@ -457,8 +460,8 @@ export default function App() {
                   r="140"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="6"
-                  className="text-neutral-50"
+                  strokeWidth="8"
+                  className="text-emerald-700/30"
                 />
                 <motion.circle
                   cx="150"
@@ -466,10 +469,10 @@ export default function App() {
                   r="140"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="6"
+                  strokeWidth="8"
                   strokeLinecap="round"
                   pathLength="1"
-                  className={(state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-500' : 'text-emerald-500'}
+                  className={(state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-400' : 'text-white'}
                   animate={{ 
                     strokeDashoffset: 1 - Math.max(0, (state.rhythmCheckTarget - state.elapsedSeconds) / 120)
                   }}
@@ -478,15 +481,15 @@ export default function App() {
                 />
               </svg>
               
-              <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
+              <div className="flex flex-col items-center z-10">
                 <div 
-                  className={`text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none ${
-                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-600' : 'text-neutral-900'
+                  className={`text-6xl sm:text-[100px] font-bold tabular-nums tracking-tighter leading-none ${
+                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-400' : 'text-white'
                   }`}
                 >
                   {formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))}
                 </div>
-                <div className="text-[14px] sm:text-[18px] text-neutral-400 uppercase tracking-widest font-bold mt-4 sm:mt-8">
+                <div className="text-xs sm:text-sm text-emerald-100 uppercase tracking-widest font-medium mt-3 sm:mt-4">
                   Rhythm Check
                 </div>
               </div>
@@ -507,15 +510,17 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* Adrenaline Status - Responsive sizing */}
+          {/* Adrenaline Status */}
           <div 
-            className={`w-full max-w-[240px] sm:max-w-[280px] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 mb-2 sm:mb-4 ${
+            className={`w-full max-w-[280px] sm:max-w-[340px] p-3 sm:p-4 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-3 transition-all duration-300 ${
               adrenalineRoundStatus.isDue 
-                ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                : 'bg-neutral-100 text-neutral-400 border-neutral-100'
+                ? 'bg-red-500 text-white shadow-lg' 
+                : 'bg-white/95 text-emerald-700 shadow-md'
             }`}
           >
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
         </div>
       </div>
@@ -528,7 +533,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'summary' ? null : 'summary' }))
           }}
           disabled={isShockForced}
-          className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors ${state.currentOverlay === 'summary' ? 'bg-red-100 text-red-800' : 'bg-emerald-600 text-white'}`}
+          className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors border-2 ${state.currentOverlay === 'summary' ? 'bg-red-100 text-red-800 border-red-200' : 'bg-white text-emerald-700 border-neutral-200'}`}
         >
           {state.currentOverlay === 'summary' ? <XCircle size={18} className="sm:w-6 sm:h-6" /> : <FileText size={18} className="sm:w-6 sm:h-6" />}
           {state.currentOverlay === 'summary' ? 'Close' : 'Summary'}
