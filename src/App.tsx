@@ -810,7 +810,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
       {/* Balanced columns: More space for name, even space for times */}
-      <div className={`grid ${isSummary ? 'grid-cols-[1.5fr_1fr_1fr]' : 'grid-cols-[1.5fr_1fr_1fr_1fr]'} bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
+      <div className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.5fr_1fr_1fr_1fr]'} bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>
@@ -830,7 +830,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const ago = tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal);
             
             return (
-              <div key={i} className={`grid ${isSummary ? 'grid-cols-[1.5fr_1fr_1fr]' : 'grid-cols-[1.5fr_1fr_1fr_1fr]'} px-4 py-4 items-center gap-1`}>
+              <div key={i} className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.5fr_1fr_1fr_1fr]'} px-4 py-4 items-center gap-1`}>
                 <div className="text-[16px] font-bold text-neutral-900 pr-1 overflow-hidden text-ellipsis whitespace-nowrap" title={tx.name}>{tx.name}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
