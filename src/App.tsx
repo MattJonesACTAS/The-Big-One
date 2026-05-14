@@ -402,7 +402,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'reversibles' ? null : 'reversibles' }))
           }}
           disabled={isShockForced}
-          className={`p-4 sm:p-6 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'reversibles' ? 'Close' : 'Reversibles'}
         </button>
@@ -412,7 +412,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'rosc' ? null : 'rosc' }))
           }}
           disabled={isShockForced}
-          className={`p-4 sm:p-6 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'rosc' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors ${state.currentOverlay === 'rosc' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'rosc' ? 'Close' : 'ROSC'}
         </button>
@@ -422,7 +422,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'phea' ? null : 'phea' }))
           }}
           disabled={isShockForced}
-          className={`p-4 sm:p-6 rounded-xl text-xs sm:text-lg font-bold btn-base transition-colors ${state.currentOverlay === 'phea' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors ${state.currentOverlay === 'phea' ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'phea' ? 'Close' : 'PHEA'}
         </button>
@@ -449,7 +449,7 @@ export default function App() {
 
           {/* Rhythm Check - Centered vertically and responsive size */}
           <div className="flex-1 flex flex-col items-center justify-center w-full pt-8 sm:pt-10">
-            <div className="relative flex items-center justify-center w-[200px] h-[200px] sm:w-[280px] sm:h-[280px]">
+            <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
               <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
                 <circle
                   cx="150"
@@ -480,7 +480,7 @@ export default function App() {
               
               <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
                 <div 
-                  className={`text-9xl sm:text-[180px] font-bold tabular-nums tracking-tighter leading-none ${
+                  className={`text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none ${
                     (state.rhythmCheckTarget - state.elapsedSeconds) <= 15 ? 'text-red-600' : 'text-neutral-900'
                   }`}
                 >
