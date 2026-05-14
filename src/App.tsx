@@ -102,13 +102,14 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Lignocaine': { 
     doses: [
-      { dose: '100mg', population: 'both' },
+      { dose: '1mg/kg', population: 'both' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Magnesium': { 
     doses: [
       { dose: '2.5g', population: 'adult' },
+      { dose: '50mg/kg', population: 'paed' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -129,7 +130,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '50mL 8.4%', population: 'both' },
+      { dose: '1mMol/kg', population: 'both' },
       { dose: 'Other', population: 'both' }
     ] 
   },
