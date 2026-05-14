@@ -368,7 +368,7 @@
       
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
         <button id="btnExportPdf" class="case-summary-btn primary">Export PDF</button>
-        <button id="btnDeleteCase" class="case-summary-btn delete" onclick="document.getElementById('deleteCaseWarning').style.display='flex'">Delete case</button>
+        <button id="btnDeleteCase" class="case-summary-btn delete" onclick="alert('Trying to show modal...'); var modal = document.getElementById('deleteCaseWarning'); alert('Modal element: ' + (modal ? 'found' : 'NOT FOUND')); if(modal) { modal.style.display='flex'; alert('Display set to flex'); }">Delete case</button>
       </div>
       
       <div class="section-header green-header-light">ARREST SUMMARY</div>
