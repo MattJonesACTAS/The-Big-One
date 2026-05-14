@@ -870,6 +870,7 @@ window.confirmDeleteCase = function() {
   state.treatments = [];
   state.catchupElapsed = 0;
   state.startClockTime = null;
+  state.currentOverlay = null;
   
   clearState();
   
@@ -879,12 +880,15 @@ window.confirmDeleteCase = function() {
   el.adrWarning.textContent = '';
   el.buttons.pause.textContent = 'Pause timer';
   
-  // Hide case summary
+  // Hide case summary and show main app
   el.overlays.caseSummary.style.display = 'none';
   document.getElementById('app').style.display = 'block';
   
-  // Show catchup modal page 1
-  catchupEl.modal.style.display = 'flex';
-  Array.from(catchupEl.pages).forEach(p => p.style.display = 'none');
-  catchupEl.page1.style.display = 'block';
+  // Hide all overlays
+  Object.values(el.overlays).forEach(overlay => {
+    if (overlay) overlay.style.display = 'none';
+  });
+  
+  // Reload the page to get back to the initial home screen
+  window.location.reload();
 };
