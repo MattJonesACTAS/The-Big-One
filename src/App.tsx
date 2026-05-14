@@ -831,7 +831,11 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             
             return (
               <div key={i} className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.5fr_1fr_1fr_1fr]'} px-4 py-4 items-center gap-1`}>
-                <div className="text-[16px] font-bold text-neutral-900 pr-1 overflow-hidden text-ellipsis whitespace-nowrap" title={tx.name}>{tx.name}</div>
+                <div className={`text-[16px] font-bold pr-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+                  tx.name.toLowerCase().includes('shock') ? 'text-red-600' : 
+                  tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' : 
+                  'text-neutral-900'
+                }`} title={tx.name}>{tx.name}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
                 {!isSummary && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{ago}</div>}
