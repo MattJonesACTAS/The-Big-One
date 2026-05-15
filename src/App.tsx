@@ -1409,6 +1409,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   const [customTx, setCustomTx] = useState('');
   const [selectedMed, setSelectedMed] = useState<string | null>(null);
   const [customDose, setCustomDose] = useState('');
+  const [expandedSection, setExpandedSection] = useState<string | null>(isShockForced ? 'rhythmCheck' : null);
   
   const handleMedClick = (med: string) => {
     if (DOSE_CONFIG[med]) {
@@ -1436,6 +1437,12 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
     }
   };
   
+  const handleBackFromMed = () => {
+    setSelectedMed(null);
+    setCustomDose('');
+    setExpandedSection('medications');
+  };
+  
   if (selectedMed && DOSE_CONFIG[selectedMed]) {
     const allDoses = DOSE_CONFIG[selectedMed].doses;
     const filteredDoses = state.patientType 
@@ -1449,7 +1456,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       <div className="h-full overflow-y-auto pb-4">
         <div className="p-6 mb-4">
           <button 
-            onClick={() => { setSelectedMed(null); setCustomDose(''); }}
+            onClick={handleBackFromMed}
             className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
           >
             Back
@@ -1502,14 +1509,19 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               
               return (
               <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={customDose}
-                  onChange={e => setCustomDose(e.target.value)}
-                  onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
-                  placeholder={placeholder}
-                  className="flex-1 bg-white border border-neutral-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                <div className="flex-1 relative flex items-center bg-white border border-neutral-200 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500">
+                  <input
+                    type="text"
+                    value={customDose}
+                    onChange={e => setCustomDose(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
+                    placeholder={placeholder}
+                    className="flex-1 bg-transparent px-4 py-3 text-base outline-none"
+                  />
+                  {unit && (
+                    <span className="pr-4 text-neutral-400 text-sm font-medium">{unit}</span>
+                  )}
+                </div>
                 <button
                   onClick={handleCustomDoseAdd}
                   className="bg-emerald-600 text-white px-5 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1541,6 +1553,9 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
         title="Rhythm Check" 
         color="pink" 
         initiallyExpanded={isShockForced}
+        sectionId="rhythmCheck"
+        expandedSection={expandedSection}
+        onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
         items={[
           'Shock — VT', 'Disarm — VF', 'Disarm — PEA', 'Disarm — Asystole', 'Disarm — ROSC'
         ]} 
@@ -1549,11 +1564,35 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
 
       {!isShockForced && (
         <>
-          <TxSection title="Medications" color="emerald" items={MEDICATIONS} onSelect={handleMedClick} />
+          <TxSection 
+            title="Medications" 
+            color="emerald" 
+            items={MEDICATIONS} 
+            onSelect={handleMedClick}
+            sectionId="medications"
+            expandedSection={expandedSection}
+            onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
+          />
           
-          <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
+          <TxSection 
+            title="Airway" 
+            color="blue" 
+            items={['ETT', 'FONA', 'IGT', 'LMA']} 
+            onSelect={addTreatment}
+            sectionId="airway"
+            expandedSection={expandedSection}
+            onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
+          />
           
-          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
+          <TxSection 
+            title="Other Tx" 
+            color="neutral" 
+            items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} 
+            onSelect={addTreatment}
+            sectionId="otherTx"
+            expandedSection={expandedSection}
+            onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
+          />
           
           <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6 mb-4">
             <div className="flex gap-2">
@@ -1578,8 +1617,40 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   );
 }
 
-function TxSection({ title, color, items, onSelect, initiallyExpanded = false }: { title: string, color: string, items: string[], onSelect: (n: string) => void, initiallyExpanded?: boolean }) {
+function TxSection({ 
+  title, 
+  color, 
+  items, 
+  onSelect, 
+  initiallyExpanded = false,
+  sectionId,
+  expandedSection,
+  onToggle
+}: { 
+  title: string;
+  color: string;
+  items: string[];
+  onSelect: (n: string) => void;
+  initiallyExpanded?: boolean;
+  sectionId?: string;
+  expandedSection?: string | null;
+  onToggle?: (id: string) => void;
+}) {
   const [isCollapsed, setIsCollapsed] = useState(!initiallyExpanded);
+  
+  // Use controlled state if provided, otherwise use internal state
+  const collapsed = sectionId && expandedSection !== undefined 
+    ? expandedSection !== sectionId
+    : isCollapsed;
+  
+  const handleToggle = () => {
+    if (sectionId && onToggle) {
+      onToggle(sectionId);
+    } else {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+  
   const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-50 text-emerald-800 border-emerald-100',
     pink: 'bg-rose-50 text-rose-800 border-rose-100',
@@ -1590,14 +1661,14 @@ function TxSection({ title, color, items, onSelect, initiallyExpanded = false }:
   return (
     <div>
       <div 
-        onClick={() => setIsCollapsed(!isCollapsed)}
+        onClick={handleToggle}
         className={`flex items-center justify-between p-4 cursor-pointer font-bold select-none text-left ${colorMap[color]}`}
       >
         <span>{title}</span>
-        <ChevronDown className={`transition-transform duration-300 ${isCollapsed ? '-rotate-90' : ''}`} />
+        <ChevronDown className={`transition-transform duration-300 ${collapsed ? '-rotate-90' : ''}`} />
       </div>
       <motion.div 
-        animate={{ height: isCollapsed ? 0 : 'auto', opacity: isCollapsed ? 0 : 1 }}
+        animate={{ height: collapsed ? 0 : 'auto', opacity: collapsed ? 0 : 1 }}
         transition={{ duration: 0.3 }}
         className="overflow-hidden bg-white"
       >
