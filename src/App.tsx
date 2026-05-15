@@ -241,6 +241,25 @@ export default function App() {
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt15 = useRef<boolean>(false);
 
+  // Timeout for disregard pending states (3 seconds)
+  useEffect(() => {
+    if (disregardAdrenaline === 'pending') {
+      const timer = setTimeout(() => {
+        setDisregardAdrenaline(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [disregardAdrenaline]);
+
+  useEffect(() => {
+    if (disregardAmiodarone === 'pending') {
+      const timer = setTimeout(() => {
+        setDisregardAmiodarone(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [disregardAmiodarone]);
+
   const playBeep = () => {
     try {
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
