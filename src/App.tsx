@@ -725,7 +725,7 @@ export default function App() {
               initial={{ x: '100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
-              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              transition={{ type: 'spring', damping: 30, stiffness: 280 }}
               className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden absolute"
             >
               {catchupStep === 1 && (
@@ -748,7 +748,7 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => setWeightType('paed')}
-                      className="bg-blue-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
+                      className="bg-purple-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
                     >
                       Paediatric
                     </button>
@@ -790,7 +790,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => setPaedWeightMethod('weight')}
-                      className="bg-blue-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
+                      className="bg-purple-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
                     >
                       Enter weight
                     </button>
@@ -816,14 +816,14 @@ export default function App() {
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && weightInput && setCatchupStep(3)}
-                        className="w-40 bg-white border-2 border-blue-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-blue-500 outline-none"
+                        className="w-40 bg-white border-2 border-purple-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-purple-500 outline-none"
                       />
                       {weightInput && <span className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-bold pointer-events-none">kg</span>}
                     </div>
                     {weightInput && (
                       <button 
                         onClick={() => setCatchupStep(3)}
-                        className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold btn-base"
+                        className="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold btn-base"
                       >
                         Set
                       </button>
@@ -1173,7 +1173,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
           ) : (
             Object.entries(pharmaSummary).map(([name, info]) => (
-              <StatRow key={name} label={name} value={info.display} />
+              <StatRow key={name} label={name} value={info.display} stacked={true} />
             ))
           )}
         </div>
@@ -1199,9 +1199,18 @@ interface StatRowProps {
   value: string | number;
   color?: string;
   key?: React.Key;
+  stacked?: boolean;
 }
 
-function StatRow({ label, value, color = "text-neutral-900" }: StatRowProps) {
+function StatRow({ label, value, color = "text-neutral-900", stacked = false }: StatRowProps) {
+  if (stacked) {
+    return (
+      <div className="p-2 px-3">
+        <div className="text-neutral-500 text-[16px] font-medium">{label}</div>
+        <div className={`text-[14px] font-black tabular-nums ${color} mt-0.5`}>{value}</div>
+      </div>
+    );
+  }
   return (
     <div className="flex justify-between items-center p-2 px-3">
       <span className="text-neutral-500 text-[16px] font-medium">{label}</span>
