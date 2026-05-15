@@ -56,8 +56,8 @@ type DoseOption = {
 const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Adrenaline push': { 
     doses: [
-      { dose: '1mg', population: 'adult', indication: 'Arrest' },
-      { dose: '0.01mg/kg', population: 'paed', indication: 'Arrest' },
+      { dose: '1mg', population: 'adult', indication: 'Cardiac arrest' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -70,9 +70,9 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Amiodarone': { 
     doses: [
-      { dose: '300mg', population: 'adult', indication: 'VF/VT' },
+      { dose: '300mg', population: 'adult', indication: 'VF/VT cardiac arrest' },
       { dose: '150mg', population: 'adult', indication: 'VT with output' },
-      { dose: '5mg/kg', population: 'paed', indication: 'VF/VT' },
+      { dose: '5mg/kg', population: 'paed', indication: 'VF/VT cardiac arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -84,7 +84,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Calcium': { 
     doses: [
-      { dose: '10mL 10%', population: 'both', indication: 'Arrest' },
+      { dose: '10mL 10%', population: 'both', indication: 'Cardiac arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -109,8 +109,8 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult', indication: 'Arrest' },
-      { dose: '50mg/kg', population: 'paed', indication: 'Arrest' },
+      { dose: '2.5g', population: 'adult', indication: 'Refractory VF' },
+      { dose: '50mg/kg', population: 'paed', indication: 'Cardiac arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -131,7 +131,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '1mMol/kg', population: 'both', indication: 'Hyperkalaemia/OD' },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -1455,10 +1455,10 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               <button
                 key={doseOpt.dose}
                 onClick={() => handleDoseSelect(doseOpt.dose)}
-                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base flex flex-col items-center gap-1"
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
               >
                 {doseOpt.indication && (
-                  <span className="text-xs opacity-75 font-normal">{doseOpt.indication}</span>
+                  <span className="text-xs opacity-75 font-normal">{doseOpt.indication}: </span>
                 )}
                 <span>{calculateDose(doseOpt.dose, state.patientWeight)}</span>
               </button>
