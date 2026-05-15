@@ -421,7 +421,7 @@ export default function App() {
     if (isDue) {
       return { text: "Adrenaline due", isDue: true };
     } else {
-      return { text: `Next adrenaline: CPR round ${nextDueRound}`, isDue: false };
+      return { text: `Next adrenaline: Round ${nextDueRound}`, isDue: false };
     }
   }, [state.treatments, state.cprRound]);
 
@@ -759,19 +759,27 @@ export default function App() {
                   : adrenalineRoundStatus.isDue 
                   ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
                   : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-              } ${amiodaroneStatus.show ? 'flex-1 flex-col gap-0.5' : 'w-full gap-2 sm:gap-2.5'}`}
+              } ${amiodaroneStatus.show ? 'flex-1 flex-col' : 'w-full gap-2 sm:gap-2.5'}`}
             >
               {disregardAdrenaline === 'pending' ? (
-                <span className="text-sm sm:text-base font-bold tracking-tight text-center">Disregard?</span>
+                <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
               ) : disregardAdrenaline === 'confirmed' ? (
                 <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
               ) : amiodaroneStatus.show ? (
                 <>
-                  <span className="text-[9px] sm:text-[11px] font-bold tracking-widest text-center text-neutral-400">
+                  <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
+                    adrenalineRoundStatus.isDue 
+                      ? 'text-[14px] sm:text-[17px] text-neutral-900'
+                      : 'text-[9px] sm:text-[11px] text-neutral-400'
+                  }`}>
                     {adrenalineRoundStatus.text.includes(':') ? adrenalineRoundStatus.text.split(':')[0] + ':' : adrenalineRoundStatus.text}
                   </span>
                   {adrenalineRoundStatus.text.includes(':') && (
-                    <span className="text-3xl sm:text-6xl font-bold tracking-tight text-center text-neutral-900 leading-none">
+                    <span className={`font-bold tracking-tight text-center leading-none ${
+                      adrenalineRoundStatus.isDue
+                        ? 'text-[45px] sm:text-[90px] text-neutral-900'
+                        : 'text-3xl sm:text-6xl text-neutral-900'
+                    }`}>
                       {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
                     </span>
                   )}
@@ -791,7 +799,7 @@ export default function App() {
                     setDisregardAmiodarone('pending');
                   }
                 }}
-                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all duration-300 border-2 cursor-pointer ${
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
                   disregardAmiodarone === 'pending'
                     ? 'bg-red-50 text-red-700 border-red-200'
                     : disregardAmiodarone === 'confirmed'
@@ -802,16 +810,24 @@ export default function App() {
                 }`}
               >
                 {disregardAmiodarone === 'pending' ? (
-                  <span className="text-sm sm:text-base font-bold tracking-tight text-center">Disregard?</span>
+                  <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
                 ) : disregardAmiodarone === 'confirmed' ? (
                   <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
                 ) : (
                   <>
-                    <span className="text-[9px] sm:text-[11px] font-bold tracking-widest text-center text-neutral-400">
+                    <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
+                      amiodaroneStatus.flashRed
+                        ? 'text-[14px] sm:text-[17px] text-neutral-900'
+                        : 'text-[9px] sm:text-[11px] text-neutral-400'
+                    }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
                     </span>
                     {amiodaroneStatus.text.includes(':') && (
-                      <span className="text-3xl sm:text-6xl font-bold tracking-tight text-center text-neutral-900 leading-none">
+                      <span className={`font-bold tracking-tight text-center leading-none ${
+                        amiodaroneStatus.flashRed
+                          ? 'text-[45px] sm:text-[90px] text-neutral-900'
+                          : 'text-3xl sm:text-6xl text-neutral-900'
+                      }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
                       </span>
                     )}
