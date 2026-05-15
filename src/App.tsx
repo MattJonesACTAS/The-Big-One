@@ -481,6 +481,9 @@ export default function App() {
     
     state.treatments.forEach(tx => {
       for (const med of MEDICATIONS) {
+        // Skip Oxygen in pharma summary
+        if (med === 'Oxygen') continue;
+        
         if (tx.name.startsWith(med)) {
           if (!summary[med]) {
             summary[med] = { totalDose: 0, unit: '', count: 0, display: '' };
