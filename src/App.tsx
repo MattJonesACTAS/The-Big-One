@@ -1511,7 +1511,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                     onChange={e => setCustomDose(e.target.value)}
                     onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
                     placeholder={placeholder}
-                    className="flex-1 bg-transparent px-4 py-3 text-base outline-none min-w-0"
+                    className="flex-1 bg-transparent px-4 py-3 text-base outline-none min-w-0 text-right"
                   />
                   {unit && (
                     <span className="pr-4 text-neutral-400 text-sm font-medium whitespace-nowrap">{unit}</span>
