@@ -42,8 +42,8 @@ const INITIAL_STATE: AppState = {
 
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
-  'Atropine', 'Calcium', 'Glucose', 'Ketamine', 'Lignocaine',
-  'Magnesium', 'Midazolam', 'Normal Saline', 'Sodium Bicarbonate', 'Suxamethonium'
+  'Atropine', 'Calcium', 'Glucose', 'Heparin', 'Ketamine', 'Ketamine infusion', 'Lignocaine',
+  'Magnesium', 'Midazolam', 'Normal Saline', 'Oxygen', 'Sodium Bicarbonate', 'Suxamethonium'
 ];
 
 type DoseOption = {
@@ -95,11 +95,24 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
       { dose: 'Other', population: 'both' }
     ] 
   },
+  'Heparin': {
+    doses: [
+      { dose: '5000u', population: 'adult' },
+      { dose: 'Other', population: 'both' }
+    ]
+  },
   'Ketamine': { 
     doses: [
       { dose: '0.5mg/kg', population: 'both', indication: 'CPR-IC' },
       { dose: 'Other', population: 'both' }
     ] 
+  },
+  'Ketamine infusion': {
+    doses: [
+      { dose: '100mg/hr', population: 'both' },
+      { dose: '20mg (2mL)', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ]
   },
   'Lignocaine': { 
     doses: [
@@ -1464,14 +1477,37 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               </button>
             ))}
             
-            {showOther && (
+            {showOther && (() => {
+              // Extract common unit from dose strings
+              const getUnitFromDoses = (doses: string[]): string => {
+                const unitMatches = doses
+                  .filter(d => d !== 'Other')
+                  .map(d => {
+                    // Match common patterns: mg/kg, mL, mg, g, etc.
+                    const match = d.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
+                    return match ? match[1] : null;
+                  })
+                  .filter(Boolean);
+                
+                // Return most common unit or first found
+                if (unitMatches.length > 0) {
+                  return unitMatches[0] as string;
+                }
+                return '';
+              };
+              
+              const doses = filteredDoses.map(d => d.dose);
+              const unit = getUnitFromDoses(doses);
+              const placeholder = unit ? `Custom dose (${unit})...` : 'Custom dose...';
+              
+              return (
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={customDose}
                   onChange={e => setCustomDose(e.target.value)}
                   onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
-                  placeholder="Custom dose..."
+                  placeholder={placeholder}
                   className="flex-1 bg-white border border-neutral-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
                 <button
@@ -1485,7 +1521,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                   </svg>
                 </button>
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </div>
@@ -1516,7 +1553,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           
           <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
           
-          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Oxygen', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
+          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
           
           <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6 mb-4">
             <div className="flex gap-2">
