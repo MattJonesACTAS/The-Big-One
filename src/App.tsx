@@ -1414,6 +1414,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   const handleMedClick = (med: string) => {
     if (DOSE_CONFIG[med]) {
       setSelectedMed(med);
+      setExpandedSection('medications'); // Keep medications section expanded
     } else {
       addTreatment(med);
     }
@@ -1438,9 +1439,10 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   };
   
   const handleBackFromMed = () => {
+    // Update both states atomically to prevent flash
     setSelectedMed(null);
     setCustomDose('');
-    setExpandedSection('medications');
+    setExpandedSection(() => 'medications');
   };
   
   if (selectedMed && DOSE_CONFIG[selectedMed]) {
@@ -1667,6 +1669,7 @@ function TxSection({
         <ChevronDown className={`transition-transform duration-300 ${collapsed ? '-rotate-90' : ''}`} />
       </div>
       <motion.div 
+        initial={{ height: collapsed ? 0 : 'auto', opacity: collapsed ? 0 : 1 }}
         animate={{ height: collapsed ? 0 : 'auto', opacity: collapsed ? 0 : 1 }}
         transition={{ duration: 0.3 }}
         className="overflow-hidden bg-white"
