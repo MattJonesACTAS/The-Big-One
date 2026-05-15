@@ -748,7 +748,7 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => setWeightType('paed')}
-                      className="bg-purple-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
+                      className="bg-pink-400 text-white p-5 rounded-2xl text-base font-bold btn-base"
                     >
                       Paediatric
                     </button>
@@ -790,13 +790,13 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => setPaedWeightMethod('weight')}
-                      className="bg-purple-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
+                      className="bg-pink-400 text-white p-5 rounded-2xl text-base font-bold btn-base"
                     >
                       Enter weight
                     </button>
                     <button 
                       onClick={() => setPaedWeightMethod('age')}
-                      className="bg-purple-600 text-white p-5 rounded-2xl text-base font-bold btn-base"
+                      className="bg-pink-400 text-white p-5 rounded-2xl text-base font-bold btn-base"
                     >
                       Age based weight
                     </button>
@@ -816,14 +816,14 @@ export default function App() {
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && weightInput && setCatchupStep(3)}
-                        className="w-40 bg-white border-2 border-purple-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-purple-500 outline-none"
+                        className="w-40 bg-white border-2 border-pink-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-pink-400 outline-none"
                       />
                       {weightInput && <span className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-bold pointer-events-none">kg</span>}
                     </div>
                     {weightInput && (
                       <button 
                         onClick={() => setCatchupStep(3)}
-                        className="bg-purple-600 text-white px-6 py-2 rounded-xl font-bold btn-base"
+                        className="bg-pink-400 text-white px-6 py-2 rounded-xl font-bold btn-base"
                       >
                         Set
                       </button>
@@ -847,7 +847,7 @@ export default function App() {
                       <button
                         key={age}
                         onClick={() => { setWeightInput(String(weight)); setCatchupStep(3); }}
-                        className="w-full bg-purple-600 text-white p-3 rounded-xl text-sm font-bold btn-base flex justify-between items-center"
+                        className="w-full bg-pink-400 text-white p-3 rounded-xl text-sm font-bold btn-base flex justify-between items-center"
                       >
                         <span>{age}</span>
                         <span>{weight}kg</span>
@@ -887,7 +887,7 @@ export default function App() {
               {catchupStep === 5 && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
-                  <div className="space-y-2 py-3 max-h-[260px] overflow-y-auto px-2">
+                  <div className="space-y-2 py-3 px-2">
                     <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} />
                     <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} />
                     <CounterItem label="Adrenaline" value={priorCounts.adrenaline} onChange={v => setPriorCounts(p => ({ ...p, adrenaline: v }))} />
@@ -980,18 +980,18 @@ function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, se
   };
 
   return (
-    <div className="flex items-center justify-center gap-5">
+    <div className="flex items-center justify-center gap-4">
       <div className="flex flex-col items-center">
-        <button onClick={() => adjust('mins', 1)} className="p-2.5 bg-neutral-100 rounded-lg text-xl font-bold text-neutral-400 hover:text-neutral-900">▲</button>
-        <div className="text-6xl font-bold text-neutral-900 tabular-nums my-3">{value.mins}</div>
-        <button onClick={() => adjust('mins', -1)} className="p-2.5 bg-neutral-100 rounded-lg text-xl font-bold text-neutral-400 hover:text-neutral-900">▼</button>
+        <button onClick={() => adjust('mins', 1)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▲</button>
+        <div className="text-5xl font-bold text-neutral-900 tabular-nums my-2">{value.mins}</div>
+        <button onClick={() => adjust('mins', -1)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▼</button>
         <span className="text-neutral-400 font-bold uppercase text-xs mt-2">min</span>
       </div>
-      <div className="text-6xl font-bold text-neutral-400 mb-10">:</div>
+      <div className="text-5xl font-bold text-neutral-400 mb-8">:</div>
       <div className="flex flex-col items-center">
-        <button onClick={() => adjust('secs', 10)} className="p-2.5 bg-neutral-100 rounded-lg text-xl font-bold text-neutral-400 hover:text-neutral-900">▲</button>
-        <div className="text-6xl font-bold text-neutral-900 tabular-nums my-3">{value.secs.toString().padStart(2, '0')}</div>
-        <button onClick={() => adjust('secs', -10)} className="p-2.5 bg-neutral-100 rounded-lg text-xl font-bold text-neutral-400 hover:text-neutral-900">▼</button>
+        <button onClick={() => adjust('secs', 10)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▲</button>
+        <div className="text-5xl font-bold text-neutral-900 tabular-nums my-2">{value.secs.toString().padStart(2, '0')}</div>
+        <button onClick={() => adjust('secs', -10)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▼</button>
         <span className="text-neutral-400 font-bold uppercase text-xs mt-2">sec</span>
       </div>
     </div>
@@ -1111,6 +1111,16 @@ function SectionGroup({ title, color, items }: { title: string, color: string, i
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
 function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = false }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, isSummary?: boolean }) {
+  // Helper to split treatment name into medication and dose
+  const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
+    // Match dose patterns at the end: numbers followed by units (mg, mcg, mL, mMol, g, kg, %)
+    const doseMatch = name.match(/^(.+?)\s+([\d.]+(?:mg\/kg|mMol\/kg|mL\/kg|mcg|mg|mL|mMol|g|kg|%|\/\d+mL))$/);
+    if (doseMatch) {
+      return { med: doseMatch[1], dose: doseMatch[2] };
+    }
+    return { med: name, dose: null };
+  };
+
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
       {/* Balanced columns: More space for name, even space for times */}
@@ -1132,14 +1142,18 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const elapsedDisplay = tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed));
             const agoVal = tx.prior ? elapsedSeconds : (elapsedSeconds - tx.elapsed);
             const ago = tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal);
+            const { med, dose } = splitTreatmentName(tx.name);
             
             return (
               <div key={i} className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.1fr_1fr_1.4fr_0.9fr]'} px-4 py-4 items-center gap-1`}>
-                <div className={`text-[15px] font-bold pr-1 overflow-hidden text-ellipsis whitespace-nowrap ${
-                  tx.name.toLowerCase().includes('shock') ? 'text-red-600' : 
-                  tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' : 
-                  'text-neutral-900'
-                }`} title={tx.name}>{tx.name}</div>
+                <div className="pr-1">
+                  <div className={`text-[15px] font-bold ${
+                    tx.name.toLowerCase().includes('shock') ? 'text-red-600' : 
+                    tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' : 
+                    'text-neutral-900'
+                  }`}>{med}</div>
+                  {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
+                </div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
                 {!isSummary && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
@@ -1173,7 +1187,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
           ) : (
             Object.entries(pharmaSummary).map(([name, info]) => (
-              <StatRow key={name} label={name} value={info.display} stacked={true} />
+              <StatRow key={name} label={name} value={info.display} />
             ))
           )}
         </div>
