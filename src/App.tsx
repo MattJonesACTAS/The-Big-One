@@ -1457,13 +1457,6 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
     return (
       <div className="h-full overflow-y-auto pb-4">
         <div className="p-6 mb-4">
-          <button 
-            onClick={handleBackFromMed}
-            className="text-emerald-600 font-bold mb-4 flex items-center gap-2"
-          >
-            Back
-          </button>
-          
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
           {state.patientWeight && (
             <p className="text-neutral-500 text-sm mb-2">Patient weight: {state.patientWeight}kg</p>
@@ -1510,7 +1503,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               const placeholder = unit ? `Custom dose (${unit})...` : 'Custom dose...';
               
               return (
-              <div className="flex gap-2">
+              <div className="w-full flex gap-2">
                 <div className="flex-1 relative flex items-center bg-white border border-neutral-200 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500">
                   <input
                     type="text"
@@ -1526,7 +1519,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 </div>
                 <button
                   onClick={handleCustomDoseAdd}
-                  className="bg-emerald-600 text-white px-5 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-emerald-600 text-white px-4 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                   disabled={!customDose}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1538,6 +1531,18 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               );
             })()}
           </div>
+        </div>
+        
+        <div className="p-6 pt-0">
+          <button 
+            onClick={handleBackFromMed}
+            className="text-emerald-600 font-bold flex items-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Back
+          </button>
         </div>
       </div>
     );
