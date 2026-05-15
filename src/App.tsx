@@ -1503,23 +1503,23 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               const placeholder = unit ? `Custom dose (${unit})...` : 'Custom dose...';
               
               return (
-              <div className="w-full flex gap-2">
-                <div className="flex-1 relative flex items-center bg-white border border-neutral-200 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500">
+              <div className="w-full flex gap-2 items-center">
+                <div className="flex-1 relative flex items-center bg-white border border-neutral-200 rounded-xl focus-within:ring-2 focus-within:ring-emerald-500 min-w-0">
                   <input
                     type="text"
                     value={customDose}
                     onChange={e => setCustomDose(e.target.value)}
                     onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
                     placeholder={placeholder}
-                    className="flex-1 bg-transparent px-4 py-3 text-base outline-none"
+                    className="flex-1 bg-transparent px-4 py-3 text-base outline-none min-w-0"
                   />
                   {unit && (
-                    <span className="pr-4 text-neutral-400 text-sm font-medium">{unit}</span>
+                    <span className="pr-4 text-neutral-400 text-sm font-medium whitespace-nowrap">{unit}</span>
                   )}
                 </div>
                 <button
                   onClick={handleCustomDoseAdd}
-                  className="bg-emerald-600 text-white px-4 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                  className="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
                   disabled={!customDose}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
