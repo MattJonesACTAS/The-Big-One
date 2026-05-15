@@ -407,11 +407,11 @@ export default function App() {
     const lastAdr = adrTreatments.pop();
     
     if (!lastAdr) {
-      return { text: "Adrenaline not given", isDue: false };
+      return { text: "", show: false, isDue: false };
     }
     
     if (lastAdr.prior) {
-      return { text: "Next adrenaline: unknown", isDue: false };
+      return { text: "Next adrenaline: unknown", show: true, isDue: false };
     }
 
     const roundGiven = lastAdr.round || (Math.floor(lastAdr.elapsed / 120) + 1);
@@ -419,9 +419,9 @@ export default function App() {
     const isDue = state.cprRound >= nextDueRound;
     
     if (isDue) {
-      return { text: "Next adrenaline due: Now", isDue: true };
+      return { text: "Next adrenaline: Now", show: true, isDue: true };
     } else {
-      return { text: `Next adrenaline: Round ${nextDueRound}`, isDue: false };
+      return { text: `Next adrenaline: Round ${nextDueRound}`, show: true, isDue: false };
     }
   }, [state.treatments, state.cprRound]);
 
@@ -441,7 +441,7 @@ export default function App() {
     const timeUntilNext = 300 - timeSinceLastDose; // 5 minutes = 300 seconds
     
     if (timeUntilNext <= 0) {
-      return { text: "Next amiodarone due: Now", show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
+      return { text: "Next amiodarone: Now", show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
     } else {
       const mins = Math.floor(timeUntilNext / 60);
       const secs = timeUntilNext % 60;
@@ -741,32 +741,29 @@ export default function App() {
           </AnimatePresence>
 
           {/* Adrenaline & Amiodarone Status - Responsive sizing */}
-          <div className={`flex gap-2 sm:gap-3 w-full justify-center mb-2 sm:mb-4 ${amiodaroneStatus.show ? 'max-w-[560px]' : 'max-w-[240px] sm:max-w-[280px]'}`}>
+          <div className={`flex gap-2 sm:gap-3 w-full justify-center mb-2 sm:mb-4 ${
+            adrenalineRoundStatus.show && amiodaroneStatus.show ? 'max-w-[560px]' : 'max-w-[240px] sm:max-w-[280px]'
+          }`}>
             {/* Adrenaline Warning */}
-            <div 
-              onClick={() => {
-                if (disregardAdrenaline === 'pending') {
-                  setDisregardAdrenaline('confirmed');
-                } else if (disregardAdrenaline !== 'confirmed') {
-                  setDisregardAdrenaline('pending');
-                }
-              }}
-              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
-                disregardAdrenaline === 'pending'
-                  ? 'bg-red-50 text-red-700 border-red-200'
-                  : disregardAdrenaline === 'confirmed'
-                  ? 'bg-neutral-50 text-neutral-300 border-neutral-100'
-                  : adrenalineRoundStatus.isDue 
-                  ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                  : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-              } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
-            >
+            {adrenalineRoundStatus.show && disregardAdrenaline !== 'confirmed' && (
+              <div 
+                onClick={() => {
+                  if (disregardAdrenaline === 'pending') {
+                    setDisregardAdrenaline('confirmed');
+                  } else if (disregardAdrenaline !== 'confirmed') {
+                    setDisregardAdrenaline('pending');
+                  }
+                }}
+                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
+                  disregardAdrenaline === 'pending'
+                    ? 'bg-red-50 text-red-700 border-neutral-100'
+                    : adrenalineRoundStatus.isDue 
+                    ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
+                    : 'bg-neutral-100 text-neutral-900 border-neutral-100'
+                } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
+              >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
-              ) : disregardAdrenaline === 'confirmed' ? (
-                <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
-              ) : !adrenalineRoundStatus.text.includes(':') ? (
-                <span className="text-base sm:text-lg font-bold tracking-tight text-center">{adrenalineRoundStatus.text}</span>
               ) : (
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
@@ -786,9 +783,10 @@ export default function App() {
                 </>
               )}
             </div>
+            )}
             
             {/* Amiodarone Warning */}
-            {amiodaroneStatus.show && (
+            {amiodaroneStatus.show && disregardAmiodarone !== 'confirmed' && (
               <div 
                 onClick={() => {
                   if (disregardAmiodarone === 'pending') {
@@ -799,18 +797,14 @@ export default function App() {
                 }}
                 className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
                   disregardAmiodarone === 'pending'
-                    ? 'bg-red-50 text-red-700 border-red-200'
-                    : disregardAmiodarone === 'confirmed'
-                    ? 'bg-neutral-50 text-neutral-300 border-neutral-100'
+                    ? 'bg-red-50 text-red-700 border-neutral-100'
                     : amiodaroneStatus.flashRed
-                    ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
+                    ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
                     : 'bg-neutral-100 text-neutral-900 border-neutral-100'
                 }`}
               >
                 {disregardAmiodarone === 'pending' ? (
                   <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
-                ) : disregardAmiodarone === 'confirmed' ? (
-                  <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
                 ) : (
                   <>
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
