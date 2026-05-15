@@ -717,20 +717,40 @@ export default function App() {
                 adrenalineRoundStatus.isDue 
                   ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
                   : 'bg-neutral-100 text-neutral-400 border-neutral-100'
-              } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
+              } ${amiodaroneStatus.show ? 'flex-1 flex-col' : 'w-full'}`}
             >
-              <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
+              {amiodaroneStatus.show ? (
+                <>
+                  <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                    {adrenalineRoundStatus.text.includes(':') ? adrenalineRoundStatus.text.split(':')[0] + ':' : adrenalineRoundStatus.text}
+                  </span>
+                  {adrenalineRoundStatus.text.includes(':') && (
+                    <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                      {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
+              )}
             </div>
             
             {amiodaroneStatus.show && (
               <div 
-                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 ${
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0 transition-all duration-300 border-2 ${
                   amiodaroneStatus.isDue 
                     ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
                     : 'bg-neutral-100 text-neutral-400 border-neutral-100'
                 }`}
               >
-                <span className="text-sm sm:text-base font-bold tracking-tight">{amiodaroneStatus.text}</span>
+                <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                  {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
+                </span>
+                {amiodaroneStatus.text.includes(':') && (
+                  <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                    {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
+                  </span>
+                )}
               </div>
             )}
           </div>
