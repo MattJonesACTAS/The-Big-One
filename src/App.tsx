@@ -157,12 +157,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Oxygen': {
     doses: [
       { dose: 'Nasal cannulae', population: 'both' },
-      { dose: 'Hudson mask', population: 'both' },
-      { dose: 'Nebuliser', population: 'both' },
-      { dose: 'NRBM', population: 'both' },
-      { dose: 'BVM', population: 'both' },
-      { dose: 'CPAP', population: 'both' },
-      { dose: 'Other', population: 'both' }
+      { dose: 'BVM', population: 'both' }
     ]
   }
 };
@@ -911,7 +906,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && !weightType && (
+              {catchupStep === 5 && !weightType && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">Patient Type</h2>
                   <div className="grid grid-cols-2 gap-3">
@@ -928,11 +923,11 @@ export default function App() {
                       Paediatric
                     </button>
                   </div>
-                  <button onClick={() => setCatchupStep(1)} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                  <button onClick={() => setCatchupStep(4)} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                 </div>
               )}
 
-              {catchupStep === 2 && weightType === 'adult' && (
+              {catchupStep === 5 && weightType === 'adult' && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">Patient Weight (Optional)</h2>
                   <div className="flex flex-col items-center gap-3">
@@ -942,13 +937,13 @@ export default function App() {
                         placeholder="Enter weight"
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && setCatchupStep(3)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleCatchupStart()}
                         className="w-40 bg-white border-2 border-emerald-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-emerald-500 outline-none"
                       />
                       {weightInput && <span className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-bold pointer-events-none">kg</span>}
                     </div>
                     <button 
-                      onClick={() => setCatchupStep(3)}
+                      onClick={handleCatchupStart}
                       className="bg-emerald-600 text-white px-6 py-2 rounded-xl font-bold btn-base"
                     >
                       {weightInput ? 'Set' : 'Skip'}
@@ -958,7 +953,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && weightType === 'paed' && !paedWeightMethod && (
+              {catchupStep === 5 && weightType === 'paed' && !paedWeightMethod && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">Patient Weight</h2>
                   <p className="text-neutral-500 text-sm">Choose how to enter weight</p>
@@ -980,7 +975,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'weight' && (
+              {catchupStep === 5 && weightType === 'paed' && paedWeightMethod === 'weight' && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">Enter Patient Weight</h2>
                   <div className="flex flex-col items-center gap-3">
@@ -990,14 +985,14 @@ export default function App() {
                         placeholder="Enter weight"
                         value={weightInput}
                         onChange={(e) => setWeightInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && weightInput && setCatchupStep(3)}
+                        onKeyDown={(e) => e.key === 'Enter' && weightInput && handleCatchupStart()}
                         className="w-40 bg-white border-2 border-pink-300 rounded-xl px-5 py-3 text-xl font-bold text-center focus:ring-4 focus:ring-pink-400 outline-none"
                       />
                       {weightInput && <span className="absolute right-5 top-1/2 -translate-y-1/2 text-neutral-400 text-lg font-bold pointer-events-none">kg</span>}
                     </div>
                     {weightInput && (
                       <button 
-                        onClick={() => setCatchupStep(3)}
+                        onClick={handleCatchupStart}
                         className="bg-pink-400 text-white px-6 py-2 rounded-xl font-bold btn-base"
                       >
                         Set
@@ -1008,7 +1003,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && weightType === 'paed' && paedWeightMethod === 'age' && (
+              {catchupStep === 5 && weightType === 'paed' && paedWeightMethod === 'age' && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900 mb-3">Select Age</h2>
                   <div className="space-y-2 max-h-[340px] overflow-y-auto p-2">
@@ -1021,7 +1016,7 @@ export default function App() {
                     ].map(([age, weight]) => (
                       <button
                         key={age}
-                        onClick={() => { setWeightInput(String(weight)); setCatchupStep(3); }}
+                        onClick={() => { setWeightInput(String(weight)); handleCatchupStart(); }}
                         className="w-full bg-pink-400 text-white p-3 rounded-xl text-sm font-bold btn-base flex justify-between items-center"
                       >
                         <span>{age}</span>
@@ -1033,33 +1028,33 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 3 && (
+              {catchupStep === 2 && (
                 <div className="text-center space-y-6">
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
                   <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(4); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                    <button onClick={() => setCatchupStep(1)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(3); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                   </div>
                 </div>
               )}
 
-              {catchupStep === 4 && (
+              {catchupStep === 3 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter what the elapsed case time will be when the next rhythm check is due</h2>
+                  <h2 className="text-xl font-bold text-neutral-900 px-4">What will the case time be when the next rhythm check is due?</h2>
                   <TimePicker 
                     value={catchupRhythm} 
                     onChange={setCatchupRhythm} 
                     maxSeconds={catchupElapsed.mins * 60 + catchupElapsed.secs + 120}
                   />
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                    <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => setCatchupStep(4)} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                   </div>
                 </div>
               )}
 
-              {catchupStep === 5 && (
+              {catchupStep === 4 && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
                   <div className="space-y-2 py-3 px-2">
@@ -1079,8 +1074,8 @@ export default function App() {
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={handleCatchupStart} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Start Timer</button>
+                    <button onClick={() => setCatchupStep(3)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => setCatchupStep(5)} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                   </div>
                 </div>
               )}
