@@ -19,8 +19,10 @@ import {
   Clock,
   Zap,
   ShieldCheck,
-  Stethoscope
+  Stethoscope,
+  Camera
 } from 'lucide-react';
+import { createWorker } from 'tesseract.js';
 import { AppState, Treatment, OverlayType } from './types';
 
 // --- Constants ---
@@ -249,6 +251,8 @@ export default function App() {
   const [weightInput, setWeightInput] = useState('');
   const [priorCounts, setPriorCounts] = useState({ shock: 0, disarm: 0, adrenaline: 0 });
   const [priorTxs, setPriorTxs] = useState<string[]>([]);
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
   const [isCaseClosed, setIsCaseClosed] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
@@ -577,6 +581,42 @@ export default function App() {
       patientType: weightType
     });
     setShowCatchup(false);
+  };
+
+  const handleMonitorScan = async (imageFile: File) => {
+    setIsProcessingOCR(true);
+    setOcrError(null);
+
+    try {
+      const worker = await createWorker('eng');
+      const { data: { text } } = await worker.recognize(imageFile);
+      await worker.terminate();
+
+      // Look for time patterns: MM:SS or M:SS
+      const timePattern = /(\d{1,2}):(\d{2})/g;
+      const matches = [...text.matchAll(timePattern)];
+
+      if (matches.length >= 2) {
+        // First match: elapsed time
+        const elapsedMins = parseInt(matches[0][1]);
+        const elapsedSecs = parseInt(matches[0][2]);
+        
+        // Second match: CPR/rhythm timer
+        const rhythmMins = parseInt(matches[1][1]);
+        const rhythmSecs = parseInt(matches[1][2]);
+
+        setCatchupElapsed({ mins: elapsedMins, secs: elapsedSecs });
+        setCatchupRhythm({ mins: rhythmMins, secs: rhythmSecs });
+        
+        setIsProcessingOCR(false);
+      } else {
+        setOcrError('Could not find two time values in the image. Please enter manually.');
+        setIsProcessingOCR(false);
+      }
+    } catch (error) {
+      setOcrError('Failed to process image. Please try again or enter manually.');
+      setIsProcessingOCR(false);
+    }
   };
 
   const deleteCase = () => {
@@ -1030,8 +1070,52 @@ export default function App() {
 
               {catchupStep === 2 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter the elapsed case time on the monitor</h2>
-                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
+                  <h2 className="text-xl font-bold text-neutral-900 px-4">Scan or enter monitor times</h2>
+                  <p className="text-neutral-600 text-sm px-4">The app will extract both the elapsed time and CPR timer from your monitor</p>
+                  
+                  {!isProcessingOCR && (
+                    <>
+                      <div className="space-y-3">
+                        <label className="block">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handleMonitorScan(file);
+                            }}
+                            className="hidden"
+                            id="monitor-camera"
+                          />
+                          <div
+                            onClick={() => document.getElementById('monitor-camera')?.click()}
+                            className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold btn-base flex items-center justify-center gap-2 cursor-pointer"
+                          >
+                            <Camera size={20} />
+                            Scan Monitor
+                          </div>
+                        </label>
+                        <div className="text-neutral-400 text-sm">or enter manually below</div>
+                      </div>
+                      
+                      {ocrError && (
+                        <div className="bg-red-50 text-red-700 p-3 rounded-xl text-sm">
+                          {ocrError}
+                        </div>
+                      )}
+                      
+                      <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
+                    </>
+                  )}
+                  
+                  {isProcessingOCR && (
+                    <div className="py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+                      <p className="text-neutral-600">Processing monitor image...</p>
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(1)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                     <button onClick={() => { setCatchupRhythm(catchupElapsed); setCatchupStep(3); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
@@ -1042,6 +1126,7 @@ export default function App() {
               {catchupStep === 3 && (
                 <div className="text-center space-y-6">
                   <h2 className="text-xl font-bold text-neutral-900 px-4">What will the case time be when the next rhythm check is due?</h2>
+                  <p className="text-neutral-600 text-sm px-4">Verify or adjust the CPR timer value</p>
                   <TimePicker 
                     value={catchupRhythm} 
                     onChange={setCatchupRhythm} 
