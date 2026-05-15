@@ -676,12 +676,12 @@ export default function App() {
           {/* Corner Cards */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
               <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
             </div>
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 leading-none">{state.cprRound}</span>
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
+              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{state.cprRound}</span>
             </div>
           </div>
 
@@ -776,12 +776,12 @@ export default function App() {
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                     adrenalineRoundStatus.isDue 
-                      ? 'text-[14px] sm:text-[17px] text-red-700'
-                      : 'text-[9px] sm:text-[11px] text-neutral-900'
+                      ? 'text-[15px] sm:text-[19px] text-red-700'
+                      : 'text-[10px] sm:text-[12px] text-neutral-900'
                   }`}>
                     {adrenalineRoundStatus.text.split(':')[0] + ':'}
                   </span>
-                  <span className={`font-bold tracking-tight text-center leading-none ${
+                  <span className={`font-bold text-center leading-none tabular-nums ${
                     adrenalineRoundStatus.isDue
                       ? 'text-[32px] sm:text-[65px] text-red-700'
                       : 'text-[22px] sm:text-[43px] text-neutral-400'
@@ -820,13 +820,13 @@ export default function App() {
                   <>
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                       amiodaroneStatus.flashRed
-                        ? 'text-[14px] sm:text-[17px] text-red-700'
-                        : 'text-[9px] sm:text-[11px] text-neutral-900'
+                        ? 'text-[15px] sm:text-[19px] text-red-700'
+                        : 'text-[10px] sm:text-[12px] text-neutral-900'
                     }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
                     </span>
                     {amiodaroneStatus.text.includes(':') && (
-                      <span className={`font-bold tracking-tight text-center leading-none ${
+                      <span className={`font-bold text-center leading-none tabular-nums ${
                         amiodaroneStatus.flashRed
                           ? 'text-[32px] sm:text-[65px] text-red-700'
                           : 'text-[22px] sm:text-[43px] text-neutral-400'
