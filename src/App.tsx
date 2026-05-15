@@ -740,32 +740,30 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* Adrenaline & Amiodarone Status - Responsive sizing */}
-          <div className={`flex gap-2 sm:gap-3 w-full max-w-[560px] mb-2 sm:mb-4 ${
-            adrenalineRoundStatus.show && amiodaroneStatus.show 
-              ? 'justify-between' 
-              : adrenalineRoundStatus.show 
-              ? 'justify-start' 
-              : 'justify-end'
-          }`}>
+          {/* Adrenaline & Amiodarone Status - Always rendered, visibility controlled */}
+          <div className="flex gap-2 sm:gap-3 w-full max-w-[560px] justify-between mb-2 sm:mb-4">
             {/* Adrenaline Warning */}
-            {adrenalineRoundStatus.show && disregardAdrenaline !== 'confirmed' && (
-              <div 
-                onClick={() => {
-                  if (disregardAdrenaline === 'pending') {
-                    setDisregardAdrenaline('confirmed');
-                  } else if (disregardAdrenaline !== 'confirmed') {
-                    setDisregardAdrenaline('pending');
-                  }
-                }}
-                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
-                  disregardAdrenaline === 'pending'
-                    ? 'bg-red-50 text-red-700 border-neutral-100'
-                    : adrenalineRoundStatus.isDue 
-                    ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
-                    : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-                } ${amiodaroneStatus.show ? 'flex-1' : 'w-[240px] sm:w-[268px]'}`}
-              >
+            <div 
+              onClick={() => {
+                if (!adrenalineRoundStatus.show || disregardAdrenaline === 'confirmed') return;
+                if (disregardAdrenaline === 'pending') {
+                  setDisregardAdrenaline('confirmed');
+                } else if (disregardAdrenaline !== 'confirmed') {
+                  setDisregardAdrenaline('pending');
+                }
+              }}
+              className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center border-2 transition-all duration-300 ${
+                !adrenalineRoundStatus.show || disregardAdrenaline === 'confirmed' 
+                  ? 'opacity-0 pointer-events-none' 
+                  : 'opacity-100 cursor-pointer'
+              } ${
+                disregardAdrenaline === 'pending'
+                  ? 'bg-red-50 text-red-700 border-neutral-100'
+                  : adrenalineRoundStatus.isDue 
+                  ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
+                  : 'bg-neutral-100 text-neutral-900 border-neutral-100'
+              }`}
+            >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
               ) : (
@@ -787,20 +785,21 @@ export default function App() {
                 </>
               )}
             </div>
-            )}
             
             {/* Amiodarone Warning */}
-            {amiodaroneStatus.show && disregardAmiodarone !== 'confirmed' && (
-              <div 
+            <div 
                 onClick={() => {
+                  if (!amiodaroneStatus.show || disregardAmiodarone === 'confirmed') return;
                   if (disregardAmiodarone === 'pending') {
                     setDisregardAmiodarone('confirmed');
                   } else if (disregardAmiodarone !== 'confirmed') {
                     setDisregardAmiodarone('pending');
                   }
                 }}
-                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
-                  adrenalineRoundStatus.show ? 'flex-1' : 'w-[240px] sm:w-[268px]'
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center border-2 transition-all duration-300 ${
+                  !amiodaroneStatus.show || disregardAmiodarone === 'confirmed'
+                    ? 'opacity-0 pointer-events-none'
+                    : 'opacity-100 cursor-pointer'
                 } ${
                   disregardAmiodarone === 'pending'
                     ? 'bg-red-50 text-red-700 border-neutral-100'
@@ -832,7 +831,6 @@ export default function App() {
                   </>
                 )}
               </div>
-            )}
           </div>
         </div>
       </div>
