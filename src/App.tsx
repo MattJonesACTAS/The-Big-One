@@ -419,7 +419,7 @@ export default function App() {
     const isDue = state.cprRound >= nextDueRound;
     
     if (isDue) {
-      return { text: "Adrenaline due: Now", isDue: true };
+      return { text: "Next adrenaline due: Now", isDue: true };
     } else {
       return { text: `Next adrenaline: Round ${nextDueRound}`, isDue: false };
     }
@@ -441,12 +441,7 @@ export default function App() {
     const timeUntilNext = 300 - timeSinceLastDose; // 5 minutes = 300 seconds
     
     if (timeUntilNext <= 0) {
-      // Count into negatives
-      const overdue = Math.abs(timeUntilNext);
-      const mins = Math.floor(overdue / 60);
-      const secs = overdue % 60;
-      const timeStr = `-${mins}:${secs.toString().padStart(2, '0')}`;
-      return { text: `Amiodarone due: ${timeStr}`, show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
+      return { text: "Next amiodarone due: Now", show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
     } else {
       const mins = Math.floor(timeUntilNext / 60);
       const secs = timeUntilNext % 60;
@@ -776,14 +771,14 @@ export default function App() {
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                     adrenalineRoundStatus.isDue 
-                      ? 'text-[15px] sm:text-[19px] text-red-700'
+                      ? 'text-[10px] sm:text-[12px] text-red-700'
                       : 'text-[10px] sm:text-[12px] text-neutral-900'
                   }`}>
                     {adrenalineRoundStatus.text.split(':')[0] + ':'}
                   </span>
                   <span className={`font-bold text-center leading-none tabular-nums ${
                     adrenalineRoundStatus.isDue
-                      ? 'text-[32px] sm:text-[65px] text-red-700'
+                      ? 'text-[22px] sm:text-[43px] text-red-700'
                       : 'text-[22px] sm:text-[43px] text-neutral-400'
                   }`}>
                     {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
@@ -820,7 +815,7 @@ export default function App() {
                   <>
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                       amiodaroneStatus.flashRed
-                        ? 'text-[15px] sm:text-[19px] text-red-700'
+                        ? 'text-[10px] sm:text-[12px] text-red-700'
                         : 'text-[10px] sm:text-[12px] text-neutral-900'
                     }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
@@ -828,7 +823,7 @@ export default function App() {
                     {amiodaroneStatus.text.includes(':') && (
                       <span className={`font-bold text-center leading-none tabular-nums ${
                         amiodaroneStatus.flashRed
-                          ? 'text-[32px] sm:text-[65px] text-red-700'
+                          ? 'text-[22px] sm:text-[43px] text-red-700'
                           : 'text-[22px] sm:text-[43px] text-neutral-400'
                       }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
