@@ -492,7 +492,7 @@ export default function App() {
           if (doseStr) {
             // For weight-based doses with calculated value: "0.01mg/kg (3.5mg)"
             // Extract the calculated value in parentheses
-            const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|g|mcg|ml|mL)\)/);
+            const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|mL|mMol|mcg|g|u|%)\)/i);
             if (calculatedMatch) {
               const [_, amount, unit] = calculatedMatch;
               if (!summary[med].unit) summary[med].unit = unit;
@@ -501,7 +501,7 @@ export default function App() {
               }
             } else {
               // Direct dose: "1mg", "300mg", "100mL", etc.
-              const directMatch = doseStr.match(/([\d.]+)(mg|g|mcg|ml|mL)/);
+              const directMatch = doseStr.match(/([\d.]+)(mg|mL|mMol|mcg|g|u|%)/i);
               if (directMatch) {
                 const [_, amount, unit] = directMatch;
                 if (!summary[med].unit) summary[med].unit = unit;
@@ -1431,8 +1431,21 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   };
   
   const handleCustomDoseAdd = () => {
-    if (selectedMed && customDose) {
-      addTreatment(`${selectedMed} ${customDose}`);
+    if (selectedMed && customDose && DOSE_CONFIG[selectedMed]) {
+      // Extract unit from dose options
+      const doses = DOSE_CONFIG[selectedMed].doses.map(d => d.dose);
+      const unitMatches = doses
+        .filter(d => d !== 'Other')
+        .map(d => {
+          const match = d.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
+          return match ? match[1] : null;
+        })
+        .filter(Boolean);
+      
+      const unit = unitMatches.length > 0 ? unitMatches[0] : '';
+      const doseWithUnit = unit ? `${customDose}${unit}` : customDose;
+      
+      addTreatment(`${selectedMed} ${doseWithUnit}`);
       setSelectedMed(null);
       setCustomDose('');
     }
