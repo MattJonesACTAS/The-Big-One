@@ -764,7 +764,7 @@ export default function App() {
                     : adrenalineRoundStatus.isDue 
                     ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
                     : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-                } ${amiodaroneStatus.show ? 'flex-1' : 'w-[240px] sm:w-[280px]'}`}
+                } ${amiodaroneStatus.show ? 'flex-1' : 'flex-1'}`}
               >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
@@ -799,9 +799,7 @@ export default function App() {
                     setDisregardAmiodarone('pending');
                   }
                 }}
-                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
-                  adrenalineRoundStatus.show ? 'flex-1' : 'w-[240px] sm:w-[280px]'
-                } ${
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
                   disregardAmiodarone === 'pending'
                     ? 'bg-red-50 text-red-700 border-neutral-100'
                     : amiodaroneStatus.flashRed
