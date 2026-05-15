@@ -741,8 +741,12 @@ export default function App() {
           </AnimatePresence>
 
           {/* Adrenaline & Amiodarone Status - Responsive sizing */}
-          <div className={`flex gap-2 sm:gap-3 w-full mb-2 sm:mb-4 ${
-            adrenalineRoundStatus.show && amiodaroneStatus.show ? 'max-w-[560px] justify-between' : 'max-w-[560px]'
+          <div className={`flex gap-2 sm:gap-3 w-full max-w-[560px] mb-2 sm:mb-4 ${
+            adrenalineRoundStatus.show && amiodaroneStatus.show 
+              ? 'justify-between' 
+              : adrenalineRoundStatus.show 
+              ? 'justify-start' 
+              : 'justify-end'
           }`}>
             {/* Adrenaline Warning */}
             {adrenalineRoundStatus.show && disregardAdrenaline !== 'confirmed' && (
@@ -795,8 +799,8 @@ export default function App() {
                     setDisregardAmiodarone('pending');
                   }
                 }}
-                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
-                  !adrenalineRoundStatus.show ? 'ml-auto w-[240px] sm:w-[280px]' : ''
+                className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
+                  adrenalineRoundStatus.show ? 'flex-1' : 'w-[240px] sm:w-[280px]'
                 } ${
                   disregardAmiodarone === 'pending'
                     ? 'bg-red-50 text-red-700 border-neutral-100'
