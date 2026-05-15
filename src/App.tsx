@@ -672,11 +672,11 @@ export default function App() {
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">Total time</span>
-              <span className="text-3xl sm:text-6xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
+              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
             </div>
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
               <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-3xl sm:text-6xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
+              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
             </div>
           </div>
 
@@ -777,8 +777,8 @@ export default function App() {
                   {adrenalineRoundStatus.text.includes(':') && (
                     <span className={`font-bold tracking-tight text-center leading-none ${
                       adrenalineRoundStatus.isDue
-                        ? 'text-[45px] sm:text-[90px] text-neutral-900'
-                        : 'text-3xl sm:text-6xl text-neutral-900'
+                        ? 'text-[36px] sm:text-[72px] text-neutral-900'
+                        : 'text-2xl sm:text-5xl text-neutral-900'
                     }`}>
                       {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
                     </span>
@@ -825,8 +825,8 @@ export default function App() {
                     {amiodaroneStatus.text.includes(':') && (
                       <span className={`font-bold tracking-tight text-center leading-none ${
                         amiodaroneStatus.flashRed
-                          ? 'text-[45px] sm:text-[90px] text-neutral-900'
-                          : 'text-3xl sm:text-6xl text-neutral-900'
+                          ? 'text-[36px] sm:text-[72px] text-neutral-900'
+                          : 'text-2xl sm:text-5xl text-neutral-900'
                       }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
                       </span>
