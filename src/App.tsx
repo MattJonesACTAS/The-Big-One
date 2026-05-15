@@ -1455,30 +1455,34 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               <button
                 key={doseOpt.dose}
                 onClick={() => handleDoseSelect(doseOpt.dose)}
-                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
               >
                 {doseOpt.indication && (
-                  <span className="text-xs opacity-75 font-normal">{doseOpt.indication}: </span>
+                  <span className="text-[10px] opacity-60 font-normal uppercase tracking-wide">{doseOpt.indication}</span>
                 )}
-                <span>{calculateDose(doseOpt.dose, state.patientWeight)}</span>
+                <span className="text-lg">{calculateDose(doseOpt.dose, state.patientWeight)}</span>
               </button>
             ))}
             
             {showOther && (
-              <div className="space-y-2">
+              <div className="flex gap-2">
                 <input
                   type="text"
                   value={customDose}
                   onChange={e => setCustomDose(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && customDose && handleCustomDoseAdd()}
                   placeholder="Custom dose..."
-                  className="w-full bg-white border border-neutral-200 rounded-xl p-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="flex-1 bg-white border border-neutral-200 rounded-xl px-4 py-3 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
                 />
                 <button
                   onClick={handleCustomDoseAdd}
-                  className="w-full bg-neutral-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+                  className="bg-emerald-600 text-white px-5 rounded-xl font-bold btn-base disabled:opacity-50 disabled:cursor-not-allowed"
                   disabled={!customDose}
                 >
-                  Add Custom Dose
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
                 </button>
               </div>
             )}
