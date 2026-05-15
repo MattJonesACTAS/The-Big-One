@@ -396,6 +396,31 @@ export default function App() {
     }
   }, [state.treatments, state.cprRound]);
 
+  const amiodaroneStatus = useMemo(() => {
+    const amioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
+    const lastAmio = amioTreatments[amioTreatments.length - 1];
+    
+    if (!lastAmio) {
+      return { text: "", show: false, isDue: false, countdown: 0 };
+    }
+    
+    if (lastAmio.prior) {
+      return { text: "Next amiodarone: unknown", show: true, isDue: false, countdown: 0 };
+    }
+
+    const timeSinceLastDose = state.elapsedSeconds - lastAmio.elapsed;
+    const timeUntilNext = 300 - timeSinceLastDose; // 5 minutes = 300 seconds
+    
+    if (timeUntilNext <= 0) {
+      return { text: "Amiodarone due", show: true, isDue: true, countdown: 0 };
+    } else {
+      const mins = Math.floor(timeUntilNext / 60);
+      const secs = timeUntilNext % 60;
+      const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+      return { text: `Next amiodarone: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext };
+    }
+  }, [state.treatments, state.elapsedSeconds]);
+
 
   const pharmaSummary = useMemo(() => {
     const summary: Record<string, { totalDose: number, unit: string, count: number, display: string }> = {};
@@ -685,15 +710,29 @@ export default function App() {
             )}
           </AnimatePresence>
 
-          {/* Adrenaline Status - Responsive sizing */}
-          <div 
-            className={`w-full max-w-[240px] sm:max-w-[280px] p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 mb-2 sm:mb-4 ${
-              adrenalineRoundStatus.isDue 
-                ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                : 'bg-neutral-100 text-neutral-400 border-neutral-100'
-            }`}
-          >
-            <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
+          {/* Adrenaline & Amiodarone Status - Responsive sizing */}
+          <div className={`flex gap-2 sm:gap-3 w-full justify-center mb-2 sm:mb-4 ${amiodaroneStatus.show ? 'max-w-[560px]' : 'max-w-[240px] sm:max-w-[280px]'}`}>
+            <div 
+              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 ${
+                adrenalineRoundStatus.isDue 
+                  ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
+                  : 'bg-neutral-100 text-neutral-400 border-neutral-100'
+              } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
+            >
+              <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
+            </div>
+            
+            {amiodaroneStatus.show && (
+              <div 
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 ${
+                  amiodaroneStatus.isDue 
+                    ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
+                    : 'bg-neutral-100 text-neutral-400 border-neutral-100'
+                }`}
+              >
+                <span className="text-sm sm:text-base font-bold tracking-tight">{amiodaroneStatus.text}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
