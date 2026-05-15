@@ -212,7 +212,16 @@ export default function App() {
     return INITIAL_STATE;
   });
 
-  const [showCatchup, setShowCatchup] = useState(!localStorage.getItem('theBigOneState'));
+  const [showCatchup, setShowCatchup] = useState(() => {
+    const saved = localStorage.getItem('theBigOneState');
+    if (!saved) return true; // No saved state = show catchup
+    try {
+      const loaded = JSON.parse(saved);
+      return !loaded.running; // Show catchup if timer not running
+    } catch (e) {
+      return true;
+    }
+  });
   const [catchupStep, setCatchupStep] = useState(1);
   const [catchupElapsed, setCatchupElapsed] = useState({ mins: 0, secs: 0 });
   const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
