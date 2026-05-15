@@ -741,8 +741,8 @@ export default function App() {
           </AnimatePresence>
 
           {/* Adrenaline & Amiodarone Status - Responsive sizing */}
-          <div className={`flex gap-2 sm:gap-3 w-full justify-center mb-2 sm:mb-4 ${
-            adrenalineRoundStatus.show && amiodaroneStatus.show ? 'max-w-[560px]' : 'max-w-[240px] sm:max-w-[280px]'
+          <div className={`flex gap-2 sm:gap-3 w-full mb-2 sm:mb-4 ${
+            adrenalineRoundStatus.show && amiodaroneStatus.show ? 'max-w-[560px] justify-between' : 'max-w-[560px]'
           }`}>
             {/* Adrenaline Warning */}
             {adrenalineRoundStatus.show && disregardAdrenaline !== 'confirmed' && (
@@ -760,7 +760,7 @@ export default function App() {
                     : adrenalineRoundStatus.isDue 
                     ? 'bg-red-50 text-red-700 border-neutral-100 animate-pulse' 
                     : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-                } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
+                } ${amiodaroneStatus.show ? 'flex-1' : 'w-[240px] sm:w-[280px]'}`}
               >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
@@ -796,6 +796,8 @@ export default function App() {
                   }
                 }}
                 className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
+                  !adrenalineRoundStatus.show ? 'ml-auto w-[240px] sm:w-[280px]' : ''
+                } ${
                   disregardAmiodarone === 'pending'
                     ? 'bg-red-50 text-red-700 border-neutral-100'
                     : amiodaroneStatus.flashRed
