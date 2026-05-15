@@ -771,14 +771,14 @@ export default function App() {
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                     adrenalineRoundStatus.isDue 
-                      ? 'text-[14px] sm:text-[17px] text-neutral-900'
+                      ? 'text-[14px] sm:text-[17px] text-red-700'
                       : 'text-[9px] sm:text-[11px] text-neutral-900'
                   }`}>
                     {adrenalineRoundStatus.text.split(':')[0] + ':'}
                   </span>
                   <span className={`font-bold tracking-tight text-center leading-none ${
                     adrenalineRoundStatus.isDue
-                      ? 'text-[32px] sm:text-[65px] text-neutral-900'
+                      ? 'text-[32px] sm:text-[65px] text-red-700'
                       : 'text-[22px] sm:text-[43px] text-neutral-400'
                   }`}>
                     {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
@@ -815,7 +815,7 @@ export default function App() {
                   <>
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                       amiodaroneStatus.flashRed
-                        ? 'text-[14px] sm:text-[17px] text-neutral-900'
+                        ? 'text-[14px] sm:text-[17px] text-red-700'
                         : 'text-[9px] sm:text-[11px] text-neutral-900'
                     }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
@@ -823,7 +823,7 @@ export default function App() {
                     {amiodaroneStatus.text.includes(':') && (
                       <span className={`font-bold tracking-tight text-center leading-none ${
                         amiodaroneStatus.flashRed
-                          ? 'text-[32px] sm:text-[65px] text-neutral-900'
+                          ? 'text-[32px] sm:text-[65px] text-red-700'
                           : 'text-[22px] sm:text-[43px] text-neutral-400'
                       }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
