@@ -232,6 +232,8 @@ export default function App() {
   const [priorTxs, setPriorTxs] = useState<string[]>([]);
   const [isCaseClosed, setIsCaseClosed] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
+  const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
@@ -371,6 +373,14 @@ export default function App() {
       currentOverlay: name === 'Disarm — ROSC' ? 'rosc' : null
     }));
     setIsShockForced(false);
+    
+    // Reset disregard states when new doses given
+    if (name.includes('Adrenaline')) {
+      setDisregardAdrenaline(null);
+    }
+    if (name.includes('Amiodarone')) {
+      setDisregardAmiodarone(null);
+    }
   };
 
   const adrenalineRoundStatus = useMemo(() => {
@@ -401,23 +411,24 @@ export default function App() {
     const lastAmio = amioTreatments[amioTreatments.length - 1];
     
     if (!lastAmio) {
-      return { text: "", show: false, isDue: false, countdown: 0 };
+      return { text: "", show: false, isDue: false, countdown: 0, flashRed: false };
     }
     
     if (lastAmio.prior) {
-      return { text: "Next amiodarone: unknown", show: true, isDue: false, countdown: 0 };
+      return { text: "Next amiodarone: unknown", show: true, isDue: false, countdown: 0, flashRed: false };
     }
 
     const timeSinceLastDose = state.elapsedSeconds - lastAmio.elapsed;
     const timeUntilNext = 300 - timeSinceLastDose; // 5 minutes = 300 seconds
     
     if (timeUntilNext <= 0) {
-      return { text: "Amiodarone due", show: true, isDue: true, countdown: 0 };
+      return { text: "Amiodarone due", show: true, isDue: true, countdown: 0, flashRed: true };
     } else {
       const mins = Math.floor(timeUntilNext / 60);
       const secs = timeUntilNext % 60;
       const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
-      return { text: `Next amiodarone: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext };
+      const flashRed = timeUntilNext <= 30; // Flash red when 30s or less
+      return { text: `Next amiodarone: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext, flashRed };
     }
   }, [state.treatments, state.elapsedSeconds]);
 
@@ -712,14 +723,30 @@ export default function App() {
 
           {/* Adrenaline & Amiodarone Status - Responsive sizing */}
           <div className={`flex gap-2 sm:gap-3 w-full justify-center mb-2 sm:mb-4 ${amiodaroneStatus.show ? 'max-w-[560px]' : 'max-w-[240px] sm:max-w-[280px]'}`}>
+            {/* Adrenaline Warning */}
             <div 
-              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center gap-2 sm:gap-2.5 transition-all duration-300 border-2 ${
-                adrenalineRoundStatus.isDue 
+              onClick={() => {
+                if (disregardAdrenaline === 'pending') {
+                  setDisregardAdrenaline('confirmed');
+                } else if (disregardAdrenaline !== 'confirmed') {
+                  setDisregardAdrenaline('pending');
+                }
+              }}
+              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
+                disregardAdrenaline === 'pending'
+                  ? 'bg-red-50 text-red-700 border-red-200'
+                  : disregardAdrenaline === 'confirmed'
+                  ? 'bg-neutral-50 text-neutral-300 border-neutral-100'
+                  : adrenalineRoundStatus.isDue 
                   ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                  : 'bg-neutral-100 text-neutral-400 border-neutral-100'
-              } ${amiodaroneStatus.show ? 'flex-1 flex-col' : 'w-full'}`}
+                  : 'bg-neutral-100 text-neutral-900 border-neutral-100'
+              } ${amiodaroneStatus.show ? 'flex-1 flex-col gap-0.5' : 'w-full gap-2 sm:gap-2.5'}`}
             >
-              {amiodaroneStatus.show ? (
+              {disregardAdrenaline === 'pending' ? (
+                <span className="text-sm sm:text-base font-bold tracking-tight text-center">Disregard?</span>
+              ) : disregardAdrenaline === 'confirmed' ? (
+                <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
+              ) : amiodaroneStatus.show ? (
                 <>
                   <span className="text-sm sm:text-base font-bold tracking-tight text-center">
                     {adrenalineRoundStatus.text.includes(':') ? adrenalineRoundStatus.text.split(':')[0] + ':' : adrenalineRoundStatus.text}
@@ -735,21 +762,41 @@ export default function App() {
               )}
             </div>
             
+            {/* Amiodarone Warning */}
             {amiodaroneStatus.show && (
               <div 
-                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0 transition-all duration-300 border-2 ${
-                  amiodaroneStatus.isDue 
+                onClick={() => {
+                  if (disregardAmiodarone === 'pending') {
+                    setDisregardAmiodarone('confirmed');
+                  } else if (disregardAmiodarone !== 'confirmed') {
+                    setDisregardAmiodarone('pending');
+                  }
+                }}
+                className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center gap-0.5 transition-all duration-300 border-2 cursor-pointer ${
+                  disregardAmiodarone === 'pending'
+                    ? 'bg-red-50 text-red-700 border-red-200'
+                    : disregardAmiodarone === 'confirmed'
+                    ? 'bg-neutral-50 text-neutral-300 border-neutral-100'
+                    : amiodaroneStatus.flashRed
                     ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
-                    : 'bg-neutral-100 text-neutral-400 border-neutral-100'
+                    : 'bg-neutral-100 text-neutral-900 border-neutral-100'
                 }`}
               >
-                <span className="text-sm sm:text-base font-bold tracking-tight text-center">
-                  {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
-                </span>
-                {amiodaroneStatus.text.includes(':') && (
-                  <span className="text-sm sm:text-base font-bold tracking-tight text-center">
-                    {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
-                  </span>
+                {disregardAmiodarone === 'pending' ? (
+                  <span className="text-sm sm:text-base font-bold tracking-tight text-center">Disregard?</span>
+                ) : disregardAmiodarone === 'confirmed' ? (
+                  <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
+                ) : (
+                  <>
+                    <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                      {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
+                    </span>
+                    {amiodaroneStatus.text.includes(':') && (
+                      <span className="text-sm sm:text-base font-bold tracking-tight text-center">
+                        {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
+                      </span>
+                    )}
+                  </>
                 )}
               </div>
             )}
