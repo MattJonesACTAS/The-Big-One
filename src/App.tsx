@@ -1552,7 +1552,6 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       <TxSection 
         title="Rhythm Check" 
         color="pink" 
-        initiallyExpanded={isShockForced}
         sectionId="rhythmCheck"
         expandedSection={expandedSection}
         onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
