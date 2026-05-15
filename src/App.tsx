@@ -49,13 +49,15 @@ const MEDICATIONS = [
 type DoseOption = {
   dose: string;
   population: 'adult' | 'paed' | 'both';
+  indication?: string;
 };
+
 
 const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Adrenaline push': { 
     doses: [
-      { dose: '1mg', population: 'adult' },
-      { dose: '0.01mg/kg', population: 'paed' },
+      { dose: '1mg', population: 'adult', indication: 'Arrest' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -68,21 +70,21 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Amiodarone': { 
     doses: [
-      { dose: '300mg', population: 'adult' },
-      { dose: '150mg', population: 'adult' },
-      { dose: '5mg/kg', population: 'paed' },
+      { dose: '300mg', population: 'adult', indication: 'VF/VT' },
+      { dose: '150mg', population: 'adult', indication: 'VT with output' },
+      { dose: '5mg/kg', population: 'paed', indication: 'VF/VT' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Atropine': { 
     doses: [
-      { dose: '600mcg', population: 'adult' },
+      { dose: '600mcg', population: 'adult', indication: 'Bradycardia' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Calcium': { 
     doses: [
-      { dose: '10mL 10%', population: 'both' },
+      { dose: '10mL 10%', population: 'both', indication: 'Arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -95,21 +97,20 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Ketamine': { 
     doses: [
-      { dose: '1mg/kg', population: 'both' },
-      { dose: '2mg/kg', population: 'both' },
+      { dose: '0.5mg/kg', population: 'both', indication: 'CPR-IC' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Lignocaine': { 
     doses: [
-      { dose: '1mg/kg', population: 'both' },
+      { dose: '1mg/kg', population: 'both', indication: 'VT with output' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult' },
-      { dose: '50mg/kg', population: 'paed' },
+      { dose: '2.5g', population: 'adult', indication: 'Arrest' },
+      { dose: '50mg/kg', population: 'paed', indication: 'Arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -130,16 +131,26 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '1mMol/kg', population: 'both' },
+      { dose: '1mMol/kg', population: 'both', indication: 'Hyperkalaemia/OD' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Suxamethonium': { 
     doses: [
-      { dose: '100mg', population: 'both' },
-      { dose: '1.5mg/kg', population: 'both' },
+      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation' },
       { dose: 'Other', population: 'both' }
     ] 
+  },
+  'Oxygen': {
+    doses: [
+      { dose: 'Nasal cannulae', population: 'both' },
+      { dose: 'Hudson mask', population: 'both' },
+      { dose: 'Nebuliser', population: 'both' },
+      { dose: 'NRBM', population: 'both' },
+      { dose: 'BVM', population: 'both' },
+      { dose: 'CPAP', population: 'both' },
+      { dose: 'Other', population: 'both' }
+    ]
   }
 };
 
@@ -867,14 +878,14 @@ export default function App() {
       {/* Catchup Modal */}
       <AnimatePresence>
         {showCatchup && (
-          <div className="fixed inset-0 bg-white z-[1000] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/90 z-[1000] flex items-center justify-center p-4">
             <motion.div 
               key={`catchup-${catchupStep}-${weightType}-${paedWeightMethod}`}
               initial={{ x: '100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-              className="bg-neutral-100 border border-neutral-100 rounded-[28px] p-6 max-w-md w-[90%] shadow-sm overflow-hidden absolute"
+              className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden absolute"
             >
               {catchupStep === 1 && (
                 <div className="text-center space-y-6">
@@ -1440,13 +1451,16 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           )}
           
           <div className="space-y-3">
-            {doses.filter(d => d !== 'Other').map(dose => (
+            {filteredDoses.filter(d => d.dose !== 'Other').map(doseOpt => (
               <button
-                key={dose}
-                onClick={() => handleDoseSelect(dose)}
-                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base"
+                key={doseOpt.dose}
+                onClick={() => handleDoseSelect(doseOpt.dose)}
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl text-lg font-bold btn-base flex flex-col items-center gap-1"
               >
-                {calculateDose(dose, state.patientWeight)}
+                {doseOpt.indication && (
+                  <span className="text-xs opacity-75 font-normal">{doseOpt.indication}</span>
+                )}
+                <span>{calculateDose(doseOpt.dose, state.patientWeight)}</span>
               </button>
             ))}
             
@@ -1498,7 +1512,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           
           <TxSection title="Airway" color="blue" items={['ETT', 'FONA', 'IGT', 'LMA']} onSelect={addTreatment} />
           
-          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
+          <TxSection title="Other Tx" color="neutral" items={['Shock', 'Oxygen', 'Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} onSelect={addTreatment} />
           
           <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6 mb-4">
             <div className="flex gap-2">
