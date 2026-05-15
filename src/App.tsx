@@ -419,7 +419,7 @@ export default function App() {
     const isDue = state.cprRound >= nextDueRound;
     
     if (isDue) {
-      return { text: "Adrenaline due", isDue: true };
+      return { text: "Adrenaline due: Now", isDue: true };
     } else {
       return { text: `Next adrenaline: Round ${nextDueRound}`, isDue: false };
     }
@@ -441,7 +441,12 @@ export default function App() {
     const timeUntilNext = 300 - timeSinceLastDose; // 5 minutes = 300 seconds
     
     if (timeUntilNext <= 0) {
-      return { text: "Amiodarone due", show: true, isDue: true, countdown: 0, flashRed: true };
+      // Count into negatives
+      const overdue = Math.abs(timeUntilNext);
+      const mins = Math.floor(overdue / 60);
+      const secs = overdue % 60;
+      const timeStr = `-${mins}:${secs.toString().padStart(2, '0')}`;
+      return { text: `Amiodarone due: ${timeStr}`, show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
     } else {
       const mins = Math.floor(timeUntilNext / 60);
       const secs = timeUntilNext % 60;
