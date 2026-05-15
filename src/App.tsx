@@ -767,11 +767,11 @@ export default function App() {
                 <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
               ) : amiodaroneStatus.show ? (
                 <>
-                  <span className="text-xs sm:text-sm font-bold tracking-tight text-center text-neutral-400">
+                  <span className="text-[9px] sm:text-[11px] font-bold tracking-widest text-center text-neutral-400">
                     {adrenalineRoundStatus.text.includes(':') ? adrenalineRoundStatus.text.split(':')[0] + ':' : adrenalineRoundStatus.text}
                   </span>
                   {adrenalineRoundStatus.text.includes(':') && (
-                    <span className="text-base sm:text-lg font-bold tracking-tight text-center text-neutral-900">
+                    <span className="text-3xl sm:text-6xl font-bold tracking-tight text-center text-neutral-900 leading-none">
                       {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
                     </span>
                   )}
@@ -807,11 +807,11 @@ export default function App() {
                   <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
                 ) : (
                   <>
-                    <span className="text-xs sm:text-sm font-bold tracking-tight text-center text-neutral-400">
+                    <span className="text-[9px] sm:text-[11px] font-bold tracking-widest text-center text-neutral-400">
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
                     </span>
                     {amiodaroneStatus.text.includes(':') && (
-                      <span className="text-base sm:text-lg font-bold tracking-tight text-center text-neutral-900">
+                      <span className="text-3xl sm:text-6xl font-bold tracking-tight text-center text-neutral-900 leading-none">
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
                       </span>
                     )}
