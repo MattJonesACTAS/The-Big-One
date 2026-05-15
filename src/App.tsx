@@ -671,12 +671,12 @@ export default function App() {
           {/* Corner Cards */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">Total time</span>
-              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
+              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
+              <span className="text-2xl sm:text-5xl font-bold text-neutral-400 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
             </div>
             <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-400 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-2xl sm:text-5xl font-bold text-neutral-900 leading-none">{state.cprRound}</span>
+              <span className="text-[9px] sm:text-[11px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
+              <span className="text-2xl sm:text-5xl font-bold text-neutral-400 leading-none">{state.cprRound}</span>
             </div>
           </div>
 
@@ -751,7 +751,7 @@ export default function App() {
                   setDisregardAdrenaline('pending');
                 }
               }}
-              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
+              className={`p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center transition-all duration-300 border-2 cursor-pointer ${
                 disregardAdrenaline === 'pending'
                   ? 'bg-red-50 text-red-700 border-red-200'
                   : disregardAdrenaline === 'confirmed'
@@ -759,18 +759,18 @@ export default function App() {
                   : adrenalineRoundStatus.isDue 
                   ? 'bg-red-50 text-red-700 border-red-200 animate-pulse' 
                   : 'bg-neutral-100 text-neutral-900 border-neutral-100'
-              } ${amiodaroneStatus.show ? 'flex-1 flex-col' : 'w-full gap-2 sm:gap-2.5'}`}
+              } ${amiodaroneStatus.show ? 'flex-1' : 'w-full'}`}
             >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
               ) : disregardAdrenaline === 'confirmed' ? (
                 <span className="text-sm sm:text-base font-bold tracking-tight text-center line-through">Disregarded</span>
-              ) : amiodaroneStatus.show ? (
+              ) : (
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                     adrenalineRoundStatus.isDue 
                       ? 'text-[14px] sm:text-[17px] text-neutral-900'
-                      : 'text-[9px] sm:text-[11px] text-neutral-400'
+                      : 'text-[9px] sm:text-[11px] text-neutral-900'
                   }`}>
                     {adrenalineRoundStatus.text.includes(':') ? adrenalineRoundStatus.text.split(':')[0] + ':' : adrenalineRoundStatus.text}
                   </span>
@@ -778,14 +778,12 @@ export default function App() {
                     <span className={`font-bold tracking-tight text-center leading-none ${
                       adrenalineRoundStatus.isDue
                         ? 'text-[36px] sm:text-[72px] text-neutral-900'
-                        : 'text-2xl sm:text-5xl text-neutral-900'
+                        : 'text-2xl sm:text-5xl text-neutral-400'
                     }`}>
                       {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
                     </span>
                   )}
                 </>
-              ) : (
-                <span className="text-sm sm:text-base font-bold tracking-tight">{adrenalineRoundStatus.text}</span>
               )}
             </div>
             
@@ -818,7 +816,7 @@ export default function App() {
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                       amiodaroneStatus.flashRed
                         ? 'text-[14px] sm:text-[17px] text-neutral-900'
-                        : 'text-[9px] sm:text-[11px] text-neutral-400'
+                        : 'text-[9px] sm:text-[11px] text-neutral-900'
                     }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
                     </span>
@@ -826,7 +824,7 @@ export default function App() {
                       <span className={`font-bold tracking-tight text-center leading-none ${
                         amiodaroneStatus.flashRed
                           ? 'text-[36px] sm:text-[72px] text-neutral-900'
-                          : 'text-2xl sm:text-5xl text-neutral-900'
+                          : 'text-2xl sm:text-5xl text-neutral-400'
                       }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
                       </span>
