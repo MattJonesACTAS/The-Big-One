@@ -433,7 +433,9 @@ export default function App() {
     Object.keys(summary).forEach(med => {
       const { totalDose, unit, count } = summary[med];
       if (totalDose > 0 && unit) {
-        summary[med].display = `${totalDose}${unit} (${count})`;
+        // Round to 2 decimal places and remove trailing zeros
+        const roundedDose = parseFloat(totalDose.toFixed(2));
+        summary[med].display = `${roundedDose}${unit} (${count})`;
       } else {
         summary[med].display = `${count}`;
       }
