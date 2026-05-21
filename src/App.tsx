@@ -444,7 +444,7 @@ export default function App() {
                 nextTarget = newElapsed + 120;
                 nextRound += 1;
                 nextOvertime = 0;
-                hasAutoClosedAt15.current = false;
+                hasAutoClosedAt10.current = false;
                 setHasShownForcedShock(false); // Reset for next cycle
               }
             } else {
