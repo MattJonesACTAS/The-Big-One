@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'The Big One Beta',
-        short_name: 'Beta',
+        name: 'The Big One',
+        short_name: 'The Big One',
         description: 'Cardiac arrest timer and treatment logger',
         theme_color: '#eab308',
         icons: [
