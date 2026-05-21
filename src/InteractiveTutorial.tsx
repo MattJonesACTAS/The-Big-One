@@ -37,19 +37,19 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
   const screens: TutorialScreens = {
     intro1: {
       title: 'Welcome to The Big One',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/1.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'intro2',
       elements: [],
     },
     intro2: {
       title: 'Getting Started',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/1.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'home1',
       elements: [],
     },
     home1: {
       title: 'CPR Timer Home Screen',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/1.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'home1_addTx',
       elements: [
         { id: 'totalTime', x: 19.8, y: 22, number: 1, title: 'Total Time', description: "Total time the monitor has been turned on" },
@@ -62,7 +62,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     home1_addTx: {
       title: 'Add Treatment Navigation',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/1.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'addTxMenu',
       elements: [
         { id: 'addTxBtn', x: 75, y: 95.4, number: 1, title: 'Add Treatment Button', description: "Let's look at the Add Tx button first" },
@@ -70,7 +70,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     addTxMenu: {
       title: 'Add Treatment Menu',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/2.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/2.png?raw=true',
       nextScreen: 'adrenalineDose',
       elements: [
         { id: 'addTxSubmenu', x: 50, y: 45.9, number: 1, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
@@ -78,7 +78,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     adrenalineDose: {
       title: 'Adrenaline Dosing',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/4.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/4.png?raw=true',
       nextScreen: 'home2',
       elements: [
         { id: 'medications', x: 53.2, y: 44.2, number: 1, title: 'Medications', description: "Each medication will bring up one or multiple age/weight based dosage options depending on the indication. Custom doses can also be added. Let's log adrenaline and amiodarone." },
@@ -86,7 +86,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     home2: {
       title: 'Medication Alerts',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/5.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'home2_summary',
       elements: [
         { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 1, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
@@ -94,7 +94,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     home2_summary: {
       title: 'Summary Navigation',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/5.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'summary',
       elements: [
         { id: 'summaryBtn', x: 26.6, y: 95.4, number: 1, title: 'Summary Button', description: "Next, let's have a look at the running case summary page" },
@@ -102,7 +102,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     summary: {
       title: 'Active Case Summary',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/6.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/6.png?raw=true',
       nextScreen: 'home2_close',
       elements: [
         { id: 'pharmaSummary', x: 50, y: 50, number: 1, title: 'Medication Summary', description: "All medications logged will appear here, with an accumulative tally of the total amount of each drug given." },
@@ -111,7 +111,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     home2_close: {
       title: 'Close Case Navigation',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/5.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'caseSummary',
       elements: [
         { id: 'close', x: 82.2, y: 4.2, number: 1, title: 'Close Button', description: "Let's say we've either stopped resuscitative efforts or we've handed our patient over at hospital. We can now close the case." },
@@ -119,7 +119,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     },
     caseSummary: {
       title: 'Closed Case Summary',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/8.png?raw=true',
+      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/8.png?raw=true',
       nextScreen: null,
       elements: [
         { id: 'finalStats', x: 50, y: 61.64, number: 1, title: 'Final Case Data', description: "Now the case is over, the treatment log shows times to the second, not just to the minute" },
@@ -136,12 +136,12 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
   // Preload all tutorial images when component mounts
   useEffect(() => {
     const imagesToPreload = [
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/1.png?raw=true',
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/2.png?raw=true',
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/4.png?raw=true',
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/5.png?raw=true',
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/6.png?raw=true',
-      'https://github.com/MattJonesACTAS/The-Big-One-Beta/blob/main/public/tutorial/8.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/2.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/4.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/6.png?raw=true',
+      'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/8.png?raw=true',
     ];
 
     imagesToPreload.forEach(src => {
