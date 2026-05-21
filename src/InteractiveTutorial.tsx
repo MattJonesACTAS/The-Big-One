@@ -230,6 +230,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
                 fontSize: '16px',
                 lineHeight: '1.6',
                 textAlign: 'center',
+                marginBottom: '20px',
               }}>
                 {currentScreen === 'intro1' && 
                   "The Big One is a tool that you can use when acting as the team leader during cardiac arrest cases to help you stay on top of everything."
@@ -238,31 +239,26 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
                   "On opening the app, you'll need to enter some times from the monitor and details about the patient. You'll then be brought to the home screen."
                 }
               </div>
+              
+              {/* Next button at bottom of box */}
+              <button
+                onClick={handleNext}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                Next
+              </button>
             </div>
-            
-            {/* Arrow button to the right of the intro box */}
-            <button
-              onClick={handleNext}
-              style={{
-                position: 'absolute',
-                left: 'calc(50% + 170px)',
-                width: '44px',
-                height: '44px',
-                backgroundColor: '#10b981',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                fontSize: '20px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              →
-            </button>
           </div>
         )}
 
