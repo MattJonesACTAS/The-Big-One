@@ -239,6 +239,30 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
                 }
               </div>
             </div>
+            
+            {/* Arrow button to the right of the intro box */}
+            <button
+              onClick={handleNext}
+              style={{
+                position: 'absolute',
+                left: 'calc(50% + 170px)',
+                width: '44px',
+                height: '44px',
+                backgroundColor: '#10b981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                fontSize: '20px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              →
+            </button>
           </div>
         )}
 
@@ -322,8 +346,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         `}</style>
       </div>
 
-      {/* Next button - centered bottom with pulsing animation */}
-      {allExplored && currentScreenData.nextScreen && (
+      {/* Next button - centered bottom with pulsing animation (for non-intro screens) */}
+      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && (
         <button
           onClick={handleNext}
           style={{
