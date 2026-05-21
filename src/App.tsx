@@ -314,7 +314,7 @@ export default function App() {
   const [isShockForced, setIsShockForced] = useState(false);
   const [hasShownForcedShock, setHasShownForcedShock] = useState(false);
   const lastBeepSecond = useRef<number | null>(null);
-  const hasAutoClosedAt15 = useRef<boolean>(false);
+  const hasAutoClosedAt10 = useRef<boolean>(false);
   const previousCountdown = useRef<number | null>(null);
 
   // Timeout for disregard pending states (3 seconds)
@@ -415,10 +415,10 @@ export default function App() {
           if (!prev.rhythmCheckPaused) {
             const countdown = prev.rhythmCheckTarget - newElapsed;
 
-            // Auto-close overlay ONCE at 15s
-            if (countdown === 15 && !hasAutoClosedAt15.current) {
+            // Auto-close overlay ONCE at 10s
+            if (countdown === 10 && !hasAutoClosedAt10.current) {
               nextOverlay = null;
-              hasAutoClosedAt15.current = true;
+              hasAutoClosedAt10.current = true;
             }
 
             // Beep logic only between 10 and 5 seconds
@@ -1730,7 +1730,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
 function ReversiblesOverlay() {
   return (
     <div className="h-full">
-      <SectionGroup title="PREHOSPITAL POTENTIAL CORRECTABLE" color="blue" items={['Hypoxia', 'Hypovolaemia', 'Hypothermia', 'Hyperkalaemia', 'Tension Pneumothorax', 'Some toxins']} />
+      <SectionGroup title="PREHOSPITAL CORRECTABLE" color="blue" items={['Hypoxia', 'Hypovolaemia', 'Hypothermia', 'Hyperkalaemia', 'Tension Pneumothorax', 'Some toxins']} />
       <SectionGroup title="HOSPITAL ONLY CORRECTABLE" color="blue" items={['Hypokalaemia', 'Hydrogen Ion Excess', 'Thrombosis Coronary/Pulmonary', 'Tamponade']} />
     </div>
   );
@@ -1750,11 +1750,11 @@ function ROSCSelection() {
 function PHEASelection() {
   return (
     <div className="h-full pb-10">
-      <SectionGroup title="PREPARATION" color="purple" items={['Assign roles', 'Adequate hands and skills mix?', 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement']} />
+      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', 'Assign roles', 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement']} />
       <SectionGroup title="PRE-OXYGENATION" color="purple" items={['Nasal prongs 15L/min']} />
       <SectionGroup title="MONITORING" color="purple" items={['ECG', 'BP — cycling', 'SpO2', 'EtCO2']} />
       <SectionGroup title="DRUGS & ACCESS EQUIPMENT" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} />
-      <SectionGroup title="AIRWAY EQUIPMENT" color="purple" items={['Sufficient oxygen available?', 'Suction', 'BVM', 'OPA / NPA', 'Airtraq — loaded tube, switched on', 'ETT loaded with bougie', 'Laryngoscope checked', 'Syringe', 'Securing method', 'FONA scalpel']} />
+      <SectionGroup title="AIRWAY EQUIPMENT AND BRIEF" color="purple" items={['Sufficient oxygen available?', 'Suction', 'OPA/NPA', 'LMA', 'BVM', 'Airtraq', 'ETT', 'Syringe', 'Securing method', 'Laryngoscope checked', 'FONA scalpel', 'External laryngeal manipulation discussed', 'Fall back plan discussed']} />
       <SectionGroup 
         title="POST-INTUBATION" 
         color="darkPurple" 
