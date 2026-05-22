@@ -347,31 +347,35 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       </div>
 
       {/* Next button - centered bottom with pulsing animation (for non-intro screens) */}
-      {/* Special case for home1: show Add Tx button at exact node 7 position */}
+      {/* Special case for home1: show exact replica of Add Tx button */}
       {allExplored && currentScreenData.nextScreen && currentScreen === 'home1' && (
         <button
           onClick={handleNext}
           style={{
             position: 'absolute',
-            left: '75%',
-            top: '95.4%',
-            transform: 'translate(-50%, -50%)',
-            padding: '14px 24px',
+            bottom: '3.5%',
+            right: '5%',
+            width: '44%',
+            padding: '16px 20px',
             backgroundColor: '#10b981',
             color: '#fff',
             border: 'none',
-            borderRadius: '12px',
-            fontSize: '16px',
+            borderRadius: '16px',
+            fontSize: '18px',
             fontWeight: '700',
             cursor: 'pointer',
             boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
-            animation: 'buttonPulse 2s infinite',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            justifyContent: 'center',
+            gap: '10px',
+            animation: 'buttonPulse 2s infinite',
           }}
         >
-          <span style={{ fontSize: '20px' }}>+</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
           Add Tx
         </button>
       )}
