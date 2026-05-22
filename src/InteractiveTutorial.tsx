@@ -50,7 +50,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     home1: {
       title: 'CPR Timer Home Screen',
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
-      nextScreen: 'home1_addTx',
+      nextScreen: 'addTxMenu',
       elements: [
         { id: 'totalTime', x: 19.8, y: 22, number: 1, title: 'Total Time', description: "Total time the monitor has been turned on" },
         { id: 'cprRound', x: 80.2, y: 22, number: 2, title: 'CPR Round', description: "The current round of CPR" },
@@ -58,14 +58,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         { id: 'pause', x: 19.0, y: 4.2, number: 4, title: 'Pause Button', description: "Pause and resume the rhythm check timer" },
         { id: 'recalibrate', x: 51.0, y: 4.2, number: 5, title: 'Recalibrate Button', description: "The app estimates a rhythm check of 6 seconds. Recalibrate the timer to match reality if your rhythm checks are longer." },
         { id: 'tabs', x: 50, y: 10.75, number: 6, title: 'Checklists', description: "Quick access to checklists for the reversible causes of arrest, ROSC and Prehospital emergency anaesthesia (PHEA)" },
-      ],
-    },
-    home1_addTx: {
-      title: 'Add Treatment Navigation',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
-      nextScreen: 'addTxMenu',
-      elements: [
-        { id: 'addTxBtn', x: 75, y: 95.4, number: 1, title: 'Add Treatment Button', description: "Let's look at the Add Tx button first" },
+        { id: 'addTxBtn', x: 75, y: 95.4, number: 7, title: 'Add Treatment Button', description: "Tap here to log treatments and interventions during the arrest" },
       ],
     },
     addTxMenu: {
@@ -265,6 +258,17 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         {currentScreenData.elements.map((element) => {
           const isExplored = exploredElements.has(element.id);
           if (isExplored) return null;
+          
+          // Progressive reveal: only show the next node in sequence
+          const exploredNumbers = currentScreenData.elements
+            .filter(el => exploredElements.has(el.id))
+            .map(el => el.number);
+          const nextNumber = exploredNumbers.length > 0 
+            ? Math.max(...exploredNumbers) + 1 
+            : 1;
+          
+          // Only render this node if it's the next in sequence
+          if (element.number !== nextNumber) return null;
           
           return (
             <div
