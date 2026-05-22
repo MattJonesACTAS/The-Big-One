@@ -347,7 +347,37 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       </div>
 
       {/* Next button - centered bottom with pulsing animation (for non-intro screens) */}
-      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && (
+      {/* Special case for home1: show Add Tx button at exact node 7 position */}
+      {allExplored && currentScreenData.nextScreen && currentScreen === 'home1' && (
+        <button
+          onClick={handleNext}
+          style={{
+            position: 'absolute',
+            left: '75%',
+            top: '95.4%',
+            transform: 'translate(-50%, -50%)',
+            padding: '14px 24px',
+            backgroundColor: '#10b981',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '16px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+            animation: 'buttonPulse 2s infinite',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}
+        >
+          <span style={{ fontSize: '20px' }}>+</span>
+          Add Tx
+        </button>
+      )}
+      
+      {/* Regular Next button for other screens */}
+      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'home1' && (
         <button
           onClick={handleNext}
           style={{
