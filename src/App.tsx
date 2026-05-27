@@ -2426,7 +2426,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           { name: 'Shock - pVT', color: 'red' },
           { name: 'Disarm - Asystole', color: 'blue' },
           { name: 'Disarm - PEA', color: 'blue' },
-          { name: 'Disarm - ROSC', color: 'blue' }
+          { name: 'Disarm - ROSC', color: 'emerald' }
         ]} 
         onSelect={addTreatment}
       />
@@ -2529,7 +2529,8 @@ function TxSection({
   
   const textColorMap: Record<string, string> = {
     red: 'text-red-600',
-    blue: 'text-blue-600'
+    blue: 'text-blue-600',
+    emerald: 'text-emerald-600'
   };
 
   return (
