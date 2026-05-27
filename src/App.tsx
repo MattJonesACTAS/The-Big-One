@@ -22,7 +22,8 @@ import {
   Stethoscope,
   ArrowRight,
   Sliders,
-  RefreshCw
+  RefreshCw,
+  Hand
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
@@ -47,7 +48,8 @@ const INITIAL_STATE: AppState = {
   patientType: null,
   reversiblesChecked: [],
   roscChecked: [],
-  pheaChecked: []
+  pheaChecked: [],
+  isROSCMode: false
 };
 
 const MEDICATIONS = [
@@ -316,6 +318,7 @@ export default function App() {
   const [showLoggedNotification, setShowLoggedNotification] = useState(false);
   const loggedTreatmentRef = useRef<string>('');
   const [isShockForced, setIsShockForced] = useState(false);
+  const [rearrested, setRearrested] = useState(false);
   const [hasShownForcedShock, setHasShownForcedShock] = useState(false);
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt10 = useRef<boolean>(false);
@@ -635,7 +638,9 @@ export default function App() {
         // Pause for ROSC, unpause for other shock/disarm
         rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused,
         // For ROSC, freeze the countdown at 2:00
-        frozenCountdown: isROSC ? 120 : prev.frozenCountdown
+        frozenCountdown: isROSC ? 120 : prev.frozenCountdown,
+        // Enter ROSC mode when ROSC logged, exit when any shock/disarm logged
+        isROSCMode: isROSC ? true : isShockOrDisarm ? false : prev.isROSCMode
       };
     });
     
@@ -645,6 +650,12 @@ export default function App() {
     }
     
     setIsShockForced(false);
+
+    // If this treatment was logged from a rearrest, show timer adjustment popup
+    if (rearrested && (name.includes('Shock') || name.includes('Disarm'))) {
+      setRearrested(false);
+      setShowTimerAdjust(true);
+    }
     
     // Show notification with treatment name
     if (name !== 'Disarm - ROSC') {
@@ -1120,7 +1131,43 @@ export default function App() {
           {/* Rhythm Check - Centered vertically and responsive size */}
           <div className="flex-1 flex flex-col items-center justify-center w-full pt-14 sm:pt-16">
             <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
+
+              {/* ROSC Mode - full circle is tap target */}
+              {state.isROSCMode ? (
+                <button
+                  onClick={() => {
+                    setState(prev => ({
+                      ...prev,
+                      isROSCMode: false,
+                      rhythmCheckPaused: false,
+                      frozenCountdown: undefined,
+                      rhythmCheckTarget: prev.elapsedSeconds + 120,
+                      rhythmCheckOvertime: 0,
+                      currentOverlay: 'treatment'
+                    }));
+                    setRearrested(true);
+                    setIsShockForced(true);
+                  }}
+                  className="absolute inset-0 w-full h-full rounded-full btn-base flex flex-col items-center justify-center"
+                >
+                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
+                    <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="6" className="text-neutral-50" />
+                    <motion.circle
+                      cx="150" cy="150" r="140"
+                      fill="none" stroke="currentColor" strokeWidth="6"
+                      strokeLinecap="round" pathLength="1"
+                      className="text-emerald-500"
+                      animate={{ strokeDashoffset: 0 }}
+                      style={{ strokeDasharray: 1 }}
+                      transition={{ duration: 0.5, ease: "linear" }}
+                    />
+                  </svg>
+                  <span className="z-10 text-[36px] sm:text-[60px] font-bold tracking-tighter leading-none text-emerald-600 text-center">PRESS IF REARREST</span>
+                  <span className="z-10 absolute bottom-[35px] sm:bottom-[51px] text-[13px] sm:text-[16px] font-bold tracking-widest uppercase text-neutral-400">ROSC</span>
+                </button>
+              ) : (
+                <>
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
                 <circle
                   cx="150"
                   cy="150"
@@ -1179,6 +1226,8 @@ export default function App() {
                   Rhythm Check
                 </div>
               </div>
+              </>
+              )}
             </div>
           </div>
 
@@ -1716,8 +1765,8 @@ export default function App() {
       {showTimerAdjust && (
         <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Adjust CPR Timer</h2>
-            <p className="text-neutral-500 mb-6">Set the countdown time for the next rhythm check</p>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Adjust Rhythm Check Timer</h2>
+            <p className="text-neutral-500 mb-6">Match the app's rhythm check timer to the monitor's CPR timer</p>
             
             <div className="mb-8">
               <TimePicker 
