@@ -640,7 +640,9 @@ export default function App() {
         // For ROSC, freeze the countdown at 2:00
         frozenCountdown: isROSC ? 120 : prev.frozenCountdown,
         // Enter ROSC mode when ROSC logged, exit when any shock/disarm logged
-        isROSCMode: isROSC ? true : isShockOrDisarm ? false : prev.isROSCMode
+        isROSCMode: isROSC ? true : isShockOrDisarm ? false : prev.isROSCMode,
+        // Clear ROSC checklist when ROSC is logged again (new ROSC event)
+        roscChecked: isROSC ? [] : prev.roscChecked
       };
     });
     
@@ -1836,14 +1838,17 @@ function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, se
     if (type === 'mins') {
       newVal.mins = Math.max(0, newVal.mins + delta);
     } else {
-      newVal.secs = (newVal.secs + delta + 60) % 60;
+      const totalSecs = newVal.mins * 60 + newVal.secs + delta;
+      if (totalSecs < 0) return; // Don't go below 0:00
+      newVal.mins = Math.floor(totalSecs / 60);
+      newVal.secs = totalSecs % 60;
     }
     
     // Enforce max limit if provided
     if (maxSeconds !== undefined) {
       const totalSeconds = newVal.mins * 60 + newVal.secs;
       if (totalSeconds > maxSeconds) {
-        return; // Don't update if exceeds max
+        return;
       }
     }
     
