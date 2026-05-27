@@ -269,6 +269,16 @@ const formatSodiumBicarbonateDose = (doseStr: string): string => {
 };
 
 export default function App() {
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => {
+    return localStorage.getItem('disclaimerAccepted') === 'true';
+  });
+  const [disclaimerChecked, setDisclaimerChecked] = useState(false);
+
+  const handleAcceptDisclaimer = () => {
+    localStorage.setItem('disclaimerAccepted', 'true');
+    setDisclaimerAccepted(true);
+  };
+
   const [state, setState] = useState<AppState>(() => {
     const saved = localStorage.getItem('theBigOneState');
     if (saved) {
@@ -1007,6 +1017,35 @@ export default function App() {
         </div>
 
         <SummaryStats state={state} pharmaSummary={pharmaSummary} />
+
+        {(() => {
+          const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
+          const vitalRows = [
+            { label: 'Heart Rate',     value: v.hr,   unit: 'bpm'    },
+            { label: 'Resp Rate',      value: v.rr,   unit: 'br/min' },
+            { label: 'SpO₂',           value: v.spo2, unit: '%'      },
+            { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
+            { label: 'Blood Pressure', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+            { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
+            { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
+            { label: 'Temperature',    value: v.temp, unit: '°C'     },
+          ].filter(r => r.value !== '');
+          return (
+            <div className="rounded-xl overflow-hidden border border-neutral-100">
+              <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider">VITAL SIGNS</div>
+              {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
+                <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
+                  <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
+                  <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
+                    {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
+                  </span>
+                </div>
+              )) : (
+                <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded.</div>
+              )}
+            </div>
+          );
+        })()}
         
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} />
@@ -1050,6 +1089,38 @@ export default function App() {
 
   return (
     <div data-main-container style={{ height: 'calc(var(--vh, 1vh) * 100)' }} className="bg-neutral-100 flex flex-col p-4 max-w-2xl mx-auto overflow-hidden relative">
+
+      {/* Disclaimer Modal */}
+      {!disclaimerAccepted && (
+        <div className="fixed inset-0 bg-black/90 z-[3000] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h1 className="text-2xl font-bold text-neutral-900 mb-1">The Big One <span className="text-sm font-medium text-neutral-400">v1.0</span></h1>
+            <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-6">Important — please read before use</p>
+            <div className="space-y-4 text-[14px] text-neutral-600 leading-relaxed mb-6">
+              <p><strong className="text-neutral-900">Supplementary cognitive aid only.</strong> This application is a consolidated digital alternative to the pen, paper, and stopwatch a clinician would typically use during cardiac arrest management. The Big One tracks multiple timers, records interventions, and displays pre-configured guideline-derived information. It is a documentation, timing, and situational awareness tool only, not a clinical decision-making system, and does not replace clinical judgement, professional training, or your service's approved clinical guidelines and procedures. This application is intended for use by trained clinicians only.</p>
+              <p><strong className="text-neutral-900">Clinical responsibility remains with the treating clinician.</strong> All patient assessment, treatment decisions, and medication administration remain the responsibility of the treating clinician(s). Users must apply their own professional judgement and follow current local clinical guidelines at all times.</p>
+              <p><strong className="text-neutral-900">Guideline alignment and verification.</strong> This application is configured to align with ACTAS Clinical Management Guidelines (CMG) v1.0.5.4. Users are responsible for verifying that information displayed by this application aligns with their service's current approved protocols.</p>
+              <p><strong className="text-neutral-900">Independent application.</strong> This application is independently developed and is not affiliated with, endorsed by, or approved by any ambulance service, health authority, or regulatory body unless explicitly stated.</p>
+            </div>
+            <label className="flex items-start gap-3 mb-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={disclaimerChecked}
+                onChange={e => setDisclaimerChecked(e.target.checked)}
+                className="mt-0.5 w-5 h-5 rounded accent-emerald-600 flex-shrink-0 cursor-pointer"
+              />
+              <span className="text-[14px] text-neutral-700 font-medium">I confirm that I am a trained clinician and understand that this application is a supplementary aid only. Clinical and professional responsibility remains with the treating clinician.</span>
+            </label>
+            <button
+              onClick={handleAcceptDisclaimer}
+              disabled={!disclaimerChecked}
+              className={`w-full py-4 rounded-xl font-bold text-[16px] transition-colors ${disclaimerChecked ? 'bg-emerald-600 text-white' : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'}`}
+            >
+              Continue to The Big One
+            </button>
+          </div>
+        </div>
+      )}
       {/* Top Controls */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
         <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
