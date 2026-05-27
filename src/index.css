@@ -98,3 +98,37 @@
     }
   }
 }
+
+/* Tutorial mode: flash buttons */
+@keyframes adrenalineFlash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+body.tutorial-flash-adrenaline [data-medication="Adrenaline push"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-dose [data-dose="Cardiac arrest"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-add-tx [data-button="add-tx"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-summary [data-button="summary"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-summary-close [data-button="summary"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-close [data-button="close-case"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
+body.tutorial-flash-delete [data-button="delete-case"] {
+  animation: adrenalineFlash 1.5s infinite;
+}

@@ -1,3 +1,4 @@
+// Build: 20260526-110611
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -29,6 +30,9 @@ export interface AppState {
   startClockTime: number | null;
   patientWeight: number | null;
   patientType: 'adult' | 'paed' | null;
+  reversiblesChecked: string[];
+  roscChecked: string[];
+  pheaChecked: string[];
 }
 
 export type OverlayType = 'reversibles' | 'rosc' | 'phea' | 'summary' | 'treatment' | 'caseSummary' | 'tutorial';

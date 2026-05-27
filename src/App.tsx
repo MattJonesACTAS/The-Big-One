@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
+import TutorialOverlay from './TutorialOverlay';
 
 // --- Constants ---
 const INITIAL_STATE: AppState = {
@@ -43,7 +44,10 @@ const INITIAL_STATE: AppState = {
   catchupElapsed: 0,
   startClockTime: null,
   patientWeight: null,
-  patientType: null
+  patientType: null,
+  reversiblesChecked: [],
+  roscChecked: [],
+  pheaChecked: []
 };
 
 const MEDICATIONS = [
@@ -316,6 +320,72 @@ export default function App() {
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt10 = useRef<boolean>(false);
   const previousCountdown = useRef<number | null>(null);
+  
+  // Tutorial mode state
+  const [tutorialMode, setTutorialMode] = useState(false);
+  const [tutorialScreen, setTutorialScreen] = useState({ index: -1, complete: false, nodeIndex: 0 });
+  const [tutorialNodeIndex, setTutorialNodeIndex] = useState(0);
+
+  // Add CSS classes to body for tutorial button flashing
+  useEffect(() => {
+    console.log('Tutorial screen tracking:', tutorialScreen);
+    console.log('Current overlay:', state.currentOverlay);
+    console.log('Treatments length:', state.treatments.length);
+    
+    // Node 7 (addTxBtn) complete - flash Add Tx button (index 8 = waiting for treatment screen)
+    if (tutorialMode && tutorialScreen.index === 8 && state.currentOverlay === null) {
+      document.body.classList.add('tutorial-flash-add-tx');
+    } else {
+      document.body.classList.remove('tutorial-flash-add-tx');
+    }
+
+    // Node 8 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 9)
+    if (tutorialMode && tutorialScreen.index === 9) {
+      document.body.classList.add('tutorial-flash-adrenaline');
+      document.body.classList.add('tutorial-flash-dose');
+    } else {
+      document.body.classList.remove('tutorial-flash-adrenaline');
+      document.body.classList.remove('tutorial-flash-dose');
+    }
+
+    // Node 10 (summaryBtn) complete - flash Summary button (index 11 = waiting for summary overlay)
+    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === null) {
+      document.body.classList.add('tutorial-flash-summary');
+    } else {
+      document.body.classList.remove('tutorial-flash-summary');
+    }
+
+    // Node 13 (closeOverlay) complete - flash summary close button (index 13 = waiting on summary)
+    if (tutorialMode && tutorialScreen.index === 13 && state.currentOverlay === 'summary') {
+      document.body.classList.add('tutorial-flash-summary-close');
+    } else {
+      document.body.classList.remove('tutorial-flash-summary-close');
+    }
+
+    // Node 13 (closeCase) complete - flash Close Case button (index 14 = waiting on home)
+    if (tutorialMode && tutorialScreen.index === 14 && state.currentOverlay === null) {
+      document.body.classList.add('tutorial-flash-close');
+    } else {
+      document.body.classList.remove('tutorial-flash-close');
+    }
+
+    // Tutorial done - flash Delete Case button
+    if (tutorialMode && tutorialScreen.complete) {
+      document.body.classList.add('tutorial-flash-delete');
+    } else {
+      document.body.classList.remove('tutorial-flash-delete');
+    }
+    
+    return () => {
+      document.body.classList.remove('tutorial-flash-add-tx');
+      document.body.classList.remove('tutorial-flash-adrenaline');
+      document.body.classList.remove('tutorial-flash-dose');
+      document.body.classList.remove('tutorial-flash-summary');
+      document.body.classList.remove('tutorial-flash-summary-close');
+      document.body.classList.remove('tutorial-flash-close');
+      document.body.classList.remove('tutorial-flash-delete');
+    };
+  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
@@ -563,7 +633,9 @@ export default function App() {
           : prev.rhythmCheckTarget,
         rhythmCheckOvertime: (isROSC || (isShockOrDisarm && wasRhythmCheckPaused)) ? 0 : prev.rhythmCheckOvertime,
         // Pause for ROSC, unpause for other shock/disarm
-        rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused
+        rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused,
+        // For ROSC, freeze the countdown at 2:00
+        frozenCountdown: isROSC ? 120 : prev.frozenCountdown
       };
     });
     
@@ -594,6 +666,17 @@ export default function App() {
     if (name.includes('Amiodarone')) {
       setDisregardAmiodarone(null);
     }
+  };
+
+  const toggleChecklistItem = (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => {
+    setState(prev => {
+      const key = `${checklist}Checked` as 'reversiblesChecked' | 'roscChecked' | 'pheaChecked';
+      const current = prev[key];
+      const updated = current.includes(label)
+        ? current.filter(item => item !== label)
+        : [...current, label];
+      return { ...prev, [key]: updated };
+    });
   };
 
   const adrenalineRoundStatus = useMemo(() => {
@@ -903,6 +986,7 @@ export default function App() {
           <button 
             onClick={() => setShowDeleteWarning(true)}
             className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold btn-base border border-red-100"
+            data-button="delete-case"
           >
             <Trash2 size={20} /> Delete Case
           </button>
@@ -925,6 +1009,26 @@ export default function App() {
              </div>
            </div>
          </div>
+        )}
+
+        {/* Tutorial Overlay - also show on case summary */}
+        {tutorialMode && (
+          <TutorialOverlay
+            appState={state}
+            isShockForced={isShockForced}
+            isCaseClosed={isCaseClosed}
+            globalNodeIndex={tutorialNodeIndex}
+            onNodeChange={(nodeIndex, done) => {
+              setTutorialNodeIndex(nodeIndex);
+              setTutorialScreen({ index: nodeIndex, complete: done, nodeIndex });
+            }}
+            onExit={() => {
+              setTutorialMode(false);
+              setTutorialNodeIndex(0);
+              setState(INITIAL_STATE);
+              setShowCatchup(true);
+            }}
+          />
         )}
       </div>
     );
@@ -950,8 +1054,8 @@ export default function App() {
         >
           <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
         </button>
-        <button onClick={() => setShowCloseWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
-          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close
+        <button onClick={() => setShowCloseWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="close-case">
+          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close Case
         </button>
       </div>
 
@@ -1088,13 +1192,29 @@ export default function App() {
                 state={state}
                 pharmaSummary={pharmaSummary}
                 isShockForced={isShockForced}
+                toggleChecklistItem={toggleChecklistItem}
               />
             )}
           </AnimatePresence>
 
-          {/* Tutorial Overlay */}
-          {state.currentOverlay === 'tutorial' && (
-            <InteractiveTutorial onClose={() => setState(p => ({ ...p, currentOverlay: null }))} />
+          {/* Tutorial Overlay - renders on top of real app */}
+          {tutorialMode && (
+            <TutorialOverlay
+              appState={state}
+              isShockForced={isShockForced}
+              isCaseClosed={isCaseClosed}
+              globalNodeIndex={tutorialNodeIndex}
+              onNodeChange={(nodeIndex, done) => {
+                setTutorialNodeIndex(nodeIndex);
+                setTutorialScreen({ index: nodeIndex, complete: done, nodeIndex });
+              }}
+              onExit={() => {
+                setTutorialMode(false);
+                setTutorialNodeIndex(0);
+                setState(INITIAL_STATE);
+                setShowCatchup(true);
+              }}
+            />
           )}
 
           {/* Adrenaline & Amiodarone Status - Always rendered, visibility controlled */}
@@ -1201,6 +1321,7 @@ export default function App() {
           }}
           disabled={isShockForced}
           className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors ${state.currentOverlay === 'summary' ? 'bg-red-100 text-red-800' : 'bg-emerald-600 text-white'}`}
+          data-button="summary"
         >
           {state.currentOverlay === 'summary' ? <XCircle size={18} className="sm:w-6 sm:h-6" /> : <FileText size={18} className="sm:w-6 sm:h-6" />}
           {state.currentOverlay === 'summary' ? 'Close' : 'Summary'}
@@ -1212,6 +1333,7 @@ export default function App() {
           }}
           disabled={isShockForced}
           className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors ${state.currentOverlay === 'treatment' ? 'bg-red-100 text-red-800' : 'bg-emerald-600 text-white'}`}
+          data-button="add-tx"
         >
           {state.currentOverlay === 'treatment' ? <XCircle size={18} className="sm:w-6 sm:h-6" /> : <Plus size={18} className="sm:w-6 sm:h-6" />}
           {state.currentOverlay === 'treatment' ? 'Close' : 'Add Tx'}
@@ -1266,7 +1388,25 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => {
-                        setState(p => ({ ...p, currentOverlay: 'tutorial' }));
+                        // Enter tutorial mode - start app with preset values
+                        const now = Date.now();
+                        setState({
+                          ...INITIAL_STATE,
+                          running: true,
+                          startTime: now,
+                          pausedTime: 0,
+                          elapsedSeconds: 0,
+                          rhythmCheckTarget: 120,
+                          cprRound: 1,
+                          shocks: 0,
+                          treatments: [],
+                          catchupElapsed: 0,
+                          startClockTime: now,
+                          patientWeight: 100,
+                          patientType: 'adult'
+                        });
+                        setShowCatchup(false);
+                        setTutorialMode(true);
                       }} 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl text-base font-semibold shadow-md shadow-blue-500/20 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
                     >
@@ -1706,14 +1846,15 @@ function CounterItem({ label, value, onChange }: { label: string, value: number,
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
   addTreatment: (n: string) => void,
   state: AppState,
   pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
-  isShockForced: boolean
+  isShockForced: boolean,
+  toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void
 }) {
   const isTop = ['reversibles', 'rosc', 'phea'].includes(type);
   
@@ -1726,9 +1867,9 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
       className="absolute inset-0 bg-white z-50 flex flex-col"
     >
       <div className="flex-1 overflow-y-auto">
-        {type === 'reversibles' && <ReversiblesOverlay />}
-        {type === 'rosc' && <ROSCSelection />}
-        {type === 'phea' && <PHEASelection />}
+        {type === 'reversibles' && <ReversiblesOverlay checkedItems={state.reversiblesChecked} onToggle={(label) => toggleChecklistItem('reversibles', label)} />}
+        {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} />}
+        {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
@@ -1736,34 +1877,34 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   );
 }
 
-function ReversiblesOverlay() {
+function ReversiblesOverlay({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
   return (
     <div className="h-full">
-      <SectionGroup title="PREHOSPITAL CORRECTABLE" color="blue" items={['Hypoxia', 'Hypovolaemia', 'Hypothermia', 'Hyperkalaemia', 'Tension Pneumothorax', 'Some toxins']} />
-      <SectionGroup title="HOSPITAL ONLY CORRECTABLE" color="blue" items={['Hypokalaemia', 'Hydrogen Ion Excess', 'Thrombosis Coronary/Pulmonary', 'Tamponade']} />
+      <SectionGroup title="PREHOSPITAL CORRECTABLE" color="blue" items={['Hypoxia', 'Hypovolaemia', 'Hypothermia', 'Hyperkalaemia', 'Tension Pneumothorax', 'Some toxins']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="HOSPITAL ONLY CORRECTABLE" color="blue" items={['Hypokalaemia', 'Hydrogen Ion Excess', 'Thrombosis Coronary/Pulmonary', 'Tamponade']} checkedItems={checkedItems} onToggle={onToggle} />
     </div>
   );
 }
 
-function ROSCSelection() {
+function ROSCSelection({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
   return (
     <div className="h-full">
-      <SectionGroup title="TEAM LEADER" color="orange" items={['Confirm roles', 'Monitor ECG for rhythm changes', 'Review reversibles']} />
-      <SectionGroup title="AIRWAY" color="orange" items={['Response — consider sedation', 'Confirm airway secured', 'Confirm spontaneous ventilations', 'Maintain SpO2 94–98%', 'Maintain ETCO2 35–40mmHg']} />
-      <SectionGroup title="GOFER" color="orange" items={['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO2', '12-lead ECG', 'Temp', 'BGL', 'Prepare extrication']} />
-      <SectionGroup title="DRUGS & ACCESS" color="orange" items={['Confirm bilateral IV/IO access', 'Maintain SBP ≥100mmHg', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required']} />
+      <SectionGroup title="TEAM LEADER" color="orange" items={['Confirm roles', 'Monitor ECG for rhythm changes', 'Review reversibles']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="AIRWAY" color="orange" items={['Response — consider sedation', 'Confirm airway secured', 'Confirm spontaneous ventilations', 'Maintain SpO2 94–98%', 'Maintain ETCO2 35–40mmHg']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="GOFER" color="orange" items={['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO2', '12-lead ECG', 'Temp', 'BGL', 'Prepare extrication']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="DRUGS & ACCESS" color="orange" items={['Confirm bilateral IV/IO access', 'Maintain SBP ≥100mmHg', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required']} checkedItems={checkedItems} onToggle={onToggle} />
     </div>
   );
 }
 
-function PHEASelection() {
+function PHEASelection({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
   return (
     <div className="h-full pb-10">
-      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', 'Assign roles', 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement']} />
-      <SectionGroup title="PRE-OXYGENATION" color="purple" items={['Nasal prongs 15L/min']} />
-      <SectionGroup title="MONITORING" color="purple" items={['ECG', 'BP — cycling', 'SpO2', 'EtCO2']} />
-      <SectionGroup title="DRUGS & ACCESS EQUIPMENT" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} />
-      <SectionGroup title="AIRWAY EQUIPMENT AND BRIEF" color="purple" items={['Sufficient oxygen available?', 'Suction', 'OPA/NPA', 'LMA', 'BVM', 'Airtraq', 'ETT', 'Syringe', 'Securing method', 'Laryngoscope checked', 'FONA scalpel', 'External laryngeal manipulation discussed', 'Fall back plan discussed']} />
+      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', 'Assign roles', 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="PRE-OXYGENATION" color="purple" items={['Nasal prongs 15L/min']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="MONITORING" color="purple" items={['ECG', 'BP — cycling', 'SpO2', 'EtCO2']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="DRUGS & ACCESS EQUIPMENT" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="AIRWAY EQUIPMENT AND BRIEF" color="purple" items={['Sufficient oxygen available?', 'Suction', 'OPA/NPA', 'LMA', 'BVM', 'Airtraq', 'ETT', 'Syringe', 'Securing method', 'Laryngoscope checked', 'FONA scalpel', 'External laryngeal manipulation discussed', 'Fall back plan discussed']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup 
         title="POST-INTUBATION" 
         color="darkPurple" 
@@ -1776,6 +1917,8 @@ function PHEASelection() {
           'Deterioration plan discussed',
           'Extrication and transport plan discussed'
         ]} 
+        checkedItems={checkedItems} 
+        onToggle={onToggle}
       />
     </div>
   );
@@ -1786,11 +1929,11 @@ interface CheckItemProps {
   key?: React.Key;
   subItems?: string[];
   color?: string;
+  checked: boolean;
+  onToggle: (label: string) => void;
 }
 
-function CheckItem({ label, subItems, color = 'emerald' }: CheckItemProps) {
-  const [checked, setChecked] = useState(false);
-  
+function CheckItem({ label, subItems, color = 'emerald', checked, onToggle }: CheckItemProps) {
   const colorMap: Record<string, { bg: string, text: string, border: string, checkBg: string }> = {
     orange: { bg: 'bg-orange-50', text: 'text-orange-900', border: 'border-orange-500', checkBg: 'bg-orange-500' },
     purple: { bg: 'bg-purple-50', text: 'text-purple-900', border: 'border-purple-500', checkBg: 'bg-purple-500' },
@@ -1803,7 +1946,7 @@ function CheckItem({ label, subItems, color = 'emerald' }: CheckItemProps) {
   
   return (
     <div>
-      <label onClick={() => setChecked(!checked)} className={`flex items-start p-2 rounded-lg cursor-pointer transition-colors ${checked ? colors.bg : 'hover:bg-neutral-50'}`}>
+      <label onClick={() => onToggle(label)} className={`flex items-start p-2 rounded-lg cursor-pointer transition-colors ${checked ? colors.bg : 'hover:bg-neutral-50'}`}>
         <div className={`w-4 h-4 rounded border-2 flex items-center justify-center mr-2.5 mt-0.5 transition-colors flex-shrink-0 ${checked ? `${colors.checkBg} ${colors.border}` : 'border-neutral-300 bg-white'}`}>
           {checked && <CheckCircle2 size={12} className="text-white" />}
         </div>
@@ -1825,7 +1968,19 @@ function CheckItem({ label, subItems, color = 'emerald' }: CheckItemProps) {
   );
 }
 
-function SectionGroup({ title, color, items }: { title: string, color: string, items: (string | { label: string, subItems: string[] })[] }) {
+function SectionGroup({ 
+  title, 
+  color, 
+  items, 
+  checkedItems, 
+  onToggle 
+}: { 
+  title: string, 
+  color: string, 
+  items: (string | { label: string, subItems: string[] })[], 
+  checkedItems: string[], 
+  onToggle: (label: string) => void 
+}) {
   const colorMap: Record<string, string> = {
     orange: 'bg-orange-50 text-orange-800 border-orange-200',
     purple: 'bg-purple-50 text-purple-800 border-purple-200',
@@ -1839,9 +1994,9 @@ function SectionGroup({ title, color, items }: { title: string, color: string, i
       <div className="p-1 space-y-0.5">
         {items.map((item, idx) => {
           if (typeof item === 'string') {
-            return <CheckItem key={item} label={item} color={color} />;
+            return <CheckItem key={item} label={item} color={color} checked={checkedItems.includes(item)} onToggle={onToggle} />;
           } else {
-            return <CheckItem key={idx} label={item.label} subItems={item.subItems} color={color} />;
+            return <CheckItem key={idx} label={item.label} subItems={item.subItems} color={color} checked={checkedItems.includes(item.label)} onToggle={onToggle} />;
           }
         })}
       </div>
@@ -2115,6 +2270,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 key={doseOpt.dose}
                 onClick={() => handleDoseSelect(doseOpt.dose)}
                 className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
+                data-dose={doseOpt.indication || calculateDose(doseOpt.dose, state.patientWeight)}
               >
                 {doseOpt.indication && (
                   <span className="text-[10px] font-normal uppercase tracking-wide">{doseOpt.indication}</span>
@@ -2402,6 +2558,7 @@ function TxSection({
                 key={itemName} 
                 onClick={() => onSelect(itemName)} 
                 className={`w-full text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm hover:bg-neutral-100 btn-base ${textColorClass}`}
+                data-medication={itemName}
               >
                 {itemName}
               </button>

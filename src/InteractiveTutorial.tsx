@@ -4,6 +4,518 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { Pause, RefreshCw, XCircle, FileText, Plus, Trash2, ChevronDown } from 'lucide-react';
+
+// Static Home Screen Component - Exact replica using real app code
+function StaticHomeScreen() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-neutral-100 flex flex-col p-4 overflow-hidden relative">
+      {/* Top Controls */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <Pause size={14} className="sm:w-4 sm:h-4" /> Pause
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close
+        </button>
+      </div>
+
+      {/* Top Quick Tools */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-blue-100 text-blue-700">
+          Reversibles
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-orange-100 text-orange-700">
+          ROSC
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-purple-100 text-purple-700">
+          PHEA
+        </button>
+      </div>
+
+      {/* Main Center Display */}
+      <div className="flex-1 bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 min-h-0 border-emerald-500">
+        <div className="h-full flex flex-col items-center px-2 sm:px-3 pt-4 pb-2 sm:pb-3 relative">
+          {/* Corner Cards */}
+          <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
+            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
+              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">1:28</span>
+            </div>
+            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
+              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">1</span>
+            </div>
+          </div>
+
+          {/* Rhythm Check - Centered vertically and responsive size */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full pt-14 sm:pt-16">
+            <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="140"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  className="text-neutral-50"
+                />
+                <circle
+                  cx="150"
+                  cy="150"
+                  r="140"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  className="text-emerald-500"
+                  strokeDasharray="879.64"
+                  strokeDashoffset="454.77"
+                  style={{ pathLength: 1 }}
+                />
+              </svg>
+              
+              <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
+                <div className="text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none text-neutral-900">
+                  0:58
+                </div>
+                <div className="text-[14px] sm:text-[18px] uppercase tracking-widest font-bold mt-4 sm:mt-8 text-neutral-400">
+                  Rhythm Check
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Main Controls */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4 flex-shrink-0">
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <FileText size={18} className="sm:w-6 sm:h-6" />
+          Summary
+        </button>
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <Plus size={18} className="sm:w-6 sm:h-6" />
+          Add Tx
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Static Add Tx Menu Component - Rendered inside the central box like in the real app
+function StaticAddTxMenu() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-neutral-100 flex flex-col p-4 overflow-hidden relative">
+      {/* Top Controls */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <Pause size={14} className="sm:w-4 sm:h-4" /> Pause
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close
+        </button>
+      </div>
+
+      {/* Top Quick Tools */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-blue-100 text-blue-700">
+          Reversibles
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-orange-100 text-orange-700">
+          ROSC
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-purple-100 text-purple-700">
+          PHEA
+        </button>
+      </div>
+
+      {/* Main Center Display with Add Tx Menu Inside */}
+      <div className="flex-1 bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 min-h-0 border-emerald-500">
+        {/* Add Tx Menu Content - STATIC, not scrollable */}
+        <div className="h-full overflow-hidden">
+          {/* Rhythm Check Section - COLLAPSED */}
+          <div>
+            <div className="flex items-center justify-between p-4 font-bold bg-rose-50 text-rose-800 border-b border-rose-100">
+              <span>Rhythm Check</span>
+              <ChevronDown className="transition-transform duration-300 -rotate-90" size={20} />
+            </div>
+          </div>
+
+          {/* Medications Section - Expanded with SINGLE COLUMN, showing only first 5 medications */}
+          <div>
+            <div className="flex items-center justify-between p-4 font-bold bg-emerald-50 text-emerald-800 border-b border-emerald-100">
+              <span>Medications</span>
+              <ChevronDown className="transition-transform duration-300" size={20} />
+            </div>
+            <div className="bg-white p-3">
+              <div className="grid grid-cols-1 gap-2">
+                <button className="text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm text-neutral-700">Adrenaline push</button>
+                <button className="text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm text-neutral-700">Adrenaline infusion</button>
+                <button className="text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm text-neutral-700">Amiodarone</button>
+                <button className="text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm text-neutral-700">Atropine</button>
+                <button className="text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm text-neutral-700">Calcium</button>
+              </div>
+            </div>
+          </div>
+
+          {/* Airway Section - Collapsed */}
+          <div>
+            <div className="flex items-center justify-between p-4 font-bold bg-blue-50 text-blue-800 border-b border-blue-100">
+              <span>Airway</span>
+              <ChevronDown className="transition-transform duration-300 -rotate-90" size={20} />
+            </div>
+          </div>
+
+          {/* Other Tx Section - Collapsed */}
+          <div>
+            <div className="flex items-center justify-between p-4 font-bold bg-neutral-100 text-neutral-800 border-b border-neutral-200">
+              <span>Other Tx</span>
+              <ChevronDown className="transition-transform duration-300 -rotate-90" size={20} />
+            </div>
+          </div>
+
+          {/* Custom Treatment Input */}
+          <div className="p-3 border-t border-neutral-100 bg-white">
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Custom treatment..."
+                className="flex-1 bg-white border border-neutral-200 rounded-xl p-3 text-sm"
+                disabled
+              />
+              <button className="bg-emerald-600 text-white px-5 rounded-xl font-bold text-sm">
+                Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Main Controls - VISIBLE */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4 flex-shrink-0">
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <FileText size={18} className="sm:w-6 sm:h-6" />
+          Summary
+        </button>
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <Plus size={18} className="sm:w-6 sm:h-6" />
+          Add Tx
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Static Adrenaline Dosing Component - Extracted from App.tsx medication dose selection
+function StaticAdrenalineDose() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-white overflow-y-auto pb-4">
+      <div className="p-6 mb-4">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">Adrenaline push</h2>
+        <p className="text-neutral-500 text-sm mb-2">Patient weight: 100kg</p>
+        <p className="text-neutral-500 text-sm mb-6">Patient type: adult</p>
+        
+        <div className="space-y-3">
+          <button className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold flex flex-col items-start gap-1">
+            <span className="text-[10px] font-normal uppercase tracking-wide">CARDIAC ARREST</span>
+            <span className="text-lg">1mg</span>
+          </button>
+          
+          <div className="w-full flex gap-2 items-center">
+            <div className="flex-1 relative flex items-center bg-white border border-neutral-200 rounded-xl min-w-0">
+              <input
+                type="text"
+                placeholder="Custom dose (mg)..."
+                className="flex-1 bg-transparent px-4 py-3 text-base outline-none min-w-0 text-right"
+                disabled
+              />
+              <span className="pr-4 text-neutral-400 text-sm font-medium whitespace-nowrap">mg</span>
+            </div>
+            <button className="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold flex-shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div className="p-6 pt-0">
+        <button className="text-emerald-600 font-bold flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Back
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Static Home With Alerts Component - matches tutorial requirements
+function StaticHomeWithAlerts() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-neutral-100 flex flex-col p-4 overflow-hidden relative">
+      {/* Top Controls */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <Pause size={14} className="sm:w-4 sm:h-4" /> Pause
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
+        </button>
+        <button className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close
+        </button>
+      </div>
+
+      {/* Top Quick Tools */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-blue-100 text-blue-700">
+          Reversibles
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-orange-100 text-orange-700">
+          ROSC
+        </button>
+        <button className="p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors bg-purple-100 text-purple-700">
+          PHEA
+        </button>
+      </div>
+
+      {/* Main Center Display with Alerts */}
+      <div className="flex-1 bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 min-h-0 border-emerald-500">
+        <div className="h-full flex flex-col items-center px-2 sm:px-3 pt-4 pb-2 sm:pb-3 relative">
+          {/* Corner Cards */}
+          <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
+            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
+              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">3:42</span>
+            </div>
+            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
+              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">2</span>
+            </div>
+          </div>
+
+          {/* Timer */}
+          <div className="flex-1 flex flex-col items-center justify-center w-full pt-14 sm:pt-16">
+            <div className="relative flex items-center justify-center w-[240px] h-[240px] sm:w-[320px] sm:h-[320px]">
+              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 300 300">
+                <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="6" className="text-neutral-50" />
+                <circle cx="150" cy="150" r="140" fill="none" stroke="currentColor" strokeWidth="6" strokeLinecap="round" className="text-emerald-500" strokeDasharray="879.64" strokeDashoffset="659.73" style={{ pathLength: 1 }} />
+              </svg>
+              <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
+                <div className="text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none text-neutral-900">1:15</div>
+                <div className="text-[14px] sm:text-[18px] uppercase tracking-widest font-bold mt-4 sm:mt-8 text-neutral-400">Rhythm Check</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Alert Banners at bottom - NEW FORMAT */}
+          <div className="absolute bottom-3 left-3 right-3 space-y-2">
+            <div className="bg-amber-100 border-2 border-amber-400 rounded-xl p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-amber-500"></div>
+                <span className="font-bold text-amber-900 text-sm">Adrenaline due</span>
+              </div>
+              <span className="text-amber-700 text-xs font-semibold">Next: 4:14</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Main Controls */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4 flex-shrink-0">
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <FileText size={18} className="sm:w-6 sm:h-6" />
+          Summary
+        </button>
+        <button className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-emerald-600 text-white">
+          <Plus size={18} className="sm:w-6 sm:h-6" />
+          Add Tx
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// Static Summary Component - Extracted from SummaryOverlay in App.tsx
+function StaticSummary() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-white overflow-y-auto pb-20">
+      {/* Arrest Summary */}
+      <div className="mb-6">
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
+        <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">CPR Rounds</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">1</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Shocks given</span>
+            <span className="text-[16px] font-black tabular-nums text-red-600">0</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Disarmed</span>
+            <span className="text-[16px] font-black tabular-nums text-blue-600">0</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pharma Summary */}
+      <div className="mb-6">
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">PHARMA SUMMARY</div>
+        <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Adrenaline push</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">0.1mg (1)</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Amiodarone</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">50mg (1)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Treatment Log */}
+      <div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
+        <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
+          <div className="grid grid-cols-[2.1fr_1fr_1.4fr_0.9fr] bg-neutral-100 border-b border-neutral-200 px-4 py-3">
+            <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
+            <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
+            <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>
+            <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>
+          </div>
+          
+          <div className="divide-y divide-neutral-100">
+            <div className="grid grid-cols-[2.1fr_1fr_1.4fr_0.9fr] px-4 py-4 items-center gap-1">
+              <div className="pr-1">
+                <div className="text-[15px] font-bold text-neutral-900">Adrenaline 1mg</div>
+              </div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">14:42</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(3:14 elapsed)</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">2 min ago</div>
+            </div>
+            <div className="grid grid-cols-[2.1fr_1fr_1.4fr_0.9fr] px-4 py-4 items-center gap-1">
+              <div className="pr-1">
+                <div className="text-[15px] font-bold text-neutral-900">Amiodarone 300mg</div>
+              </div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">14:41</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(3:13 elapsed)</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">3 min ago</div>
+            </div>
+            <div className="grid grid-cols-[2.1fr_1fr_1.4fr_0.9fr] px-4 py-4 items-center gap-1">
+              <div className="pr-1">
+                <div className="text-[15px] font-bold text-neutral-900">Adrenaline 1mg</div>
+              </div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">14:40</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(3:12 elapsed)</div>
+              <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">4 min ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Static Case Summary Component - Extracted from closed case view in App.tsx  
+function StaticCaseSummary() {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-white overflow-y-auto p-6 max-w-2xl mx-auto space-y-6 pb-24">
+      <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <button className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold border border-emerald-100">
+          <FileText size={20} /> Export PDF
+        </button>
+        <button className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold border border-red-100">
+          <Trash2 size={20} /> Delete Case
+        </button>
+      </div>
+
+      {/* Arrest Summary */}
+      <div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
+        <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">CPR Rounds</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">1</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Shocks given</span>
+            <span className="text-[16px] font-black tabular-nums text-red-600">0</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Disarmed</span>
+            <span className="text-[16px] font-black tabular-nums text-blue-600">0</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Pharma Summary */}
+      <div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">PHARMA SUMMARY</div>
+        <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Adrenaline push</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">0.1mg (1)</span>
+          </div>
+          <div className="flex justify-between items-center p-2 px-3">
+            <span className="text-neutral-500 text-[16px] font-medium">Amiodarone</span>
+            <span className="text-[16px] font-black tabular-nums text-neutral-900">50mg (1)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Final Treatment Log */}
+      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">FINAL TREATMENT LOG</div>
+      <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
+        <div className="grid grid-cols-[2fr_1fr_1fr] bg-neutral-100 border-b border-neutral-200 px-4 py-3">
+          <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
+          <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
+          <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>
+        </div>
+        
+        <div className="divide-y divide-neutral-100">
+          <div className="grid grid-cols-[2fr_1fr_1fr] px-4 py-4 items-center gap-1">
+            <div className="pr-1">
+              <div className="text-[15px] font-bold text-neutral-900">Close case</div>
+            </div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">08:09:01</div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(00:00:29 elapsed)</div>
+          </div>
+          <div className="grid grid-cols-[2fr_1fr_1fr] px-4 py-4 items-center gap-1">
+            <div className="pr-1">
+              <div className="text-[15px] font-bold text-neutral-900">Amiodarone</div>
+              <div className="text-[13px] text-neutral-500 font-medium mt-0.5">50mg</div>
+            </div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">08:08:42</div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(00:00:10 elapsed)</div>
+          </div>
+          <div className="grid grid-cols-[2fr_1fr_1fr] px-4 py-4 items-center gap-1">
+            <div className="pr-1">
+              <div className="text-[15px] font-bold text-neutral-900">Adrenaline push</div>
+              <div className="text-[13px] text-neutral-500 font-medium mt-0.5">0.1mg</div>
+            </div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">08:08:37</div>
+            <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">(00:00:05 elapsed)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface TutorialElement {
   id: string;
@@ -32,6 +544,7 @@ interface InteractiveTutorialProps {
 const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) => {
   const [currentScreen, setCurrentScreen] = useState('intro1');
   const [exploredElements, setExploredElements] = useState<Set<string>>(new Set());
+  const [showingInfoBox, setShowingInfoBox] = useState(false);
   const [activeExplanation, setActiveExplanation] = useState<TutorialElement | null>(null);
 
   const screens: TutorialScreens = {
@@ -146,10 +659,12 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
   const handleElementClick = (element: TutorialElement) => {
     setActiveExplanation(element);
     setExploredElements(prev => new Set([...prev, element.id]));
+    setShowingInfoBox(true);
   };
 
   const handleCloseExplanation = () => {
     setActiveExplanation(null);
+    setShowingInfoBox(false);
   };
 
   const handleNext = () => {
@@ -166,222 +681,301 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: '#1a1a1a',
+      backgroundColor: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
+      alignItems: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      justifyContent: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      padding: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       zIndex: 9999,
       overflowY: 'auto',
     }}>
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        maxWidth: '400px',
-        backgroundColor: '#000',
-        borderRadius: '20px',
-        overflow: 'hidden',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-      }}>
-        <img
-          src={currentScreenData.image}
-          alt={currentScreenData.title}
-          style={{
-            width: '100%',
-            height: 'auto',
-            display: 'block',
-          }}
-        />
-
-        {/* Intro message boxes for intro1 and intro2 screens */}
-        {(currentScreen === 'intro1' || currentScreen === 'intro2') && (
-          <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '20px',
-            zIndex: 10000,
-          }}>
-            <div style={{
-              backgroundColor: '#ffffff',
-              borderRadius: '16px',
-              padding: '24px',
-              maxWidth: '320px',
-              width: '85%',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-            }}>
-              <div style={{
-                color: '#1a1a1a',
-                fontSize: '16px',
-                lineHeight: '1.6',
-                textAlign: 'center',
-                marginBottom: '20px',
-              }}>
-                {currentScreen === 'intro1' && 
-                  "The Big One is a tool that you can use when acting as the team leader during cardiac arrest cases to help you stay on top of everything."
-                }
-                {currentScreen === 'intro2' && 
-                  "On opening the app, you'll need to enter some times from the monitor and details about the patient. You'll then be brought to the home screen."
-                }
-              </div>
-              
-              {/* Next button at bottom of box */}
-              <button
-                onClick={handleNext}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  backgroundColor: '#10b981',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontSize: '16px',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-                }}
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
-
-        {currentScreenData.elements.map((element) => {
-          const isExplored = exploredElements.has(element.id);
-          if (isExplored) return null;
-          
-          // Progressive reveal: only show the next node in sequence
-          const exploredNumbers = currentScreenData.elements
-            .filter(el => exploredElements.has(el.id))
-            .map(el => el.number);
-          const nextNumber = exploredNumbers.length > 0 
-            ? Math.max(...exploredNumbers) + 1 
-            : 1;
-          
-          // Only render this node if it's the next in sequence
-          if (element.number !== nextNumber) return null;
-          
-          return (
-            <div
-              key={element.id}
-              onClick={() => handleElementClick(element)}
-              style={{
-                position: 'absolute',
-                left: `${element.x}%`,
-                top: `${element.y}%`,
-                width: '43px',
-                height: '43px',
-                transform: 'translate(-50%, -50%)',
-                cursor: 'pointer',
-                zIndex: 10,
-              }}
-            >
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: '100%',
-                height: '100%',
-                transform: 'translate(-50%, -50%)',
-                borderRadius: '50%',
-                border: '2px solid #10b981',
-                animation: 'ripple 2s infinite',
-                opacity: 0.6,
-              }} />
-              
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                width: '26px',
-                height: '26px',
-                transform: 'translate(-50%, -50%)',
-                borderRadius: '50%',
-                backgroundColor: '#fff',
-                border: '3px solid #10b981',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '15px',
-                fontWeight: '700',
-                color: '#10b981',
-              }}>
-                {element.number}
-              </div>
-            </div>
-          );
-        })}
-
-        <style>{`
-          @keyframes ripple {
-            0% {
-              transform: translate(-50%, -50%) scale(1);
-              opacity: 0.6;
-            }
-            100% {
-              transform: translate(-50%, -50%) scale(1.8);
-              opacity: 0;
-            }
-          }
-          @keyframes buttonPulse {
-            0%, 100% {
-              transform: translateX(-50%) scale(1);
-              box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-            }
-            50% {
-              transform: translateX(-50%) scale(1.05);
-              box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
-            }
-          }
-        `}</style>
-      </div>
-
-      {/* Next button - centered bottom with pulsing animation (for non-intro screens) */}
-      {/* Special case for home1: show exact replica of Add Tx button */}
-      {allExplored && currentScreenData.nextScreen && currentScreen === 'home1' && (
+      {/* Render static components for various screens */}
+      {currentScreen === 'home1' && <StaticHomeScreen />}
+      {currentScreen === 'addTxMenu' && <StaticAddTxMenu />}
+      {currentScreen === 'adrenalineDose' && <StaticAdrenalineDose />}
+      {(currentScreen === 'home2' || currentScreen === 'home2_summary' || currentScreen === 'home2_close') && <StaticHomeWithAlerts />}
+      {currentScreen === 'summary' && <StaticSummary />}
+      {currentScreen === 'caseSummary' && <StaticCaseSummary />}
+      
+      {/* Exit button overlay for static screens */}
+      {['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) && (
         <button
-          onClick={handleNext}
+          onClick={onClose}
           style={{
             position: 'absolute',
-            bottom: 'calc(3.5% + 5px)',
-            right: 'calc(5% + 15px)',
-            width: '41.8%',
-            padding: '14.4px 20px',
-            backgroundColor: '#10b981',
+            top: '10px',
+            right: '10px',
+            zIndex: 10001,
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
             color: '#fff',
             border: 'none',
-            borderRadius: '16px',
-            fontSize: '18px',
-            fontWeight: '700',
             cursor: 'pointer',
-            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)',
+            fontSize: '20px',
+            fontWeight: '700',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
-            animation: 'buttonPulse 2s infinite',
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
-          Add Tx
+          ×
         </button>
       )}
       
+      {/* Screenshot rendering for intro screens only */}
+      {(currentScreen === 'intro1' || currentScreen === 'intro2') && (
+        <div style={{
+          position: 'relative',
+          width: '100%',
+          maxWidth: '400px',
+          backgroundColor: '#000',
+          borderRadius: '20px',
+          overflow: 'hidden',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        }}>
+          {/* Exit button for testing */}
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '10px',
+              right: '10px',
+              zIndex: 10001,
+              width: '36px',
+              height: '36px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(0, 0, 0, 0.7)',
+              color: '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '20px',
+              fontWeight: '700',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            ×
+          </button>
+
+          <img
+            src={currentScreenData.image}
+            alt={currentScreenData.title}
+            style={{
+              width: '100%',
+              height: 'auto',
+              display: 'block',
+            }}
+          />
+        </div>
+      )}
+
+      {/* Intro message boxes for intro1 and intro2 screens */}
+      {(currentScreen === 'intro1' || currentScreen === 'intro2') && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
+          zIndex: 10000,
+        }}>
+          <div style={{
+            backgroundColor: '#ffffff',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '320px',
+            width: '85%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+          }}>
+            <div style={{
+              color: '#1a1a1a',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              textAlign: 'center',
+              marginBottom: '20px',
+            }}>
+              {currentScreen === 'intro1' && 
+                "The Big One is a tool that you can use when acting as the team leader during cardiac arrest cases to help you stay on top of everything."
+              }
+              {currentScreen === 'intro2' && 
+                "On opening the app, you'll need to enter some times from the monitor and details about the patient. You'll then be brought to the home screen."
+              }
+            </div>
+            
+            {/* Next button at bottom of box */}
+            <button
+              onClick={handleNext}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#10b981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
+
+      {currentScreenData.elements.map((element) => {
+        const isExplored = exploredElements.has(element.id);
+        if (isExplored) return null;
+        
+        // Progressive reveal: only show the next node in sequence
+        const exploredNumbers = currentScreenData.elements
+          .filter(el => exploredElements.has(el.id))
+          .map(el => el.number);
+        const nextNumber = exploredNumbers.length > 0 
+          ? Math.max(...exploredNumbers) + 1 
+          : 1;
+        
+        // Only render this node if it's the next in sequence
+        if (element.number !== nextNumber) return null;
+        
+        return (
+          <div
+            key={element.id}
+            onClick={() => handleElementClick(element)}
+            style={{
+              position: 'absolute',
+              left: `${element.x}%`,
+              top: `${element.y}%`,
+              width: '43px',
+              height: '43px',
+              transform: 'translate(-50%, -50%)',
+              cursor: 'pointer',
+              zIndex: 10,
+            }}
+          >
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '100%',
+              height: '100%',
+              transform: 'translate(-50%, -50%)',
+              borderRadius: '50%',
+              border: '2px solid #10b981',
+              animation: 'ripple 2s infinite',
+              opacity: 0.6,
+            }} />
+            
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              width: '26px',
+              height: '26px',
+              transform: 'translate(-50%, -50%)',
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              border: '3px solid #10b981',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '15px',
+              fontWeight: '700',
+              color: '#10b981',
+            }}>
+              {element.number}
+            </div>
+          </div>
+        );
+      })}
+
+      <style>{`
+        @keyframes ripple {
+          0% {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 0.6;
+          }
+          100% {
+            transform: translate(-50%, -50%) scale(1.8);
+            opacity: 0;
+          }
+        }
+        @keyframes buttonPulse {
+          0%, 100% {
+            transform: translateX(-50%) scale(1);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+          }
+          50% {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+          }
+        }
+      `}</style>
+
+      {/* Next button - centered bottom with pulsing animation (for non-intro screens) */}
+      {/* Special case for home1: Add Tx button with flashing text */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'home1' && (
+        <button
+          onClick={handleNext}
+          className="text-base sm:text-xl"
+          style={{
+            position: 'absolute',
+            bottom: '16px',
+            right: '16px',
+            width: 'calc((100% - 32px - 12px) / 2)',
+            height: '48px',
+            backgroundColor: '#059669',
+            color: '#ffffff',
+            border: 'none',
+            outline: 'none',
+            borderRadius: '16px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+          aria-label="Continue to Add Treatment screen"
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'textFlash 2s infinite',
+          }}>
+            <Plus size={18} className="sm:w-6 sm:h-6" />
+            Add Tx
+          </div>
+        </button>
+      )}
+      
+      <style>{`
+        @keyframes textFlash {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+      `}</style>
+      
       {/* Special case for home2_summary: show exact replica of Summary button */}
-      {allExplored && currentScreenData.nextScreen && currentScreen === 'home2_summary' && (
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'home2_summary' && (
         <button
           onClick={handleNext}
           style={{
@@ -416,8 +1010,176 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         </button>
       )}
       
-      {/* Regular Next button for other screens */}
-      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'home1' && currentScreen !== 'home2_summary' && (
+      {/* Special case for addTxMenu: clickable Adrenaline push button matching the list item */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'addTxMenu' && (
+        <button
+          onClick={handleNext}
+          style={{
+            position: 'absolute',
+            top: 'calc(30.5% - 2px)',
+            left: '29px',
+            right: '29px',
+            height: '50px',
+            backgroundColor: '#f5f5f5',
+            color: '#000',
+            border: 'none',
+            outline: 'none',
+            borderRadius: '12px',
+            fontSize: '14px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            paddingLeft: '14px',
+            textAlign: 'left',
+          }}
+        >
+          <div style={{
+            animation: 'textFlash 2s infinite',
+          }}>
+            Adrenaline push
+          </div>
+        </button>
+      )}
+      
+      {/* Special case for adrenalineDose: clickable dose button */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'adrenalineDose' && (
+        <button
+          onClick={handleNext}
+          style={{
+            position: 'absolute',
+            top: '30%',
+            left: '16px',
+            right: '16px',
+            height: '70px',
+            backgroundColor: '#d1fae5',
+            color: '#065f46',
+            border: '2px solid #10b981',
+            outline: 'none',
+            borderRadius: '12px',
+            fontSize: '18px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            textAlign: 'left',
+            paddingLeft: '20px',
+          }}
+        >
+          <div style={{
+            animation: 'textFlash 2s infinite',
+          }}>
+            1mg (Adult cardiac arrest)
+          </div>
+        </button>
+      )}
+      
+      {/* Special case for home2_summary: Summary button overlay */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'home2_summary' && (
+        <button
+          onClick={handleNext}
+          className="text-base sm:text-xl"
+          style={{
+            position: 'absolute',
+            bottom: '16px',
+            left: '16px',
+            width: 'calc((100% - 32px - 12px) / 2)',
+            height: '48px',
+            backgroundColor: '#059669',
+            color: '#ffffff',
+            border: 'none',
+            outline: 'none',
+            borderRadius: '16px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            animation: 'textFlash 2s infinite',
+          }}>
+            <FileText size={18} className="sm:w-6 sm:h-6" />
+            Summary
+          </div>
+        </button>
+      )}
+      
+      {/* Special case for home2_close: Close button overlay */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && currentScreen === 'home2_close' && (
+        <button
+          onClick={handleNext}
+          className="text-xs sm:text-sm"
+          style={{
+            position: 'absolute',
+            top: '16px',
+            right: '16px',
+            width: 'calc((100% - 32px - 12px) / 3)',
+            height: '44px',
+            backgroundColor: '#e5e5e5',
+            color: '#000',
+            border: 'none',
+            outline: 'none',
+            borderRadius: '12px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            zIndex: 10001,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '6px',
+          }}
+        >
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            animation: 'textFlash 2s infinite',
+          }}>
+            <XCircle size={14} className="sm:w-4 sm:h-4" />
+            Close
+          </div>
+        </button>
+      )}
+      
+      {/* For summary and caseSummary screens: use regular Next button */}
+      {allExplored && !showingInfoBox && currentScreenData.nextScreen && (currentScreen === 'summary' || currentScreen === 'home2') && (
+        <button
+          onClick={handleNext}
+          style={{
+            position: 'absolute',
+            bottom: '5%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '16px 48px',
+            backgroundColor: '#10b981',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '18px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+            zIndex: 10001,
+          }}
+        >
+          <div style={{ animation: 'textFlash 2s infinite' }}>
+            Next
+          </div>
+        </button>
+      )}
+      
+      {/* Regular Next button for intro screens only */}
+      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'home1' && currentScreen !== 'addTxMenu' && currentScreen !== 'adrenalineDose' && currentScreen !== 'home2' && currentScreen !== 'home2_summary' && currentScreen !== 'home2_close' && currentScreen !== 'summary' && currentScreen !== 'caseSummary' && (
         <button
           onClick={handleNext}
           style={{
