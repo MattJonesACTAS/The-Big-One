@@ -1,4 +1,3 @@
-// Build: 20260526-110611
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -33,6 +32,24 @@ export interface AppState {
   reversiblesChecked: string[];
   roscChecked: string[];
   pheaChecked: string[];
+  isROSCMode: boolean;
+  vitals: {
+    hr: string; rr: string; gcs: string;
+    bpSys: string; bpDia: string; spo2: string;
+    etco2: string; bgl: string; temp: string;
+  };
 }
 
-export type OverlayType = 'reversibles' | 'rosc' | 'phea' | 'summary' | 'treatment' | 'caseSummary' | 'tutorial';
+export type OverlayType = 'reversibles' | 'rosc' | 'phea' | 'summary' | 'treatment' | 'caseSummary' | 'tutorial' | 'vitals';
+
+export interface Vitals {
+  hr: string;
+  rr: string;
+  gcs: string;
+  bpSys: string;
+  bpDia: string;
+  spo2: string;
+  etco2: string;
+  bgl: string;
+  temp: string;
+}

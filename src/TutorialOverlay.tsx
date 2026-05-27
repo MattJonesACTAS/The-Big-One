@@ -76,7 +76,7 @@ const ALL_NODES: GlobalNode[] = [
   },
   {
     id: 'tabs', type: 'positioned', x: 50, y: 10.75, displayNumber: 6,
-    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)' }],
+    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
   },
   {
@@ -120,7 +120,11 @@ const ALL_NODES: GlobalNode[] = [
       },
       {
         title: 'Pharma Summary',
-        description: 'In the middle, the pharma summary lists all logged medications, with a cumulative tally of the total dose given of each drug.'
+        description: 'Next, we have the pharma summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
+      },
+      {
+        title: 'Vital Signs Survey',
+        description: "Next, we have the vital signs survey. Any vital signs entered via the VSS tab will appear here for quick reference during the case and at handover."
       },
       {
         title: 'Treatment Log',

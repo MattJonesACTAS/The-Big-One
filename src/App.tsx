@@ -49,7 +49,8 @@ const INITIAL_STATE: AppState = {
   reversiblesChecked: [],
   roscChecked: [],
   pheaChecked: [],
-  isROSCMode: false
+  isROSCMode: false,
+  vitals: { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }
 };
 
 const MEDICATIONS = [
@@ -1073,21 +1074,21 @@ export default function App() {
       </div>
 
       {/* Top Quick Tools */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
+      <div className="grid grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
         <button 
           onClick={() => {
             if (isShockForced) return;
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'reversibles' ? null : 'reversibles' }))
           }}
           disabled={isShockForced}
-          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
-          {state.currentOverlay === 'reversibles' ? 'Close' : 'Reversibles'}
+          {state.currentOverlay === 'reversibles' ? 'Close' : '4H 4T'}
         </button>
         <button 
           onClick={() => {
             if (isShockForced) return;
-            setRoscButtonFlashing(false); // Clear flash when opened
+            setRoscButtonFlashing(false);
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'rosc' ? null : 'rosc' }))
           }}
           disabled={isShockForced}
@@ -1109,13 +1110,24 @@ export default function App() {
         >
           {state.currentOverlay === 'phea' ? 'Close' : 'PHEA'}
         </button>
+        <button 
+          onClick={() => {
+            if (isShockForced) return;
+            setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'vitals' ? null : 'vitals' }))
+          }}
+          disabled={isShockForced}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${state.currentOverlay === 'vitals' ? 'bg-red-100 text-red-800' : 'bg-sky-100 text-sky-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+        >
+          {state.currentOverlay === 'vitals' ? 'Close' : 'VSS'}
+        </button>
       </div>
 
       {/* Main Center Display */}
       <div data-green-box className={`flex-1 bg-white border-4 rounded-3xl relative overflow-hidden transition-colors duration-300 min-h-0 ${
         state.currentOverlay === 'reversibles' ? 'border-blue-400' :
         state.currentOverlay === 'rosc' ? 'border-orange-400' :
-        state.currentOverlay === 'phea' ? 'border-purple-400' : 'border-emerald-500'
+        state.currentOverlay === 'phea' ? 'border-purple-400' :
+        state.currentOverlay === 'vitals' ? 'border-sky-400' : 'border-emerald-500'
       }`}>
         <div className="h-full flex flex-col items-center px-2 sm:px-3 pt-4 pb-2 sm:pb-3 relative">
           {/* Corner Cards */}
@@ -1244,6 +1256,7 @@ export default function App() {
                 pharmaSummary={pharmaSummary}
                 isShockForced={isShockForced}
                 toggleChecklistItem={toggleChecklistItem}
+                onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
               />
             )}
           </AnimatePresence>
@@ -1900,7 +1913,7 @@ function CounterItem({ label, value, onChange }: { label: string, value: number,
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -1908,9 +1921,10 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   state: AppState,
   pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
   isShockForced: boolean,
-  toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void
+  toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void,
+  onVitalsChange: (v: AppState['vitals']) => void
 }) {
-  const isTop = ['reversibles', 'rosc', 'phea'].includes(type);
+  const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
   
   return (
     <motion.div 
@@ -1924,10 +1938,45 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'reversibles' && <ReversiblesOverlay checkedItems={state.reversiblesChecked} onToggle={(label) => toggleChecklistItem('reversibles', label)} />}
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
+        {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
         {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
+  );
+}
+
+function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onChange: (v: AppState['vitals']) => void }) {
+  const update = (key: keyof AppState['vitals'], val: string) => onChange({ ...vitals, [key]: val });
+  const fields: { key: keyof AppState['vitals'], label: string }[] = [
+    { key: 'hr',   label: 'Heart Rate'    },
+    { key: 'rr',   label: 'Resp Rate'     },
+    { key: 'spo2', label: 'SpO₂'          },
+    { key: 'etco2',label: 'EtCO₂'         },
+    { key: 'bpSys',label: 'BP Systolic'   },
+    { key: 'bpDia',label: 'BP Diastolic'  },
+    { key: 'gcs',  label: 'GCS'           },
+    { key: 'bgl',  label: 'BGL'           },
+    { key: 'temp', label: 'Temperature'   },
+  ];
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="p-2.5 px-4 font-bold text-[16px] tracking-wide border-b uppercase sticky top-0 text-center bg-sky-50 text-sky-800 border-sky-200">Vital Signs</div>
+      <div className="p-3 space-y-2">
+        {fields.map(({ key, label }) => (
+          <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-100">
+            <span className="text-[15px] font-bold text-neutral-800">{label}</span>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={vitals[key]}
+              onChange={e => update(key, e.target.value)}
+              className="w-24 text-right text-[18px] font-bold text-sky-700 bg-transparent border-b-2 border-sky-200 focus:border-sky-500 outline-none py-1 tabular-nums"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -2146,9 +2195,35 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
 }
 
 function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
+  const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
+  const hasVitals = Object.values(v).some(val => val !== '');
+  const vitalRows = [
+    { label: 'Heart Rate',     value: v.hr,   unit: 'bpm'    },
+    { label: 'Resp Rate',      value: v.rr,   unit: 'br/min' },
+    { label: 'SpO₂',           value: v.spo2, unit: '%'      },
+    { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
+    { label: 'Blood Pressure', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+    { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
+    { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
+    { label: 'Temperature',    value: v.temp, unit: '°C'     },
+  ].filter(r => r.value !== '');
+
   return (
     <div className="space-y-6 pb-20">
       <SummaryStats state={state} pharmaSummary={pharmaSummary} />
+      <div className="rounded-xl overflow-hidden border border-neutral-100">
+          <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider">VITAL SIGNS</div>
+          {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
+            <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
+              <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
+              <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
+                {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
+              </span>
+            </div>
+          )) : (
+            <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded yet.</div>
+          )}
+        </div>
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} />
