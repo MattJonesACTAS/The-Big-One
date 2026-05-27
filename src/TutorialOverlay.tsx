@@ -86,7 +86,7 @@ const ALL_NODES: GlobalNode[] = [
   },
   // --- Treatment screen (2 pages) ---
   {
-    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 40, displayNumber: 1,
+    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 40, displayNumber: 8,
     pages: [
       {
         title: 'Add Tx Submenu',
@@ -101,18 +101,18 @@ const ALL_NODES: GlobalNode[] = [
   },
   // --- Home with medication alerts ---
   {
-    id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82, displayNumber: 1,
+    id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82, displayNumber: 9,
     pages: [{ title: 'Medication alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && s.rhythmCheckOvertime === 0 && !sf
   },
   {
-    id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 2,
+    id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 10,
     pages: [{ title: 'Summary Button', description: "Next, let's have a look at the running case summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && s.rhythmCheckOvertime === 0 && !sf
   },
   // --- Summary overlay (3-page node + close) ---
   {
-    id: 'summaryInfo', type: 'positioned', x: 50, y: 50, displayNumber: 1,
+    id: 'summaryInfo', type: 'positioned', x: 50, y: 50, displayNumber: 11,
     pages: [
       {
         title: 'Arrest Summary',
@@ -134,29 +134,29 @@ const ALL_NODES: GlobalNode[] = [
     condition: (s) => s.currentOverlay === 'summary'
   },
   {
-    id: 'closeOverlay', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 2,
+    id: 'closeOverlay', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 12,
     pages: [{ title: 'Return to Home', description: 'Press the close button to return to the home page.' }],
     condition: (s) => s.currentOverlay === 'summary'
   },
   // --- Home after summary ---
   {
-    id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2, displayNumber: 1,
+    id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2, displayNumber: 13,
     pages: [{ title: 'Close Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can close the case.\n\nLet's close the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
   },
   // --- Case summary ---
   {
-    id: 'finalStats', type: 'positioned', x: 50, y: 61.64, displayNumber: 1,
+    id: 'finalStats', type: 'positioned', x: 50, y: 61.64, displayNumber: 14,
     pages: [{ title: 'Final Case Data', description: 'Now the case is over, the treatment log shows times to the second, not just to the minute.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'export', type: 'positioned', x: 27, y: 14, displayNumber: 2,
+    id: 'export', type: 'positioned', x: 27, y: 14, displayNumber: 15,
     pages: [{ title: 'Export PDF', description: 'Here you can export the case summary and Tx log to a PDF, which you can then download or email for later review.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'delete', type: 'positioned', x: 73, y: 14, displayNumber: 3,
+    id: 'delete', type: 'positioned', x: 73, y: 14, displayNumber: 16,
     pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nDelete the case to finish the tutorial." }],
     condition: (s) => !s.running
   }
