@@ -132,3 +132,25 @@ body.tutorial-flash-close [data-button="close-case"] {
 body.tutorial-flash-delete [data-button="delete-case"] {
   animation: adrenalineFlash 1.5s infinite;
 }
+
+@keyframes flashRed {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+.flash-red {
+  animation: flashRed 0.6s steps(1, end) infinite;
+}
+
+@keyframes roscHeartbeat {
+  0%, 100% { transform: scale(1); }
+  6% { transform: scale(1.040); }
+  11% { transform: scale(1); }
+  17% { transform: scale(1.022); }
+  26% { transform: scale(1); }
+}
+
+.rosc-pulse {
+  animation: roscHeartbeat 1.77s ease-in-out infinite;
+  transform-origin: center center;
+}

@@ -1304,7 +1304,7 @@ export default function App() {
                   }
                 </div>
                 <div className={`text-[14px] sm:text-[18px] uppercase tracking-widest font-bold mt-4 sm:mt-8 ${
-                  state.rhythmCheckOvertime > 0 ? 'text-red-600 animate-pulse' : 'text-neutral-400'
+                  state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' : 'text-neutral-400'
                 }`}>
                   Rhythm Check
                 </div>
