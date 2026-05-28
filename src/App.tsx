@@ -519,7 +519,7 @@ export default function App() {
               // When overtime reaches 6 seconds, force shock entry and reset immediately
               if (nextOvertime >= 6) {
                 // Force shock overlay (don't wait for user to complete it)
-                if (!showCatchup) {
+                if (!showCatchup && !tutorialMode) {
                   nextOverlay = 'treatment';
                   setIsShockForced(true);
                 }
@@ -1274,8 +1274,7 @@ export default function App() {
                   className={
                     state.rhythmCheckPaused ? 'text-emerald-500' :
                     state.rhythmCheckOvertime > 0 ? 'text-red-500' :
-                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 && 
-                    (state.rhythmCheckTarget - state.elapsedSeconds) > 5 ? 'text-red-500' : 'text-emerald-500'
+                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-500' : 'text-emerald-500'
                   }
                   animate={{ 
                     strokeDashoffset: state.rhythmCheckPaused
@@ -1294,8 +1293,7 @@ export default function App() {
                   className={`text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none ${
                     state.rhythmCheckPaused ? 'text-neutral-900' :
                     state.rhythmCheckOvertime > 0 ? 'text-red-600' :
-                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 && 
-                    (state.rhythmCheckTarget - state.elapsedSeconds) > 5 ? 'text-red-600' : 'text-neutral-900'
+                    (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-600' : 'text-neutral-900'
                   }`}
                 >
                   {state.rhythmCheckPaused 
@@ -1497,15 +1495,8 @@ export default function App() {
                     <h1 className="text-4xl font-extrabold bg-gradient-to-r from-emerald-600 to-emerald-500 bg-clip-text text-transparent">
                       It's The Big One!
                     </h1>
-                    <p className="text-lg font-medium text-neutral-600">
+                    <p className="text-lg font-medium text-neutral-600 whitespace-nowrap">
                       Your cardiac arrest management tool
-                    </p>
-                  </div>
-                  
-                  {/* Description with subtle background */}
-                  <div className="bg-neutral-50 rounded-xl p-4 border border-neutral-100">
-                    <p className="text-neutral-600 text-sm leading-relaxed">
-                      Before we start, the app needs to be calibrated to the current case
                     </p>
                   </div>
                   
@@ -1547,6 +1538,12 @@ export default function App() {
                     >
                       Tutorial
                     </button>
+                  </div>
+
+                  <div className="text-[11px] text-neutral-400 text-center pt-2 space-y-0.5">
+                    <p>The Big One v1.0</p>
+                    <p>ACTAS CMG v1.0.5.4</p>
+                    <p>Last reviewed May 2026</p>
                   </div>
                 </div>
               )}

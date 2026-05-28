@@ -30,7 +30,7 @@ const ALL_NODES: GlobalNode[] = [
       },
       {
         title: 'Getting Started',
-        description: "On opening The Big One, you'll need to calibrate the app by entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been applied\n\n• The elapsed case time on the monitor\n\n• The time shown on the monitor's CPR count down\n\nYou'll then be brought to the home screen which we'll look at first."
+        description: "On opening The Big One, you'll need to calibrate the app by entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been performed\n\n• The elapsed case time on the monitor\n\n• The time shown on the monitor's CPR count down\n\nYou'll then be brought to the home screen which we'll look at first."
       },
       {
         title: 'Navigating the Tutorial',
@@ -42,47 +42,47 @@ const ALL_NODES: GlobalNode[] = [
   // --- Home screen nodes ---
   {
     id: 'totalTime', type: 'positioned', x: 19.8, y: 22, displayNumber: 1,
-    pages: [{ title: 'Total Time', description: "The total time indicates how long ago the monitor was turned on.\n\nDuring opening configuration, you will be prompted to extract this time from the monitor and enter it into the app.\n\nYou'll find this time in the top right corner of the monitor screen." }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    pages: [{ title: 'Total Time', description: "The total time indicates how long ago the monitor was turned on.\n\nDuring configuration, you will be prompted to copy this time from the monitor and enter it into the app.\n\nYou'll find this time in the top right corner of the monitor screen." }],
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'cprRound', type: 'positioned', x: 80.2, y: 22, displayNumber: 2,
     pages: [{ title: 'CPR Round', description: "The current round of CPR.\n\nThe CPR round counter will update every time the rhythm check counter reaches 0:00." }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'timer', type: 'positioned', x: 50, y: 52, displayNumber: 3,
     pages: [
       {
         title: 'Rhythm Check Timer',
-        description: "The countdown to the next rhythm check.\n\nDuring opening configuration, you will be prompted to extract this time from the monitor and enter it into the app.\n\nYou'll find this time counting down from 2:00 in its own central banner on the monitor screen."
+        description: "The countdown to the next rhythm check.\n\nDuring configuration, you will be prompted to copy this time from the monitor and enter it into the app.\n\nYou'll find this time counting down from 2:00 in its own central banner on the monitor screen."
       },
       {
         title: 'Timer Behaviour',
         description: "When the timer reaches 00:10 you will be forced back to the home screen so that you don't miss the rhythm check.\n\nWhen the timer reaches 0:00, it allows 6 seconds for the rhythm check, then restarts from 2:00.\n\nYou will then be forced to record whether you shocked or disarmed."
       }
     ],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'pause', type: 'positioned', x: 19.0, y: 4.2, displayNumber: 4,
     pages: [{ title: 'Pause Button', description: 'Pause and resume the rhythm check timer.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2, displayNumber: 5,
     pages: [{ title: 'Recalibrate Button', description: 'The app estimates a rhythm check of 6 seconds.\n\nRecalibrate the timer if your last rhythm check was longer.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'tabs', type: 'positioned', x: 50, y: 10.75, displayNumber: 6,
     pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'addTxBtn', type: 'positioned', x: 75, y: 95.4, displayNumber: 7,
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.\n\nPress the \u2018+ Add Tx\u2019 button so we can log our first Tx.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Treatment screen (2 pages) ---
   {
@@ -103,12 +103,12 @@ const ALL_NODES: GlobalNode[] = [
   {
     id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82, displayNumber: 9,
     pages: [{ title: 'Medication alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
   {
     id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 10,
     pages: [{ title: 'Summary Button', description: "Next, let's have a look at the running case summary page." }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
   // --- Summary overlay (3-page node + close) ---
   {
@@ -120,7 +120,7 @@ const ALL_NODES: GlobalNode[] = [
       },
       {
         title: 'Pharma Summary',
-        description: 'Next, we have the pharma summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
+        description: 'Next, we have the pharmacological summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
       },
       {
         title: 'Vital Signs Survey',
@@ -142,7 +142,7 @@ const ALL_NODES: GlobalNode[] = [
   {
     id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2, displayNumber: 13,
     pages: [{ title: 'Close Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can close the case.\n\nLet's close the case and see the final summary page." }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.rhythmCheckOvertime === 0 && !sf
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Case summary ---
   {
@@ -189,9 +189,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
 
   const currentNode = tutorialDone ? null : ALL_NODES[globalNodeIndex];
 
-  const inRhythmCheckWindow = appState.running && (
-    isShockForced || appState.rhythmCheckOvertime > 0
-  );
+  const inRhythmCheckWindow = appState.running && isShockForced;
 
   const conditionMet = !inRhythmCheckWindow && currentNode
     ? (currentNode.condition ? currentNode.condition(appState, isShockForced) : true)
