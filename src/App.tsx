@@ -86,6 +86,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
       { dose: '300mg', population: 'adult', indication: 'VF/VT cardiac arrest' },
       { dose: '150mg', population: 'adult', indication: 'VT with output' },
       { dose: '5mg/kg', population: 'paed', indication: 'VF/VT cardiac arrest' },
+      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/VT cardiac arrest (repeat)' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -727,8 +728,27 @@ export default function App() {
   }, [state.treatments, state.cprRound]);
 
   const amiodaroneStatus = useMemo(() => {
-    // Only the 300mg dose triggers the 5-minute repeat warning; 150mg does not
-    const amioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone') && t.name.includes('300'));
+    const allAmioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
+
+    console.log('[amioStatus] treatments:', allAmioTreatments.map(t => t.name));
+
+    // Determine if a dose is an "arrest dose" that starts the timer:
+    //   - Adult: 300mg
+    //   - Paed: 5mg/kg (first dose)
+    // Final doses (150mg adult, 2.5mg/kg paed) clear the timer permanently.
+    const isArrestDose = (name: string) =>
+      name.includes('300') || / 5mg\/kg/.test(name); // space before "5" excludes "2.5mg/kg"
+
+    // If a final/second dose has been logged (i.e. any dose that is NOT an arrest dose,
+    // e.g. adult 150mg), clear and hide the warning permanently.
+    const hasFinalDose = allAmioTreatments.some(t => !isArrestDose(t.name));
+    console.log('[amioStatus] hasFinalDose:', hasFinalDose, allAmioTreatments.map(t => `${t.name} => arrest=${isArrestDose(t.name)}`));
+    if (hasFinalDose) {
+      return { text: '', show: false, isDue: false, countdown: 0, flashRed: false };
+    }
+
+    // Otherwise, only arrest doses count for the timer
+    const amioTreatments = allAmioTreatments.filter(t => isArrestDose(t.name));
     const lastAmio = amioTreatments[amioTreatments.length - 1];
     
     if (!lastAmio) {
