@@ -83,10 +83,10 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Amiodarone': { 
     doses: [
-      { dose: '300mg', population: 'adult', indication: 'VF/VT cardiac arrest' },
+      { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest' },
       { dose: '150mg', population: 'adult', indication: 'VT with output' },
-      { dose: '5mg/kg', population: 'paed', indication: 'VF/VT cardiac arrest' },
-      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/VT cardiac arrest (repeat)' },
+      { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest' },
+      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat)' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -137,8 +137,8 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult', indication: 'Refractory VF' },
-      { dose: '50mg/kg', population: 'paed', indication: 'Cardiac arrest' },
+      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT' },
+      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT' },
       { dose: 'Other', population: 'both' }
     ] 
   },
