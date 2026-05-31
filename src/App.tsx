@@ -730,25 +730,15 @@ export default function App() {
   const amiodaroneStatus = useMemo(() => {
     const allAmioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
 
-    console.log('[amioStatus] treatments:', allAmioTreatments.map(t => t.name));
-
-    // Determine if a dose is an "arrest dose" that starts the timer:
-    //   - Adult: 300mg
-    //   - Paed: 5mg/kg (first dose)
-    // Final doses (150mg adult, 2.5mg/kg paed) clear the timer permanently.
-    const isArrestDose = (name: string) =>
-      name.includes('300') || / 5mg\/kg/.test(name); // space before "5" excludes "2.5mg/kg"
-
-    // If a final/second dose has been logged (i.e. any dose that is NOT an arrest dose,
-    // e.g. adult 150mg), clear and hide the warning permanently.
-    const hasFinalDose = allAmioTreatments.some(t => !isArrestDose(t.name));
-    console.log('[amioStatus] hasFinalDose:', hasFinalDose, allAmioTreatments.map(t => `${t.name} => arrest=${isArrestDose(t.name)}`));
-    if (hasFinalDose) {
+    // Protocol: first amiodarone dose starts the 5-min timer, second (final) dose clears it.
+    // We can't rely on dose string matching because cleanDoseForLog strips mg/kg to just
+    // the calculated value (e.g. "5mg/kg (42mg)" -> "Amiodarone 42mg").
+    // So we use count: 1 dose = show timer, 2+ doses = hide permanently.
+    if (allAmioTreatments.length >= 2) {
       return { text: '', show: false, isDue: false, countdown: 0, flashRed: false };
     }
 
-    // Otherwise, only arrest doses count for the timer
-    const amioTreatments = allAmioTreatments.filter(t => isArrestDose(t.name));
+    const amioTreatments = allAmioTreatments;
     const lastAmio = amioTreatments[amioTreatments.length - 1];
     
     if (!lastAmio) {
