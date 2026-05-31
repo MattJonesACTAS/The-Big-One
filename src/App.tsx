@@ -727,7 +727,8 @@ export default function App() {
   }, [state.treatments, state.cprRound]);
 
   const amiodaroneStatus = useMemo(() => {
-    const amioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
+    // Only the 300mg dose triggers the 5-minute repeat warning; 150mg does not
+    const amioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone') && t.name.includes('300'));
     const lastAmio = amioTreatments[amioTreatments.length - 1];
     
     if (!lastAmio) {
