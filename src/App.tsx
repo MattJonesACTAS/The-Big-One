@@ -2016,7 +2016,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
     >
       <div className="flex-1 overflow-y-auto">
         {type === 'reversibles' && <ReversiblesOverlay checkedItems={state.reversiblesChecked} onToggle={(label) => toggleChecklistItem('reversibles', label)} />}
-        {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} />}
+        {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
         {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
@@ -2069,13 +2069,70 @@ function ReversiblesOverlay({ checkedItems, onToggle }: { checkedItems: string[]
   );
 }
 
-function ROSCSelection({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
+function ROSCSelection({ checkedItems, onToggle, patientType, patientWeight }: {
+  checkedItems: string[];
+  onToggle: (label: string) => void;
+  patientType: 'adult' | 'paed' | null;
+  patientWeight: number | string | null;
+}) {
+  const isPaed = patientType === 'paed';
+  const weight = typeof patientWeight === 'number' ? patientWeight : parseFloat(String(patientWeight));
+
+  // Ventilation rate by weight (paed)
+  const rrTarget = isPaed
+    ? weight <= 12 ? '30–45/min'
+    : weight <= 19 ? '20–40/min'
+    : '20–30/min'
+    : '8–10/min';
+
+  // SBP target by weight (paed) or adult
+  const sbpTarget = !isPaed
+    ? 'Maintain SBP ≥100mmHg'
+    : weight <= 3 ? 'Maintain SBP 60–100mmHg'
+    : weight <= 12 ? 'Maintain SBP 70–110mmHg'
+    : 'Maintain SBP 90–110mmHg';
+
+  const teamLeaderItems = isPaed
+    ? ['Confirm roles', 'Monitor ECG for rhythm changes', 'Review reversibles', 'Aggressively check and address correctable causes']
+    : ['Confirm roles', 'Monitor ECG for rhythm changes', 'Review reversibles'];
+
+  const airwayItems = isPaed
+    ? [
+        'Do not perform RSI (not authorised)',
+        'If ETT placed during arrest — maintain sedation, prevent dislodgement',
+        'Confirm spontaneous ventilations',
+        'Maintain SpO₂ 94–98%',
+        'Maintain EtCO₂ 35–40mmHg',
+        `Ventilate at age-appropriate rate (${rrTarget})`,
+      ]
+    : [
+        'Response — consider sedation',
+        'Confirm airway secured',
+        'Confirm spontaneous ventilations',
+        'Maintain SpO₂ 94–98%',
+        'Maintain EtCO₂ 35–40mmHg',
+        `Ventilate 8–10/min`,
+      ];
+
+  const goferItems = isPaed
+    ? ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', 'Temp', 'BGL', 'Prepare extrication']
+    : ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', '12-lead ECG', 'Temp', 'BGL', 'Prepare extrication'];
+
+  const drugsItems = isPaed
+    ? [sbpTarget, 'Confirm bilateral IV/IO access', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required']
+    : ['Confirm bilateral IV/IO access', 'Maintain SBP ≥100mmHg', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required'];
+
+  const tempItems = isPaed
+    ? ['Check core temperature', 'Acceptable temperature range 32–37.5°C', 'Treat hyperthermia aggressively']
+    : ['Check core temperature', 'No active rewarming unless temp <32°C', 'No active cooling unless temp >39°C', 'Do not allow patient to shiver'];
+
   return (
     <div className="h-full">
-      <SectionGroup title="TEAM LEADER" color="orange" items={['Confirm roles', 'Monitor ECG for rhythm changes', 'Review reversibles']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="AIRWAY" color="orange" items={['Response — consider sedation', 'Confirm airway secured', 'Confirm spontaneous ventilations', 'Maintain SpO2 94–98%', 'Maintain ETCO2 35–40mmHg']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="GOFER" color="orange" items={['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO2', '12-lead ECG', 'Temp', 'BGL', 'Prepare extrication']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="DRUGS & ACCESS" color="orange" items={['Confirm bilateral IV/IO access', 'Maintain SBP ≥100mmHg', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="TEAM LEADER" color="orange" items={teamLeaderItems} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="AIRWAY" color="orange" items={airwayItems} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="GOFER" color="orange" items={goferItems} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="DRUGS & ACCESS" color="orange" items={drugsItems} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="TEMPERATURE" color="orange" items={tempItems} checkedItems={checkedItems} onToggle={onToggle} />
     </div>
   );
 }
