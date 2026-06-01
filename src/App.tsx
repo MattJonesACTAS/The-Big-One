@@ -69,57 +69,60 @@ type DoseOption = {
 const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Adrenaline push': { 
     doses: [
-      { dose: '1mg', population: 'adult', indication: 'Cardiac arrest' },
-      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest' },
+      { dose: '1mg', population: 'adult', indication: 'Cardiac arrest — fast push' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest — fast push' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Adrenaline infusion': { 
     doses: [
-      { dose: '1mg/500mL', population: 'both' },
-      { dose: '3mg/50mL', population: 'both' },
+      { dose: '1mg/500mL', population: 'both', indication: 'Gravity fed — adult & paed' },
+      { dose: '3mg/50mL', population: 'both', indication: 'Infusion pump — adult or large paed (≥21kg)' },
+      { dose: '300mcg/50mL', population: 'paed', indication: 'Infusion pump — small paed (≤20kg)' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Amiodarone': { 
     doses: [
-      { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest' },
-      { dose: '150mg', population: 'adult', indication: 'VT with output' },
-      { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest' },
-      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat)' },
+      { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest — fast push' },
+      { dose: '150mg', population: 'adult', indication: 'VT/AF/A.flutter with output — over 10 min via Springfusor' },
+      { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest — fast push', calculated: true },
+      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat) — fast push', calculated: true },
+      { dose: '5mg/kg', population: 'paed', indication: 'VT with output — over 10 min via Springfusor', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Atropine': { 
     doses: [
-      { dose: '600mcg', population: 'adult', indication: 'Bradycardia' },
+      { dose: '600mcg', population: 'adult', indication: 'Bradycardia — fast push' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Calcium': { 
     doses: [
-      { dose: '10mL 10%', population: 'both', indication: 'Cardiac arrest' },
+      { dose: '10mg/kg', population: 'both', indication: 'Cardiac arrest — over 30–60 sec', calculated: true },
+      { dose: '10mg/kg', population: 'both', indication: 'With cardiac output — over 2 min', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Glucose 10%': { 
     doses: [
-      { dose: '2.5mL/kg', population: 'both', calculated: true },
+      { dose: '2.5mL/kg', population: 'both', calculated: true, indication: 'Hypoglycaemia — over 5 min' },
       { dose: 'Other', population: 'both' }
     ],
     customUnit: 'mls'
   },
   'Heparin': {
     doses: [
-      { dose: '5000u', population: 'adult' },
+      { dose: '5000u', population: 'adult', indication: 'STEMI — over 30–60 sec' },
       { dose: 'Other', population: 'both' }
     ]
   },
   'Ketamine push': { 
     doses: [
       { dose: '0.5mg/kg', population: 'both', indication: 'CPR induced consciousness' },
-      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium' },
-      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated' },
+      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium — over 30–60 sec' },
+      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated — over 30–60 sec' },
       { dose: '1mg/kg', population: 'both', indication: 'Post intubation analgosedation' },
       { dose: 'Other', population: 'both' }
     ] 
@@ -131,20 +134,20 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Lignocaine': { 
     doses: [
-      { dose: '1mg/kg', population: 'both', indication: 'VT with output' },
+      { dose: '1mg/kg', population: 'both', indication: 'VT with output — over 2 min' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT' },
-      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT' },
+      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT — over 30–60 sec' },
+      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT — over 30–60 sec' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Midazolam': { 
     doses: [
-      { dose: '0.05mg/kg', population: 'both', indication: 'Post intubation sedation with ketamine - push dose' },
+      { dose: '0.05mg/kg', population: 'both', indication: 'Post intubation sedation with ketamine — over 60 sec' },
       { dose: 'mg/h', population: 'adult', indication: 'Post intubation sedation morph/midaz infusion' },
       { dose: 'mg', population: 'adult', indication: 'Post intubation sedation with morphine - push dose' }
     ] 
@@ -165,13 +168,15 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD', calculated: true },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD — fast push', calculated: true },
+      { dose: '0.5mMol/kg', population: 'both', indication: 'Hyperkalaemia with output — over 2–5 min', calculated: true },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardioactive drug OD with output — over 30–60 sec', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Suxamethonium': { 
     doses: [
-      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation' },
+      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation — over 30–60 sec' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -267,6 +272,20 @@ const formatSodiumBicarbonateDose = (doseStr: string): string => {
   }
   console.log('formatSodiumBicarbonateDose no match, returning:', doseStr);
   return doseStr;
+};
+
+const formatCalciumDose = (doseStr: string, weight: number | null): string => {
+  // Calcium chloride 10% = 100mg/mL
+  // 10mg/kg, max 1g (10mL)
+  if (!weight) return doseStr;
+  const mgMatch = doseStr.match(/([\d.]+)\s*mg/i);
+  if (!mgMatch) return doseStr;
+  const mg = Math.min(parseFloat(mgMatch[1]), 1000); // cap at 1g
+  const mL = Math.round(mg / 100 * 10) / 10; // 100mg/mL
+  if (weight >= 100) {
+    return `10mg/kg — 1g max (10mL of 10%)`;
+  }
+  return `10mg/kg (${mg}mg / ${mL}mL of 10%)`;
 };
 
 export default function App() {
@@ -2439,6 +2458,28 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
         cleanDose = formatSodiumBicarbonateDose(cleanDose);
       }
       
+      // For Calcium, add mg and mL calculation with max cap
+      if (selectedMed === 'Calcium') {
+        cleanDose = formatCalciumDose(cleanDose, state.patientWeight);
+      }
+      
+      // For Amiodarone paed, apply max dose caps
+      if (selectedMed === 'Amiodarone' && state.patientType === 'paed') {
+        const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
+        const mgMatch = cleanDose.match(/([\d.]+)mg/);
+        if (mgMatch) {
+          const calculated = parseFloat(mgMatch[1]);
+          const doseOpt = DOSE_CONFIG['Amiodarone'].doses.find(d => d.dose === dose);
+          if (doseOpt?.indication?.includes('repeat')) {
+            const capped = Math.min(calculated, 150);
+            cleanDose = `${capped}mg`;
+          } else if (doseOpt?.dose?.includes('/kg')) {
+            const capped = Math.min(calculated, 300);
+            cleanDose = `${capped}mg`;
+          }
+        }
+      }
+      
       console.log('handleDoseSelect - final cleanDose:', cleanDose);
       const finalTreatment = `${selectedMed} ${cleanDose}`;
       console.log('handleDoseSelect - adding treatment:', finalTreatment);
@@ -2480,6 +2521,11 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       // For Sodium Bicarbonate, add mls calculation
       if (selectedMed === 'Sodium Bicarbonate') {
         doseWithUnit = formatSodiumBicarbonateDose(doseWithUnit);
+      }
+      
+      // For Calcium, add mg and mL calculation with max cap
+      if (selectedMed === 'Calcium') {
+        doseWithUnit = formatCalciumDose(doseWithUnit, state.patientWeight);
       }
       
       addTreatment(`${selectedMed} ${doseWithUnit}`);
@@ -2525,6 +2571,36 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       }
     };
     
+    // Display dose on button — applies max caps and special formatting
+    const getButtonDisplayDose = (doseOpt: { dose: string; indication?: string }) => {
+      const base = calculateDose(doseOpt.dose, state.patientWeight);
+      const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
+      // Calcium: show mg and mL with 1g max cap
+      if (selectedMed === 'Calcium' && doseOpt.dose.includes('/kg')) {
+        return formatCalciumDose(base, weight);
+      }
+      // Amiodarone paed: cap display at 300mg for arrest, 150mg for VT with output
+      if (selectedMed === 'Amiodarone' && doseOpt.dose.includes('/kg') && state.patientType === 'paed') {
+        const mgMatch = base.match(/\(([\d.]+)mg\)/);
+        if (mgMatch) {
+          const calculated = parseFloat(mgMatch[1]);
+          if (doseOpt.indication?.includes('cardiac arrest') && !doseOpt.indication?.includes('repeat')) {
+            const capped = Math.min(calculated, 300);
+            return `5mg/kg (${capped}mg${calculated > 300 ? ' — 300mg max' : ''})`;
+          }
+          if (doseOpt.indication?.includes('repeat')) {
+            const capped = Math.min(calculated, 150);
+            return `2.5mg/kg (${capped}mg${calculated > 150 ? ' — 150mg max' : ''})`;
+          }
+          if (doseOpt.indication?.includes('VT with output')) {
+            const capped = Math.min(calculated, 150);
+            return `5mg/kg (${capped}mg${calculated > 150 ? ' — 150mg max' : ''})`;
+          }
+        }
+      }
+      return base;
+    };
+
     return (
       <div className="h-full overflow-y-auto pb-4">
         <div className="p-6 mb-4">
@@ -2541,15 +2617,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           <div className="space-y-3">
             {regularDoses.map(doseOpt => (
               <button
-                key={doseOpt.dose}
+                key={`${doseOpt.dose}-${doseOpt.indication}`}
                 onClick={() => handleDoseSelect(doseOpt.dose)}
                 className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
-                data-dose={doseOpt.indication || calculateDose(doseOpt.dose, state.patientWeight)}
+                data-dose={doseOpt.indication || getButtonDisplayDose(doseOpt)}
               >
                 {doseOpt.indication && (
                   <span className="text-[10px] font-normal uppercase tracking-wide">{doseOpt.indication}</span>
                 )}
-                <span className="text-lg">{calculateDose(doseOpt.dose, state.patientWeight)}</span>
+                <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
               </button>
             ))}
             
