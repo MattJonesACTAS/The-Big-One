@@ -2622,7 +2622,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
                 {doseOpt.indication && (
                   <>
-                    <span className="w-full border-t border-white opacity-30 my-1" />
+                    <span className="w-1/3 border-t border-white opacity-30 my-1" />
                     {doseOpt.indication.split(' / ').map((ind, i) => (
                       <span key={i} className="text-[11px] font-normal text-white opacity-90 leading-tight">
                         {ind.split(/(pVT)/).map((part, j) =>
