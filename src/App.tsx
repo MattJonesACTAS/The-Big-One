@@ -2625,7 +2625,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                     <span className="w-full border-t border-white opacity-30 my-1" />
                     {doseOpt.indication.split(' / ').map((ind, i) => (
                       <span key={i} className="text-[11px] font-normal text-white opacity-90 leading-tight block">
-                        {"— "}{ind.split(/(pVT)/).map((part, j) =>
+                        {"- "}{ind.split(/(pVT)/).map((part, j) =>
                           part === 'pVT'
                             ? <span key={j}>pVT</span>
                             : part
