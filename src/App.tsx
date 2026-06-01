@@ -2619,16 +2619,21 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
                 data-dose={doseOpt.indication || getButtonDisplayDose(doseOpt)}
               >
-                {doseOpt.indication && doseOpt.indication.split(' / ').map((ind, i) => (
-                  <span key={i} className="text-[10px] font-normal uppercase tracking-wide">
-                    {ind.split(/(pVT)/).map((part, j) =>
-                      part === 'pVT'
-                        ? <span key={j} className="normal-case">pVT</span>
-                        : part
-                    )}
-                  </span>
-                ))}
                 <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
+                {doseOpt.indication && (
+                  <span className="text-[11px] font-normal text-emerald-100 opacity-80 mt-0.5">
+                    {doseOpt.indication.split(' / ').map((ind, i) => (
+                      <span key={i}>
+                        {i > 0 && <span className="mx-1 opacity-60">·</span>}
+                        {ind.split(/(pVT)/).map((part, j) =>
+                          part === 'pVT'
+                            ? <span key={j}>pVT</span>
+                            : part
+                        )}
+                      </span>
+                    ))}
+                  </span>
+                )}
               </button>
             ))}
             
