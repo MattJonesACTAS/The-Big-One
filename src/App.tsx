@@ -1676,11 +1676,11 @@ export default function App() {
                         >
                           <option value="">Choose age</option>
                           {[
-                            ['Newborn', 3], ['1 month', 4], ['3 months', 6], ['6 months', 8],
-                            ['9 months', 9], ['1 year', 10], ['18 months', 11], ['2 years', 12],
+                            ['Newborn', 3], ['3 months', 5], ['6 months', 7],
+                            ['12 months', 11], ['2 years', 13],
                             ['3 years', 15], ['4 years', 17], ['5 years', 19], ['6 years', 21],
-                            ['7 years', 23], ['8 years', 26], ['9 years', 29], ['10 years', 32],
-                            ['11 years', 35], ['12 years', 38]
+                            ['7 years', 23], ['8 years', 25], ['9 years', 27], ['10 years', 30],
+                            ['11 years', 33], ['12 years', 35]
                           ].map(([age, weight]) => (
                             <option key={age} value={weight}>{age} ({weight} kg)</option>
                           ))}
