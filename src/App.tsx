@@ -69,8 +69,8 @@ type DoseOption = {
 const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Adrenaline push': { 
     doses: [
-      { dose: '1mg', population: 'adult', indication: 'Cardiac arrest — fast push' },
-      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest — fast push' },
+      { dose: '1mg', population: 'adult', indication: 'Cardiac arrest' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest' },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -84,45 +84,45 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Amiodarone': { 
     doses: [
-      { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest — fast push' },
-      { dose: '150mg', population: 'adult', indication: 'VT/AF/A.flutter with output — over 10 min via Springfusor' },
-      { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest — fast push', calculated: true },
-      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat) — fast push', calculated: true },
-      { dose: '5mg/kg', population: 'paed', indication: 'VT with output — over 10 min via Springfusor', calculated: true },
+      { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest' },
+      { dose: '150mg', population: 'adult', indication: 'VT/AF/A.flutter with output' },
+      { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest', calculated: true },
+      { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat)', calculated: true },
+      { dose: '5mg/kg', population: 'paed', indication: 'VT with output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Atropine': { 
     doses: [
-      { dose: '600mcg', population: 'adult', indication: 'Bradycardia — fast push' },
+      { dose: '600mcg', population: 'adult', indication: 'Bradycardia' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Calcium': { 
     doses: [
-      { dose: '10mg/kg', population: 'both', indication: 'Cardiac arrest — over 30–60 sec', calculated: true },
-      { dose: '10mg/kg', population: 'both', indication: 'With cardiac output — over 2 min', calculated: true },
+      { dose: '10mg/kg', population: 'both', indication: 'Cardiac arrest', calculated: true },
+      { dose: '10mg/kg', population: 'both', indication: 'With cardiac output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Glucose 10%': { 
     doses: [
-      { dose: '2.5mL/kg', population: 'both', calculated: true, indication: 'Hypoglycaemia — over 5 min' },
+      { dose: '2.5mL/kg', population: 'both', calculated: true, indication: 'Hypoglycaemia' },
       { dose: 'Other', population: 'both' }
     ],
     customUnit: 'mls'
   },
   'Heparin': {
     doses: [
-      { dose: '5000u', population: 'adult', indication: 'STEMI — over 30–60 sec' },
+      { dose: '5000u', population: 'adult', indication: 'STEMI' },
       { dose: 'Other', population: 'both' }
     ]
   },
   'Ketamine push': { 
     doses: [
       { dose: '0.5mg/kg', population: 'both', indication: 'CPR induced consciousness' },
-      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium — over 30–60 sec' },
-      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated — over 30–60 sec' },
+      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium' },
+      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated' },
       { dose: '1mg/kg', population: 'both', indication: 'Post intubation analgosedation' },
       { dose: 'Other', population: 'both' }
     ] 
@@ -134,20 +134,20 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Lignocaine': { 
     doses: [
-      { dose: '1mg/kg', population: 'both', indication: 'VT with output — over 2 min' },
+      { dose: '1mg/kg', population: 'both', indication: 'VT with output' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT — over 30–60 sec' },
-      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT — over 30–60 sec' },
+      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT' },
+      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Midazolam': { 
     doses: [
-      { dose: '0.05mg/kg', population: 'both', indication: 'Post intubation sedation with ketamine — over 60 sec' },
+      { dose: '0.05mg/kg', population: 'both', indication: 'Post intubation sedation with ketamine' },
       { dose: 'mg/h', population: 'adult', indication: 'Post intubation sedation morph/midaz infusion' },
       { dose: 'mg', population: 'adult', indication: 'Post intubation sedation with morphine - push dose' }
     ] 
@@ -168,15 +168,15 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD — fast push', calculated: true },
-      { dose: '0.5mMol/kg', population: 'both', indication: 'Hyperkalaemia with output — over 2–5 min', calculated: true },
-      { dose: '1mMol/kg', population: 'both', indication: 'Cardioactive drug OD with output — over 30–60 sec', calculated: true },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD', calculated: true },
+      { dose: '0.5mMol/kg', population: 'both', indication: 'Hyperkalaemia with output', calculated: true },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardioactive drug OD with output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Suxamethonium': { 
     doses: [
-      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation — over 30–60 sec' },
+      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation' },
       { dose: 'Other', population: 'both' }
     ] 
   },
