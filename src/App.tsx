@@ -278,13 +278,12 @@ const formatCalciumDose = (doseStr: string, weight: number | null): string => {
   // Calcium chloride 10% = 100mg/mL
   // 10mg/kg, max 1g (10mL)
   if (!weight) return doseStr;
-  const mgMatch = doseStr.match(/([\d.]+)\s*mg/i);
-  if (!mgMatch) return doseStr;
-  const mg = Math.min(parseFloat(mgMatch[1]), 1000); // cap at 1g
-  const mL = Math.round(mg / 100 * 10) / 10; // 100mg/mL
   if (weight >= 100) {
     return `10mg/kg — 1g max (10mL of 10%)`;
   }
+  const calculatedMg = 10 * weight; // 10mg/kg
+  const mg = Math.min(Math.round(calculatedMg * 10) / 10, 1000);
+  const mL = Math.round(mg / 100 * 10) / 10; // 100mg/mL
   return `10mg/kg (${mg}mg / ${mL}mL of 10%)`;
 };
 
@@ -2623,7 +2622,13 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 data-dose={doseOpt.indication || getButtonDisplayDose(doseOpt)}
               >
                 {doseOpt.indication && (
-                  <span className="text-[10px] font-normal uppercase tracking-wide">{doseOpt.indication}</span>
+                  <span className="text-[10px] font-normal uppercase tracking-wide">
+                    {doseOpt.indication?.split(/(pVT)/).map((part, i) =>
+                      part === 'pVT'
+                        ? <span key={i} className="normal-case">pVT</span>
+                        : part
+                    )}
+                  </span>
                 )}
                 <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
               </button>
