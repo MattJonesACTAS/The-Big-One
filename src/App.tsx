@@ -100,8 +100,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Calcium': { 
     doses: [
-      { dose: '10mg/kg', population: 'both', indication: 'Cardiac arrest', calculated: true },
-      { dose: '10mg/kg', population: 'both', indication: 'With cardiac output', calculated: true },
+      { dose: '10mg/kg', population: 'both', indication: 'Cardiac arrest / With cardiac output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -121,15 +120,15 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Ketamine push': { 
     doses: [
       { dose: '0.5mg/kg', population: 'both', indication: 'CPR induced consciousness' },
-      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium' },
+      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium / Post intubation analgosedation' },
+      { dose: '1mg/kg', population: 'paed', indication: 'Post intubation analgosedation' },
       { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated' },
-      { dose: '1mg/kg', population: 'both', indication: 'Post intubation analgosedation' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Ketamine infusion': {
     doses: [
-      { dose: 'mg/h', population: 'both' }
+      { dose: 'mg/h', population: 'both', indication: 'Post intubation analgosedation' }
     ]
   },
   'Lignocaine': { 
@@ -162,15 +161,13 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
     doses: [
       { dose: '250mL', population: 'both' },
       { dose: '500mL', population: 'both' },
-      { dose: '1000mL', population: 'both' },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Sodium Bicarbonate': { 
     doses: [
-      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD', calculated: true },
+      { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD / Cardioactive drug OD with output', calculated: true },
       { dose: '0.5mMol/kg', population: 'both', indication: 'Hyperkalaemia with output', calculated: true },
-      { dose: '1mMol/kg', population: 'both', indication: 'Cardioactive drug OD with output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -183,6 +180,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Oxygen': {
     doses: [
       { dose: 'Nasal cannulae', population: 'both' },
+      { dose: 'NRB', population: 'both' },
       { dose: 'BVM', population: 'both' }
     ]
   }
@@ -2621,15 +2619,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                 className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
                 data-dose={doseOpt.indication || getButtonDisplayDose(doseOpt)}
               >
-                {doseOpt.indication && (
-                  <span className="text-[10px] font-normal uppercase tracking-wide">
-                    {doseOpt.indication?.split(/(pVT)/).map((part, i) =>
+                {doseOpt.indication && doseOpt.indication.split(' / ').map((ind, i) => (
+                  <span key={i} className="text-[10px] font-normal uppercase tracking-wide">
+                    {ind.split(/(pVT)/).map((part, j) =>
                       part === 'pVT'
-                        ? <span key={i} className="normal-case">pVT</span>
+                        ? <span key={j} className="normal-case">pVT</span>
                         : part
                     )}
                   </span>
-                )}
+                ))}
                 <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
               </button>
             ))}
