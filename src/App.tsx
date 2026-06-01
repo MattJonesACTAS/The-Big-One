@@ -1613,7 +1613,7 @@ export default function App() {
                         <div className="text-center">
                           <div className="font-bold text-lg">Paediatric</div>
                           <div className={`text-xs mt-1 ${weightType === 'paed' ? 'text-pink-100' : 'text-neutral-400'}`}>
-                            Newborn-12 yrs
+                            Newborn-11 yrs
                           </div>
                         </div>
                       </div>
@@ -2255,7 +2255,12 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   return (
     <div className="space-y-6">
       {patientLabel && (
-        <p className="text-xs text-neutral-400 text-right tracking-wide">{patientLabel}</p>
+        <div className="rounded-xl overflow-hidden border border-neutral-100">
+          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider">PATIENT</div>
+          <div className="bg-white px-4 py-3">
+            <span className="text-[17px] font-bold text-neutral-900">{patientLabel}</span>
+          </div>
+        </div>
       )}
        <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
