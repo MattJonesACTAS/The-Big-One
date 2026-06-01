@@ -1587,7 +1587,7 @@ export default function App() {
                         <div className="text-center">
                           <div className="font-bold text-lg">Adult</div>
                           <div className={`text-xs mt-1 ${weightType === 'adult' ? 'text-emerald-100' : 'text-neutral-400'}`}>
-                            40-200 kg
+                            35-200 kg
                           </div>
                         </div>
                       </div>
@@ -1635,6 +1635,7 @@ export default function App() {
                         className="w-full bg-white border-2 border-emerald-300 rounded-xl px-4 py-4 text-base font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all"
                       >
                         <option value="">Select weight</option>
+                        <option value="35">35 kg</option>
                         <option value="40">40 kg</option>
                         <option value="50">50 kg</option>
                         <option value="60">60 kg</option>
@@ -1680,7 +1681,7 @@ export default function App() {
                             ['12 months', 11], ['2 years', 13],
                             ['3 years', 15], ['4 years', 17], ['5 years', 19], ['6 years', 21],
                             ['7 years', 23], ['8 years', 25], ['9 years', 27], ['10 years', 30],
-                            ['11 years', 33], ['12 years', 35]
+                            ['11 years', 33]
                           ].map(([age, weight]) => (
                             <option key={age} value={weight}>{age} ({weight} kg)</option>
                           ))}
