@@ -2115,8 +2115,8 @@ function ROSCSelection({ checkedItems, onToggle, patientType, patientWeight }: {
       ];
 
   const goferItems = isPaed
-    ? ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', 'Temp (32–37.5°C)', 'BGL', 'Prepare extrication']
-    : ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', '12-lead ECG', 'Temp (aggressive correction if <32°C or >39°C)', 'BGL', 'Prepare extrication'];
+    ? ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', 'Temp (32–37.5°C acceptable)', 'BGL', 'Prepare extrication']
+    : ['Confirm radial pulse', 'Set BP to automatic cycling', 'Attach SpO₂', '12-lead ECG', 'Temp (aggressively correct if <32°C or >39°C)', 'BGL', 'Prepare extrication'];
 
   const drugsItems = isPaed
     ? [sbpTarget, 'Confirm bilateral IV/IO access', 'Prepare sedation medications if required', 'Prepare adrenaline infusion if required']
