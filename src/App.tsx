@@ -2616,15 +2616,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
               <button
                 key={`${doseOpt.dose}-${doseOpt.indication}`}
                 onClick={() => handleDoseSelect(doseOpt.dose)}
-                className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1"
+                className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base flex flex-col items-start gap-1 text-left"
                 data-dose={doseOpt.indication || getButtonDisplayDose(doseOpt)}
               >
                 <span className="text-lg">{getButtonDisplayDose(doseOpt)}</span>
                 {doseOpt.indication && (
                   <>
-                    <span className="w-1/3 border-t border-white opacity-30 my-1" />
+                    <span className="w-full border-t border-white opacity-30 my-1" />
                     {doseOpt.indication.split(' / ').map((ind, i) => (
-                      <span key={i} className="text-[11px] font-normal text-white opacity-90 leading-tight">
+                      <span key={i} className="text-[11px] font-normal text-white opacity-90 leading-tight block">
                         {ind.split(/(pVT)/).map((part, j) =>
                           part === 'pVT'
                             ? <span key={j}>pVT</span>
