@@ -2246,9 +2246,17 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
 
 function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
-  
+  const patientLabel = state.patientType === 'adult'
+    ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
+    : state.patientType === 'paed'
+    ? `Paediatric · ${state.patientWeight}kg`
+    : null;
+
   return (
     <div className="space-y-6">
+      {patientLabel && (
+        <p className="text-xs text-neutral-400 text-right tracking-wide">{patientLabel}</p>
+      )}
        <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
