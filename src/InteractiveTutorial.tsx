@@ -1282,14 +1282,14 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
               color: '#1a1a1a',
               textAlign: 'center',
             }}>
-              {activeExplanation.title}
+              {activeExplanation.title.charAt(0).toUpperCase() + activeExplanation.title.slice(1)}
             </h3>
             <p style={{
               margin: '0 0 20px 0',
               fontSize: '15px',
               lineHeight: '1.6',
               color: '#444',
-              textAlign: 'center',
+              textAlign: 'left',
               whiteSpace: 'pre-line',
             }}>
               {activeExplanation.description}
