@@ -333,6 +333,9 @@ export default function App() {
   const [useManualEntry, setUseManualEntry] = useState(false);
   const [elapsedTimestamp, setElapsedTimestamp] = useState<number | null>(null);
   const [cprTimestamp, setCprTimestamp] = useState<number | null>(null);
+  const [timingMode, setTimingMode] = useState<'cpr' | 'elapsed' | 'log' | null>(null);
+  const [rhythmInterval, setRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds' | null>(null);
+  const [demoTick, setDemoTick] = useState(0); // drives animated timers on mode selection screen
   const [isCaseClosed, setIsCaseClosed] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
@@ -342,6 +345,8 @@ export default function App() {
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [showTimerAdjust, setShowTimerAdjust] = useState(false);
   const [timerAdjustValue, setTimerAdjustValue] = useState({ mins: 2, secs: 0 });
+  const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
+  const [showRearrestIntervalPicker, setShowRearrestIntervalPicker] = useState(false);
   const [roscButtonFlashing, setRoscButtonFlashing] = useState(false);
   const [showLoggedNotification, setShowLoggedNotification] = useState(false);
   const loggedTreatmentRef = useRef<string>('');
@@ -354,24 +359,48 @@ export default function App() {
   
   // Tutorial mode state
   const [tutorialMode, setTutorialMode] = useState(false);
+  const [showInteractiveTutorial, setShowInteractiveTutorial] = useState(false);
+  const [timingNodesComplete, setTimingNodesComplete] = useState(false);
   const [tutorialScreen, setTutorialScreen] = useState({ index: -1, complete: false, nodeIndex: 0 });
   const [tutorialNodeIndex, setTutorialNodeIndex] = useState(0);
 
-  // Add CSS classes to body for tutorial button flashing
+  // Inject tutorial CPR button flash CSS
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'tutorial-cpr-flash-style';
+    style.textContent = `
+      @keyframes tutorialCprFade {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.45; }
+      }
+      body.tutorial-flash-cpr-btn [data-tutorial="cpr-btn"] {
+        animation: tutorialCprFade 2s ease-in-out infinite;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { document.getElementById('tutorial-cpr-flash-style')?.remove(); };
+  }, []);
   useEffect(() => {
     console.log('Tutorial screen tracking:', tutorialScreen);
     console.log('Current overlay:', state.currentOverlay);
     console.log('Treatments length:', state.treatments.length);
+
+    // Tutorial: flash CPR button when all timing nodes explored
+    if (showInteractiveTutorial && timingNodesComplete) {
+      document.body.classList.add('tutorial-flash-cpr-btn');
+    } else {
+      document.body.classList.remove('tutorial-flash-cpr-btn');
+    }
     
-    // Node 7 (addTxBtn) complete - flash Add Tx button (index 8 = waiting for treatment screen)
-    if (tutorialMode && tutorialScreen.index === 8 && state.currentOverlay === null) {
+    // Node 5 (addTxBtn) complete - flash Add Tx button (index 6 = waiting for treatment screen)
+    if (tutorialMode && tutorialScreen.index === 6 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-add-tx');
     } else {
       document.body.classList.remove('tutorial-flash-add-tx');
     }
 
-    // Node 8 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 9)
-    if (tutorialMode && tutorialScreen.index === 9) {
+    // Node 6 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 7)
+    if (tutorialMode && tutorialScreen.index === 7) {
       document.body.classList.add('tutorial-flash-adrenaline');
       document.body.classList.add('tutorial-flash-dose');
     } else {
@@ -379,22 +408,22 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-dose');
     }
 
-    // Node 10 (summaryBtn) complete - flash Summary button (index 11 = waiting for summary overlay)
-    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === null) {
+    // Node 8 (summaryBtn) complete - flash Summary button (index 9 = waiting for summary overlay)
+    if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-summary');
     } else {
       document.body.classList.remove('tutorial-flash-summary');
     }
 
-    // Node 13 (closeOverlay) complete - flash summary close button (index 13 = waiting on summary)
-    if (tutorialMode && tutorialScreen.index === 13 && state.currentOverlay === 'summary') {
+    // Node 10 (closeOverlay) complete - flash summary close button (index 11 = waiting on summary)
+    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === 'summary') {
       document.body.classList.add('tutorial-flash-summary-close');
     } else {
       document.body.classList.remove('tutorial-flash-summary-close');
     }
 
-    // Node 13 (closeCase) complete - flash Close Case button (index 14 = waiting on home)
-    if (tutorialMode && tutorialScreen.index === 14 && state.currentOverlay === null) {
+    // Node 11 (closeCase) complete - flash Close Case button (index 12 = waiting on home)
+    if (tutorialMode && tutorialScreen.index === 12 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-close');
     } else {
       document.body.classList.remove('tutorial-flash-close');
@@ -408,6 +437,7 @@ export default function App() {
     }
     
     return () => {
+      document.body.classList.remove('tutorial-flash-cpr-btn');
       document.body.classList.remove('tutorial-flash-add-tx');
       document.body.classList.remove('tutorial-flash-adrenaline');
       document.body.classList.remove('tutorial-flash-dose');
@@ -416,7 +446,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-close');
       document.body.classList.remove('tutorial-flash-delete');
     };
-  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay]);
+  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
@@ -498,6 +528,13 @@ export default function App() {
   }, [state]);
 
   // Timer logic
+  // Demo tick for animated timers on timing mode selection screen
+  useEffect(() => {
+    if (catchupStep !== 6) return;
+    const interval = window.setInterval(() => setDemoTick(t => t + 1), 1000);
+    return () => clearInterval(interval);
+  }, [catchupStep]);
+
   useEffect(() => {
     let interval: number;
     if (state.running) {
@@ -516,37 +553,50 @@ export default function App() {
           if (!prev.rhythmCheckPaused) {
             const countdown = prev.rhythmCheckTarget - newElapsed;
 
-            // Auto-close overlay ONCE at 10s
-            if (countdown === 10 && !hasAutoClosedAt10.current) {
+            // Auto-close overlay ONCE at 10s (not in tutorial)
+            if (countdown === 10 && !hasAutoClosedAt10.current && !tutorialMode) {
               nextOverlay = null;
               hasAutoClosedAt10.current = true;
             }
 
-            // Beep logic only between 10 and 5 seconds
-            if (countdown <= 10 && countdown > 5 && lastBeepSecond.current !== newElapsed) {
+            // Beep logic: in elapsed mode beep at 5s to 0s; in CPR mode beep at 10s to 5s
+            const beepStart = timingMode === 'elapsed' ? 5 : 10;
+            const beepEnd = timingMode === 'elapsed' ? 0 : 5;
+            if (countdown <= beepStart && countdown > beepEnd && lastBeepSecond.current !== newElapsed) {
               playBeep();
               lastBeepSecond.current = newElapsed;
             }
 
-            // Handle rhythm check reaching 0:00 and overtime
+            // Handle rhythm check reaching 0:00
             if (countdown <= 0) {
-              // Calculate overtime (how many seconds past the target)
-              nextOvertime = newElapsed - prev.rhythmCheckTarget;
-              
-              // When overtime reaches 6 seconds, force shock entry and reset immediately
-              if (nextOvertime >= 6) {
-                // Force shock overlay (don't wait for user to complete it)
-                if (!showCatchup && !tutorialMode) {
-                  nextOverlay = 'treatment';
-                  setIsShockForced(true);
+              if (timingMode === 'elapsed' && rhythmInterval) {
+                // Elapsed mode: fire overlay immediately at rhythm check time, no overtime phase
+                if (countdown === 0) {
+                  if (!showCatchup && !tutorialMode) {
+                    nextOverlay = 'treatment';
+                    setIsShockForced(true);
+                  }
+                  nextTarget = calcNextIntervalTarget(newElapsed, rhythmInterval);
+                  nextRound += 1;
+                  nextOvertime = 0;
+                  hasAutoClosedAt10.current = false;
+                  setHasShownForcedShock(false);
                 }
+              } else {
+                // CPR mode: 6-second overtime phase before forcing overlay
+                nextOvertime = newElapsed - prev.rhythmCheckTarget;
                 
-                // Reset immediately regardless of shock entry
-                nextTarget = newElapsed + 120;
-                nextRound += 1;
-                nextOvertime = 0;
-                hasAutoClosedAt10.current = false;
-                setHasShownForcedShock(false); // Reset for next cycle
+                if (nextOvertime >= 6) {
+                  if (!showCatchup && !tutorialMode) {
+                    nextOverlay = 'treatment';
+                    setIsShockForced(true);
+                  }
+                  nextTarget = newElapsed + 120;
+                  nextRound += 1;
+                  nextOvertime = 0;
+                  hasAutoClosedAt10.current = false;
+                  setHasShownForcedShock(false);
+                }
               }
             } else {
               nextOvertime = 0; // Reset overtime when not past target
@@ -637,7 +687,10 @@ export default function App() {
     setState(prev => {
       const isShockOrDisarm = name.includes('Shock') || name.includes('Disarm');
       const isROSC = name === 'Disarm - ROSC';
+      const isRearrest = name === 'Rearrest';
       const wasRhythmCheckPaused = prev.rhythmCheckPaused;
+      // Increment round if shock/disarm logged out of turn (before timer hit 0)
+      const isOutOfTurn = isShockOrDisarm && !isROSC && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
       
       // Auto-add OPA before BVM
       const newTreatments = [...prev.treatments];
@@ -657,23 +710,32 @@ export default function App() {
         ...prev,
         treatments: newTreatments,
         shocks: (name.includes('Shock') && !name.includes('Disarm')) ? prev.shocks + 1 : prev.shocks,
-        currentOverlay: null,
+        cprRound: isOutOfTurn ? prev.cprRound + 1 : prev.cprRound,
+        currentOverlay: isRearrest ? 'treatment' : null,
         // Reset rhythm check to 2:00 for ROSC or when unpausing via other shock/disarm
         rhythmCheckTarget: (isROSC || (isShockOrDisarm && wasRhythmCheckPaused)) 
           ? prev.elapsedSeconds + 120 
           : prev.rhythmCheckTarget,
         rhythmCheckOvertime: (isROSC || (isShockOrDisarm && wasRhythmCheckPaused)) ? 0 : prev.rhythmCheckOvertime,
-        // Pause for ROSC, unpause for other shock/disarm
+        // Pause for ROSC, unpause for other shock/disarm; Rearrest exits ROSC mode
         rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused,
         // For ROSC, freeze the countdown at 2:00
         frozenCountdown: isROSC ? 120 : prev.frozenCountdown,
-        // Enter ROSC mode when ROSC logged, exit when any shock/disarm logged
-        isROSCMode: isROSC ? true : isShockOrDisarm ? false : prev.isROSCMode,
+        // Enter ROSC mode when ROSC logged, exit when any shock/disarm or rearrest logged
+        isROSCMode: isROSC ? true : (isShockOrDisarm || isRearrest) ? false : prev.isROSCMode,
         // Clear ROSC checklist when ROSC is logged again (new ROSC event)
         roscChecked: isROSC ? [] : prev.roscChecked
       };
     });
     
+    // Rearrest from Add Tx menu: stop flashing, set forced overlay, mark as rearrest
+    if (name === 'Rearrest') {
+      setRoscButtonFlashing(false);
+      setRearrested(true);
+      setIsShockForced(true);
+      return; // Skip the rest — overlay stays open for rhythm check outcome
+    }
+
     // Make ROSC button flash when ROSC is selected
     if (name === 'Disarm - ROSC') {
       setRoscButtonFlashing(true);
@@ -681,10 +743,14 @@ export default function App() {
     
     setIsShockForced(false);
 
-    // If this treatment was logged from a rearrest, show timer adjustment popup
+    // If this treatment was logged from a rearrest, show interval picker (elapsed) or timer adjust (CPR); log mode needs nothing
     if (rearrested && (name.includes('Shock') || name.includes('Disarm'))) {
       setRearrested(false);
-      setShowTimerAdjust(true);
+      if (timingMode === 'elapsed') {
+        setShowRearrestIntervalPicker(true);
+      } else if (timingMode !== 'log') {
+        setShowTimerAdjust(true);
+      }
     }
     
     // Show notification with treatment name
@@ -701,7 +767,7 @@ export default function App() {
     }
     
     // Reset disregard states when new doses given
-    if (name.includes('Adrenaline')) {
+    if (name.includes('Adrenaline push')) {
       setDisregardAdrenaline(null);
     }
     if (name.includes('Amiodarone')) {
@@ -721,7 +787,7 @@ export default function App() {
   };
 
   const adrenalineRoundStatus = useMemo(() => {
-    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline'));
+    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push'));
     const lastAdr = adrTreatments.pop();
     
     if (!lastAdr) {
@@ -866,6 +932,20 @@ export default function App() {
     return summary;
   }, [state.treatments]);
 
+  // --- Elapsed time interval calculator ---
+  const calcNextIntervalTarget = (elapsedSecs: number, interval: 'evens' | 'odds' | 'half-evens' | 'half-odds'): number => {
+    const intervalMap = {
+      'evens':      { period: 120, offset: 0   }, // 2:00, 4:00, 6:00...
+      'odds':       { period: 120, offset: 60  }, // 1:00, 3:00, 5:00...
+      'half-evens': { period: 120, offset: 30  }, // 2:30, 4:30, 6:30...
+      'half-odds':  { period: 120, offset: 90  }, // 1:30, 3:30, 5:30...
+    };
+    const { period, offset } = intervalMap[interval];
+    const phase = ((elapsedSecs - offset) % period + period) % period;
+    const next = elapsedSecs + (period - phase);
+    return next;
+  };
+
   // --- Catchup Handlers ---
   const handleCatchupStart = (overrideWeight?: string) => {
     console.log('handleCatchupStart called', { overrideWeight, weightInput });
@@ -905,13 +985,22 @@ export default function App() {
       adjustedElapsed += timeSinceElapsed;
     }
     
-    if (cprTimestamp) {
+    // Only apply CPR timestamp adjustment in CPR timer mode
+    if (timingMode === 'cpr' && cprTimestamp) {
       const timeSinceCpr = Math.floor((Date.now() - cprTimestamp) / 1000);
       adjustedRhythm = Math.max(0, adjustedRhythm - timeSinceCpr);
     }
     
     const now = Date.now();
     const startClockTime = now - (adjustedElapsed * 1000);
+    
+    // Calculate rhythm check target based on timing mode
+    let rhythmCheckTarget: number;
+    if (timingMode === 'elapsed' && rhythmInterval) {
+      rhythmCheckTarget = calcNextIntervalTarget(adjustedElapsed, rhythmInterval);
+    } else {
+      rhythmCheckTarget = adjustedElapsed + adjustedRhythm;
+    }
 
     const initialTxs: Treatment[] = [];
     const baseClock = new Date(startClockTime);
@@ -967,14 +1056,14 @@ export default function App() {
       startTime: now,
       pausedTime: adjustedElapsed * 1000,
       elapsedSeconds: adjustedElapsed,
-      rhythmCheckTarget: adjustedElapsed + adjustedRhythm, // Target time = current elapsed + countdown
-      cprRound: Math.max(1, priorCounts.shock + priorCounts.disarm), // Round = total shocks + disarms (min 1)
+      rhythmCheckTarget: rhythmCheckTarget,
+      cprRound: Math.max(1, priorCounts.shock + priorCounts.disarm),
       shocks: priorCounts.shock,
       treatments: initialTxs,
       catchupElapsed: adjustedElapsed,
       startClockTime: startClockTime,
-      patientWeight: parsedWeight,
-      patientType: weightType
+      patientWeight: parsedWeight || (tutorialMode ? 70 : null),
+      patientType: weightType || (tutorialMode ? 'adult' : null)
     });
     console.log('State set with weight:', parsedWeight, 'and type:', weightType);
     
@@ -994,7 +1083,7 @@ export default function App() {
     // setPhotoTimestamp(null); // Removed - not defined
     setElapsedTimestamp(null);
     setCprTimestamp(null);
-    previousCountdown.current = adjustedRhythm; // Initialize countdown to prevent immediate trigger
+    previousCountdown.current = adjustedRhythm;
   };
 
   const deleteCase = () => {
@@ -1075,7 +1164,7 @@ export default function App() {
         })()}
         
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} timingMode={timingMode} />
 
         {showDeleteWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6">
@@ -1117,6 +1206,18 @@ export default function App() {
   return (
     <div data-main-container style={{ height: 'calc(var(--vh, 1vh) * 100)' }} className="bg-neutral-100 flex flex-col p-4 max-w-2xl mx-auto overflow-hidden relative">
 
+      {/* Interactive Tutorial pre-screen */}
+      {showInteractiveTutorial && (
+        <InteractiveTutorial
+          onClose={() => {
+            setShowInteractiveTutorial(false);
+            setTimingNodesComplete(false);
+            setTutorialMode(true);
+          }}
+          onTimingNodesComplete={() => setTimingNodesComplete(true)}
+        />
+      )}
+
       {/* Disclaimer Modal */}
       {!disclaimerAccepted && (
         <div className="fixed inset-0 bg-black/90 z-[3000] flex items-center justify-center p-4">
@@ -1149,23 +1250,31 @@ export default function App() {
         </div>
       )}
       {/* Top Controls */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0">
-        <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
-          {(state.running && !state.rhythmCheckPaused) ? <Pause size={14} className="sm:w-4 sm:h-4" /> : <Play size={14} className="sm:w-4 sm:h-4" />} 
-          {(state.running && !state.rhythmCheckPaused) ? 'Pause' : 'Play'}
-        </button>
-        <button 
-          onClick={() => {
-            const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
-            const mins = Math.floor(currentCountdown / 60);
-            const secs = currentCountdown % 60;
-            setTimerAdjustValue({ mins, secs });
-            setShowTimerAdjust(true);
-          }} 
-          className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
-        >
-          <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
-        </button>
+      <div className={`grid gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0 ${timingMode === 'log' ? 'grid-cols-1' : 'grid-cols-3'}`}>
+        {timingMode !== 'log' && (
+          <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
+            {(state.running && !state.rhythmCheckPaused) ? <Pause size={14} className="sm:w-4 sm:h-4" /> : <Play size={14} className="sm:w-4 sm:h-4" />} 
+            {(state.running && !state.rhythmCheckPaused) ? 'Pause' : 'Play'}
+          </button>
+        )}
+        {timingMode !== 'log' && (
+          <button 
+            onClick={() => {
+              if (timingMode === 'elapsed') {
+                setShowElapsedRecalibrate(true);
+              } else {
+                const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
+                const mins = Math.floor(currentCountdown / 60);
+                const secs = currentCountdown % 60;
+                setTimerAdjustValue({ mins, secs });
+                setShowTimerAdjust(true);
+              }
+            }} 
+            className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
+          >
+            <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
+          </button>
+        )}
         <button onClick={() => setShowCloseWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="close-case">
           <XCircle size={14} className="sm:w-4 sm:h-4" /> Close Case
         </button>
@@ -1227,14 +1336,44 @@ export default function App() {
         state.currentOverlay === 'phea' ? 'border-purple-400' :
         state.currentOverlay === 'vitals' ? 'border-sky-400' : 'border-emerald-500'
       }`}>
+        {timingMode === 'log' ? (
+          /* Log mode: scrollable running summary is the home screen */
+          <div className="h-full flex flex-col relative">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <SummaryStats state={state} pharmaSummary={pharmaSummary} />
+              <div>
+                <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} />
+              </div>
+            </div>
+            <AnimatePresence>
+              {state.currentOverlay && state.currentOverlay !== 'tutorial' && (
+                <Overlay
+                  key={state.currentOverlay}
+                  type={state.currentOverlay as OverlayType}
+                  onClose={() => setState(p => ({ ...p, currentOverlay: null }))}
+                  addTreatment={addTreatment}
+                  state={state}
+                  pharmaSummary={pharmaSummary}
+                  isShockForced={isShockForced}
+                  toggleChecklistItem={toggleChecklistItem}
+                  onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
+                  timingMode={timingMode}
+                />
+              )}
+            </AnimatePresence>
+          </div>
+        ) : (
         <div className="h-full flex flex-col items-center px-2 sm:px-3 pt-4 pb-2 sm:pb-3 relative">
           {/* Corner Cards */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
-            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
-              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
-            </div>
-            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+            {timingMode !== 'cpr' && timingMode !== 'elapsed' && (
+              <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
+                <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
+                <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
+              </div>
+            )}
+            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px] ml-auto">
               <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
               <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{state.cprRound}</span>
             </div>
@@ -1257,6 +1396,7 @@ export default function App() {
                       rhythmCheckOvertime: 0,
                       currentOverlay: 'treatment'
                     }));
+                    setRoscButtonFlashing(false);
                     setRearrested(true);
                     setIsShockForced(true);
                   }}
@@ -1305,10 +1445,23 @@ export default function App() {
                   }
                   animate={{ 
                     strokeDashoffset: state.rhythmCheckPaused
-                      ? 1 - Math.max(0, (state.frozenCountdown || 0) / 120) // Show frozen progress
+                      ? 1 - Math.max(0, (state.frozenCountdown || 0) / 120)
                       : state.rhythmCheckOvertime > 0 
-                        ? 1 - (state.rhythmCheckOvertime / 6) // Count down from 6 to 0
-                        : 1 - Math.max(0, (state.rhythmCheckTarget - state.elapsedSeconds) / 120)
+                        ? 1 - (state.rhythmCheckOvertime / 6)
+                        : timingMode === 'elapsed' && rhythmInterval
+                          ? (() => {
+                              // Progress ring fills from previous interval boundary to next
+                              const intervalMap: Record<string, { period: number; offset: number }> = {
+                                'evens':      { period: 120, offset: 0  },
+                                'odds':       { period: 120, offset: 60 },
+                                'half-evens': { period: 120, offset: 30 },
+                                'half-odds':  { period: 120, offset: 90 },
+                              };
+                              const { period, offset } = intervalMap[rhythmInterval];
+                              const phase = ((state.elapsedSeconds - offset) % period + period) % period;
+                              return 1 - (phase / period);
+                            })()
+                          : 1 - Math.max(0, (state.rhythmCheckTarget - state.elapsedSeconds) / 120)
                   }}
                   style={{ strokeDasharray: 1 }}
                   transition={{ duration: 0.5, ease: "linear" }}
@@ -1317,23 +1470,29 @@ export default function App() {
               
               <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
                 <div 
-                  className={`text-7xl sm:text-[120px] font-bold tabular-nums tracking-tighter leading-none ${
+                  className={`font-bold tabular-nums tracking-tighter leading-none ${
+                    timingMode === 'elapsed' ? 'text-[40px] sm:text-[62px]' : 'text-7xl sm:text-[120px]'
+                  } ${
                     state.rhythmCheckPaused ? 'text-neutral-900' :
                     state.rhythmCheckOvertime > 0 ? 'text-red-600' :
                     (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-600' : 'text-neutral-900'
                   }`}
                 >
-                  {state.rhythmCheckPaused 
-                    ? formatTime(state.frozenCountdown || 0)
-                    : state.rhythmCheckOvertime > 0 
-                      ? formatTime(6 - state.rhythmCheckOvertime)
-                      : formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))
+                  {timingMode === 'elapsed'
+                    ? formatTimeWithSeconds(state.elapsedSeconds)
+                    : state.rhythmCheckPaused 
+                      ? formatTime(state.frozenCountdown || 0)
+                      : state.rhythmCheckOvertime > 0 
+                        ? formatTime(6 - state.rhythmCheckOvertime)
+                        : formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))
                   }
                 </div>
-                <div className={`text-[14px] sm:text-[18px] uppercase tracking-widest font-bold mt-4 sm:mt-8 ${
+                <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 ${
+                  timingMode === 'elapsed' ? 'text-[11px] sm:text-[14px]' : 'text-[14px] sm:text-[18px]'
+                } ${
                   state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' : 'text-neutral-400'
                 }`}>
-                  Rhythm Check
+                  {timingMode === 'elapsed' ? 'Elapsed Time' : 'Rhythm Check'}
                 </div>
               </div>
               </>
@@ -1353,6 +1512,7 @@ export default function App() {
                 isShockForced={isShockForced}
                 toggleChecklistItem={toggleChecklistItem}
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
+                timingMode={timingMode}
               />
             )}
           </AnimatePresence>
@@ -1470,22 +1630,42 @@ export default function App() {
               </div>
           </div>
         </div>
+        )} {/* end else (non-log mode) */}
       </div>
 
       {/* Bottom Main Controls */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4 flex-shrink-0">
-        <button 
-          onClick={() => {
-            if (isShockForced) return;
-            setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'summary' ? null : 'summary' }))
-          }}
-          disabled={isShockForced}
-          className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors ${state.currentOverlay === 'summary' ? 'bg-red-100 text-red-800' : 'bg-emerald-600 text-white'}`}
-          data-button="summary"
-        >
-          {state.currentOverlay === 'summary' ? <XCircle size={18} className="sm:w-6 sm:h-6" /> : <FileText size={18} className="sm:w-6 sm:h-6" />}
-          {state.currentOverlay === 'summary' ? 'Close' : 'Summary'}
-        </button>
+      <div className={`grid gap-3 sm:gap-4 mt-3 sm:mt-4 flex-shrink-0 ${timingMode === 'log' ? (state.isROSCMode ? 'grid-cols-2' : 'grid-cols-1') : 'grid-cols-2'}`}>
+        {timingMode !== 'log' && (
+          <button 
+            onClick={() => {
+              if (isShockForced) return;
+              setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'summary' ? null : 'summary' }))
+            }}
+            disabled={isShockForced}
+            className={`p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors ${state.currentOverlay === 'summary' ? 'bg-red-100 text-red-800' : 'bg-emerald-600 text-white'}`}
+            data-button="summary"
+          >
+            {state.currentOverlay === 'summary' ? <XCircle size={18} className="sm:w-6 sm:h-6" /> : <FileText size={18} className="sm:w-6 sm:h-6" />}
+            {state.currentOverlay === 'summary' ? 'Close' : 'Summary'}
+          </button>
+        )}
+        {timingMode === 'log' && state.isROSCMode && (
+          <button
+            onClick={() => {
+              setState(prev => ({
+                ...prev,
+                isROSCMode: false,
+                currentOverlay: 'treatment'
+              }));
+              setRoscButtonFlashing(false);
+              setRearrested(true);
+              setIsShockForced(true);
+            }}
+            className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-orange-500 text-white"
+          >
+            Re-arrest
+          </button>
+        )}
         <button 
           onClick={() => {
             if (isShockForced) return;
@@ -1541,25 +1721,12 @@ export default function App() {
                     </button>
                     <button 
                       onClick={() => {
-                        // Enter tutorial mode - start app with preset values
-                        const now = Date.now();
-                        setState({
-                          ...INITIAL_STATE,
-                          running: true,
-                          startTime: now,
-                          pausedTime: 0,
-                          elapsedSeconds: 0,
-                          rhythmCheckTarget: 120,
-                          cprRound: 1,
-                          shocks: 0,
-                          treatments: [],
-                          catchupElapsed: 0,
-                          startClockTime: now,
-                          patientWeight: 100,
-                          patientType: 'adult'
-                        });
-                        setShowCatchup(false);
-                        setTutorialMode(true);
+                        setShowCatchup(true);
+                        setCatchupStep(6);
+                        setTimingMode(null);
+                        setTimingNodesComplete(false);
+                        setState(prev => ({ ...prev, patientType: 'adult', patientWeight: 70 }));
+                        setShowInteractiveTutorial(true);
                       }} 
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-2xl text-base font-semibold shadow-md shadow-blue-500/20 transition-all duration-200 hover:shadow-lg hover:scale-[1.02]"
                     >
@@ -1759,36 +1926,37 @@ export default function App() {
 
               {catchupStep === 4 && (
                 <div className="text-center space-y-6">
-                  {/* Manual entry UI */}
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter elapsed time</h2>
                   <p className="text-neutral-600 text-sm px-4">This is the time at the top right corner of the monitor</p>
                   <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   
-                  {/* Navigation buttons */}
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => {
-                        setCatchupStep(3);
+                        setCatchupStep(timingMode === 'elapsed' ? 7 : 6);
                         setUseManualEntry(false);
                       }} 
                       className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base"
                     >
                       Back
                     </button>
-                      <button 
-                        onClick={() => { 
-                          // Set timestamp for elapsed time entry
-                          setElapsedTimestamp(Date.now());
-                          setCatchupRhythm({ mins: 0, secs: 0 }); 
+                    <button 
+                      onClick={() => { 
+                        setElapsedTimestamp(Date.now());
+                        if (timingMode === 'elapsed') {
+                          handleCatchupStart();
+                        } else {
+                          setCatchupRhythm({ mins: 0, secs: 0 });
                           setCatchupStep(5);
-                        }} 
-                        className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base"
-                      >
-                        Next
-                      </button>
-                    </div>
+                        }
+                      }} 
+                      className={'p-3 rounded-xl font-bold btn-base text-white bg-emerald-600'}
+                    >
+                      {timingMode === 'elapsed' ? 'Start Case' : 'Next'}
+                    </button>
                   </div>
-                )}
+                </div>
+              )}
 
               {catchupStep === 5 && (
                 <div className="text-center space-y-6">
@@ -1800,16 +1968,61 @@ export default function App() {
                     maxSeconds={120}
                   />
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(4)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                    <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                     <button 
                       onClick={() => {
-                        // Set timestamp for CPR timer entry
                         setCprTimestamp(Date.now());
                         handleCatchupStart();
                       }}
                       className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base"
                     >
                       Start Case
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {catchupStep === 7 && (
+                <div className="space-y-6 px-4 max-w-md mx-auto">
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-bold text-neutral-900">Rhythm Check Timing</h2>
+                    <p className="text-neutral-500 text-sm">When are rhythm checks due?</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {([
+                      { key: 'evens',      label: 'Evens',      example: '2:00, 4:00...' },
+                      { key: 'odds',       label: 'Odds',       example: '1:00, 3:00...' },
+                      { key: 'half-evens', label: 'Half evens', example: '2:30, 4:30...' },
+                      { key: 'half-odds',  label: 'Half odds',  example: '1:30, 3:30...' },
+                    ] as const).map(({ key, label, example }) => (
+                      <button
+                        key={key}
+                        onClick={() => setRhythmInterval(key)}
+                        className={`p-4 rounded-2xl transition-all duration-200 ${
+                          rhythmInterval === key
+                            ? 'bg-emerald-500 text-white shadow-lg scale-105'
+                            : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-emerald-300'
+                        }`}
+                      >
+                        <div className="font-bold text-base">{label}</div>
+                        <div className={`text-xs mt-1 ${rhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-neutral-100 text-neutral-700 py-4 rounded-xl font-bold hover:bg-neutral-200 transition-colors">Back</button>
+                    <button
+                      onClick={() => rhythmInterval && setCatchupStep(4)}
+                      disabled={!rhythmInterval}
+                      className={`py-4 rounded-xl font-bold transition-all ${
+                        rhythmInterval
+                          ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
+                          : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+                      }`}
+                    >
+                      Next
                     </button>
                   </div>
                 </div>
@@ -1836,7 +2049,127 @@ export default function App() {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => setCatchupStep(4)} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                    <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                  </div>
+                </div>
+              )}
+
+              {catchupStep === 6 && (
+                <div className="space-y-5 px-4 max-w-md mx-auto">
+                  <div className="text-center space-y-2">
+                    <h2 className="text-2xl font-bold text-neutral-900">Timing Method</h2>
+                    <p className="text-neutral-500 text-sm">How are you tracking rhythm checks?</p>
+                  </div>
+
+                  <div className="flex flex-col gap-3">
+
+                    {/* Record keeping only */}
+                    <button
+                      onClick={() => setTimingMode('log')}
+                      className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'log' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
+                    >
+                      <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                        <div className="w-full max-w-[220px] rounded-xl border border-neutral-200 overflow-hidden text-left bg-white shadow-sm">
+                          <div className="bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-800 tracking-widest uppercase">Treatment Log</div>
+                          <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1 border-b border-neutral-100">
+                            <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest">Treatment</span>
+                            <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</span>
+                            <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</span>
+                          </div>
+                          <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1">
+                            <span className="text-[11px] text-neutral-400 italic">No entries yet</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'log' ? 'bg-emerald-500 text-white' : 'bg-white text-neutral-700'}`}>
+                        No timer — record keeping only
+                      </div>
+                    </button>
+
+                    {/* CPR timer */}
+                    <button
+                      onClick={() => {
+                        setTimingMode('cpr');
+                        if (showInteractiveTutorial) {
+                          setShowInteractiveTutorial(false);
+                          setTutorialMode(true);
+                        }
+                      }}
+                      data-tutorial="cpr-btn"
+                      className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'cpr' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
+                    >
+                      <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                        <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5"
+                              strokeLinecap="round"
+                              strokeDasharray="276.5"
+                              strokeDashoffset={276.5 * (1 - ((120 - (demoTick % 120)) / 120))}
+                            />
+                          </svg>
+                          <div className="flex flex-col items-center z-10">
+                            <span className="text-[22px] font-bold tabular-nums leading-none text-neutral-900">
+                              {`${Math.floor((120 - (demoTick % 120)) / 60)}:${String((120 - (demoTick % 120)) % 60).padStart(2,'0')}`}
+                            </span>
+                            <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Rhythm Check</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'cpr' ? 'bg-emerald-500 text-white' : 'bg-white text-neutral-700'}`}>
+                        Inbuilt monitor CPR timer
+                      </div>
+                    </button>
+
+                    {/* Elapsed time */}
+                    <button
+                      onClick={() => setTimingMode('elapsed')}
+                      className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'elapsed' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
+                    >
+                      <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                        <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                            <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5"
+                              strokeLinecap="round"
+                              strokeDasharray="276.5"
+                              strokeDashoffset={276.5 * (1 - ((demoTick % 120) / 120))}
+                            />
+                          </svg>
+                          <div className="flex flex-col items-center z-10">
+                            <span className="text-[16px] font-bold tabular-nums leading-none text-neutral-900">
+                              {(() => {
+                                const total = 120 + (demoTick % 3600);
+                                const h = Math.floor(total / 3600);
+                                const m = Math.floor((total % 3600) / 60);
+                                const s = total % 60;
+                                return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+                              })()}
+                            </span>
+                            <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Elapsed Time</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'elapsed' ? 'bg-emerald-500 text-white' : 'bg-white text-neutral-700'}`}>
+                        Elapsed time — odds/evens
+                      </div>
+                    </button>
+
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-2">
+                    <button disabled={showInteractiveTutorial} onClick={() => setCatchupStep(3)} className={`bg-neutral-100 py-4 rounded-xl font-bold transition-colors ${showInteractiveTutorial ? 'text-neutral-300 cursor-default' : 'text-neutral-700 hover:bg-neutral-200'}`}>Back</button>
+                    <button
+                      onClick={() => {
+                        if (timingMode === 'cpr') setCatchupStep(5);
+                        else if (timingMode === 'elapsed') setCatchupStep(7);
+                        else if (timingMode === 'log') handleCatchupStart();
+                      }}
+                      disabled={!timingMode}
+                      className={`py-4 rounded-xl font-bold transition-all ${timingMode ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md' : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'}`}
+                    >
+                      {timingMode === 'log' ? 'Start Case' : 'Next'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -1869,6 +2202,128 @@ export default function App() {
               <button onClick={() => setShowPauseWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
               <button onClick={togglePause} className="bg-red-600 p-4 rounded-xl font-bold text-white btn-base">Pause</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showRearrestIntervalPicker && (
+        <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold text-neutral-900">Rhythm Check Timing</h2>
+              <p className="text-neutral-500 text-sm">When are rhythm checks due?</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { key: 'evens',      label: 'Evens',      example: '2:00, 4:00...' },
+                { key: 'odds',       label: 'Odds',       example: '1:00, 3:00...' },
+                { key: 'half-evens', label: 'Half evens', example: '2:30, 4:30...' },
+                { key: 'half-odds',  label: 'Half odds',  example: '1:30, 3:30...' },
+              ] as const).map(({ key, label, example }) => (
+                <button
+                  key={key}
+                  onClick={() => setRhythmInterval(key)}
+                  className={`p-4 rounded-2xl transition-all duration-200 ${
+                    rhythmInterval === key
+                      ? 'bg-emerald-500 text-white shadow-lg scale-105'
+                      : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-emerald-300'
+                  }`}
+                >
+                  <div className="font-bold text-base">{label}</div>
+                  <div className={`text-xs mt-1 ${rhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
+                </button>
+              ))}
+            </div>
+
+            <button
+              disabled={!rhythmInterval}
+              onClick={() => {
+                if (!rhythmInterval) return;
+                const newTarget = calcNextIntervalTarget(state.elapsedSeconds, rhythmInterval);
+                setState(prev => ({
+                  ...prev,
+                  rhythmCheckTarget: newTarget,
+                  rhythmCheckOvertime: 0,
+                  rhythmCheckPaused: false
+                }));
+                setShowRearrestIntervalPicker(false);
+              }}
+              className={`w-full p-4 rounded-xl font-bold transition-all ${
+                rhythmInterval
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
+                  : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+              }`}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showElapsedRecalibrate && (
+        <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold text-neutral-900">Recalibrate Elapsed Time</h2>
+              <p className="text-neutral-500 text-sm">Adjust elapsed time and rhythm check interval</p>
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 text-center">Elapsed Time</p>
+              <TimePicker
+                value={{ mins: Math.floor(state.elapsedSeconds / 60), secs: state.elapsedSeconds % 60 }}
+                onChange={(v) => {
+                  const newElapsed = v.mins * 60 + v.secs;
+                  const newTarget = calcNextIntervalTarget(newElapsed, rhythmInterval || 'evens');
+                  setState(prev => ({
+                    ...prev,
+                    elapsedSeconds: newElapsed,
+                    startTime: Date.now(),
+                    pausedTime: newElapsed * 1000,
+                    rhythmCheckTarget: newTarget,
+                    rhythmCheckOvertime: 0
+                  }));
+                }}
+                maxSeconds={5999}
+              />
+            </div>
+
+            <div>
+              <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 text-center">Rhythm Check Interval</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: 'evens',      label: 'Evens',      example: '2:00, 4:00...' },
+                  { key: 'odds',       label: 'Odds',       example: '1:00, 3:00...' },
+                  { key: 'half-evens', label: 'Half evens', example: '2:30, 4:30...' },
+                  { key: 'half-odds',  label: 'Half odds',  example: '1:30, 3:30...' },
+                ] as const).map(({ key, label, example }) => (
+                  <button
+                    key={key}
+                    onClick={() => {
+                      setRhythmInterval(key);
+                      const newTarget = calcNextIntervalTarget(state.elapsedSeconds, key);
+                      setState(prev => ({ ...prev, rhythmCheckTarget: newTarget, rhythmCheckOvertime: 0 }));
+                    }}
+                    className={`p-3 rounded-xl transition-all duration-200 ${
+                      rhythmInterval === key
+                        ? 'bg-emerald-500 text-white shadow-md'
+                        : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-emerald-300'
+                    }`}
+                  >
+                    <div className="font-bold text-sm">{label}</div>
+                    <div className={`text-xs mt-0.5 ${rhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowElapsedRecalibrate(false)}
+              className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
+            >
+              Done
+            </button>
           </div>
         </div>
       )}
@@ -2009,7 +2464,7 @@ function CounterItem({ label, value, onChange }: { label: string, value: number,
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -2018,7 +2473,8 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
   isShockForced: boolean,
   toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void,
-  onVitalsChange: (v: AppState['vitals']) => void
+  onVitalsChange: (v: AppState['vitals']) => void,
+  timingMode?: string | null
 }) {
   const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
   
@@ -2035,7 +2491,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
@@ -2256,7 +2712,7 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = false }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, isSummary?: boolean }) {
+function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = false, timingMode }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, isSummary?: boolean, timingMode?: string | null }) {
   // Helper to split treatment name into medication and dose
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
     // Match dose patterns at the end: numbers followed by units (mg, mcg, mL, mMol, g, kg, %)
@@ -2267,14 +2723,24 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
     return { med: name, dose: null };
   };
 
+  const isCpr = timingMode === 'cpr';
+  const isElapsedMode = timingMode === 'elapsed';
+  // Column visibility
+  const showElapsed = !isCpr && !isElapsedMode && timingMode !== 'log';
+  const showAgo = !isSummary;  // Ago only shown in running log, not closed/PDF — same as before
+
+  // Grid templates
+  const gridCols = isSummary
+    ? (showElapsed ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2fr_1fr]')
+    : (showElapsed ? 'grid-cols-[2.1fr_1fr_1.4fr_0.9fr]' : 'grid-cols-[2.1fr_1fr_0.9fr]');
+
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
-      {/* Balanced columns: More space for name, even space for times */}
-      <div className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.1fr_1fr_1.4fr_0.9fr]'} bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
+      <div className={`grid ${gridCols} gap-1 bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
-        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>
-        {!isSummary && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>}
+        {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
+        {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>}
       </div>
       
       {/* Table Body */}
@@ -2291,7 +2757,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const { med, dose } = splitTreatmentName(tx.name);
             
             return (
-              <div key={i} className={`grid ${isSummary ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2.1fr_1fr_1.4fr_0.9fr]'} px-4 py-4 items-center gap-1`}>
+              <div key={i} className={`grid ${gridCols} px-4 py-4 items-center gap-1`}>
                 <div className="pr-1">
                   <div className={`text-[15px] font-bold ${
                     tx.name.toLowerCase().includes('shock') ? 'text-red-600' : 
@@ -2301,8 +2767,8 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
                   {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
                 </div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
-                <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>
-                {!isSummary && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
+                {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
+                {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
               </div>
             );
           })
@@ -2355,7 +2821,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
+function SummaryOverlay({ state, pharmaSummary, timingMode }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null }) {
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
@@ -2387,7 +2853,7 @@ function SummaryOverlay({ state, pharmaSummary }: { state: AppState, pharmaSumma
         </div>
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} />
       </div>
     </div>
   );
@@ -2784,7 +3250,9 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           { name: 'Shock - pVT', color: 'red' },
           { name: 'Disarm - Asystole', color: 'blue' },
           { name: 'Disarm - PEA', color: 'blue' },
-          { name: 'Disarm - ROSC', color: 'emerald' }
+          state.isROSCMode
+            ? { name: 'Rearrest', color: 'orange' }
+            : { name: 'Disarm - ROSC', color: 'emerald' }
         ]} 
         onSelect={addTreatment}
       />
@@ -2856,7 +3324,7 @@ function TxSection({
 }: { 
   title: string;
   color: string;
-  items: (string | { name: string; color?: string })[];
+  items: (string | { name: string; color?: string; displayName?: string })[];
   onSelect: (n: string) => void;
   initiallyExpanded?: boolean;
   sectionId?: string;
@@ -2888,7 +3356,8 @@ function TxSection({
   const textColorMap: Record<string, string> = {
     red: 'text-red-600',
     blue: 'text-blue-600',
-    emerald: 'text-emerald-600'
+    emerald: 'text-emerald-600',
+    orange: 'text-orange-600'
   };
 
   return (
@@ -2910,16 +3379,18 @@ function TxSection({
           {items.map(item => {
             const itemName = typeof item === 'string' ? item : item.name;
             const itemColor = typeof item === 'string' ? null : item.color;
-            const textColorClass = itemColor ? textColorMap[itemColor] : 'text-neutral-700';
+            const displayName = typeof item === 'string' ? item : (item.displayName ?? item.name);
+            const textColorClass = itemColor ? (textColorMap[itemColor] ?? 'text-neutral-700') : 'text-neutral-700';
+            const bgClass = itemColor === 'orange' ? 'bg-orange-50 hover:bg-orange-100' : 'bg-neutral-50 hover:bg-neutral-100';
             
             return (
               <button 
                 key={itemName} 
                 onClick={() => onSelect(itemName)} 
-                className={`w-full text-left p-3 bg-neutral-50 rounded-xl font-bold text-sm hover:bg-neutral-100 btn-base ${textColorClass}`}
+                className={`w-full text-left p-3 rounded-xl font-bold text-sm btn-base ${textColorClass} ${bgClass}`}
                 data-medication={itemName}
               >
-                {itemName}
+                {displayName}
               </button>
             );
           })}

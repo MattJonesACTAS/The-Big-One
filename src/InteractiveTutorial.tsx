@@ -107,6 +107,69 @@ function StaticHomeScreen() {
   );
 }
 
+// Static Timing Method Screen - replica of catchup step 6
+function StaticTimingMethodScreen({ cprFading = false }: { cprFading?: boolean }) {
+  return (
+    <div style={{ height: 'calc(var(--vh, 1vh) * 100)', width: '100%' }} className="bg-neutral-100 flex flex-col p-4 overflow-hidden relative justify-center">
+      <div className="space-y-5 px-4 max-w-md mx-auto w-full">
+        <div className="text-center space-y-2">
+          <h2 className="text-2xl font-bold text-neutral-900">Timing Method</h2>
+          <p className="text-neutral-500 text-sm">How are you tracking rhythm checks?</p>
+        </div>
+        <div className="flex flex-col gap-3">
+          {/* Record keeping only */}
+          <div className="w-full rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white">
+            <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+              <div className="w-full max-w-[220px] rounded-xl border border-neutral-200 overflow-hidden text-left bg-white shadow-sm">
+                <div className="bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-800 tracking-widest uppercase">Treatment Log</div>
+                <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1 border-b border-neutral-100">
+                  <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest">Treatment</span>
+                  <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</span>
+                  <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</span>
+                </div>
+                <div className="px-3 py-2"><span className="text-[11px] text-neutral-400 italic">No entries yet</span></div>
+              </div>
+            </div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">No timer — record keeping only</div>
+          </div>
+          {/* CPR timer */}
+          <div className="w-full rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white" style={cprFading ? { animation: 'cprCardFade 2s ease-in-out infinite' } : {}}>
+            <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+              <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeDasharray="276.5" strokeDashoffset="138"/>
+                </svg>
+                <div className="flex flex-col items-center z-10">
+                  <span className="text-[22px] font-bold tabular-nums leading-none text-neutral-900">1:00</span>
+                  <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Rhythm Check</span>
+                </div>
+              </div>
+            </div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">Inbuilt monitor CPR timer</div>
+          </div>
+          {/* Elapsed time */}
+          <div className="w-full rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white">
+            <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+              <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                  <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5" strokeLinecap="round" strokeDasharray="276.5" strokeDashoffset="207"/>
+                </svg>
+                <div className="flex flex-col items-center z-10">
+                  <span className="text-[16px] font-bold tabular-nums leading-none text-neutral-900">00:05:00</span>
+                  <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Elapsed Time</span>
+                </div>
+              </div>
+            </div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">Elapsed time — odds/evens</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // Static Add Tx Menu Component - Rendered inside the central box like in the real app
 function StaticAddTxMenu() {
   return (
@@ -539,9 +602,10 @@ interface TutorialScreens {
 
 interface InteractiveTutorialProps {
   onClose: () => void;
+  onTimingNodesComplete?: () => void;
 }
 
-const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) => {
+const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTimingNodesComplete }) => {
   const [currentScreen, setCurrentScreen] = useState('intro1');
   const [exploredElements, setExploredElements] = useState<Set<string>>(new Set());
   const [showingInfoBox, setShowingInfoBox] = useState(false);
@@ -549,29 +613,50 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
 
   const screens: TutorialScreens = {
     intro1: {
-      title: 'Welcome to The Big One',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
+      title: 'Welcome',
+      image: '',
       nextScreen: 'intro2',
       elements: [],
     },
     intro2: {
-      title: 'Getting Started',
-      image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
-      nextScreen: 'home1',
+      title: 'Navigating the Tutorial',
+      image: '',
+      nextScreen: 'intro3',
       elements: [],
+    },
+    intro3: {
+      title: 'Getting Started',
+      image: '',
+      nextScreen: 'intro4',
+      elements: [],
+    },
+    intro4: {
+      title: 'Time Keeping',
+      image: '',
+      nextScreen: 'timingMethod',
+      elements: [],
+    },
+    timingMethod: {
+      title: 'Time Keeping',
+      image: '',
+      nextScreen: 'home1',
+      elements: [
+        { id: 'timingLog',     x: 50, y: 25, number: 1, title: 'Tx log only',   description: "This option means the app will only help you record the times of interventions.\n\nIt will not assist you to keep track of times." },
+        { id: 'timingCPR',     x: 50, y: 47, number: 3, title: 'CPR timer',     description: "Choose this option if you are using the monitor's inbuilt CPR timer, found above the compression depth diamond on the CPR screen.\n\nFor the tutorial we will use this option, because it's likely the one you're least familiar with.\n\nChoose 'CPR Timer' to progress in the tutorial." },
+        { id: 'timingElapsed', x: 50, y: 70, number: 2, title: 'Elapsed time',  description: "Choose this option if you are using the elapsed time found at the top right corner of the monitor.\n\nYou can then choose whether you are performing rhythm checks on even or odd minutes." },
+      ],
     },
     home1: {
       title: 'CPR Timer Home Screen',
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'addTxMenu',
       elements: [
-        { id: 'totalTime', x: 19.8, y: 22, number: 1, title: 'Total Time', description: "Total time the monitor has been turned on" },
-        { id: 'cprRound', x: 80.2, y: 22, number: 2, title: 'CPR Round', description: "The current round of CPR" },
-        { id: 'timer', x: 50, y: 52, number: 3, title: 'Rhythm Check Timer', description: "The countdown to the next rhythm check. When the timer reaches 0:00, it pauses for 6 seconds to allow for the rhythm check, then restarts from 2:00." },
-        { id: 'pause', x: 19.0, y: 4.2, number: 4, title: 'Pause Button', description: "Pause and resume the rhythm check timer" },
-        { id: 'recalibrate', x: 51.0, y: 4.2, number: 5, title: 'Recalibrate Button', description: "The app estimates a rhythm check of 6 seconds. Recalibrate the timer to match reality if your rhythm checks are longer." },
-        { id: 'tabs', x: 50, y: 10.75, number: 6, title: 'Checklists', description: "Quick access to checklists for the reversible causes of arrest, ROSC and Prehospital emergency anaesthesia (PHEA)" },
-        { id: 'addTxBtn', x: 75, y: 95.4, number: 7, title: 'Add Treatment Button', description: "Tap here to log treatments and interventions during the arrest" },
+        { id: 'cprRound', x: 80.2, y: 22, number: 4, title: 'CPR Round', description: "The current round of CPR" },
+        { id: 'timer', x: 50, y: 52, number: 5, title: 'Rhythm Check Timer', description: "The countdown to the next rhythm check. When the timer reaches 0:00, it pauses for 6 seconds to allow for the rhythm check, then restarts from 2:00." },
+        { id: 'pause', x: 19.0, y: 4.2, number: 6, title: 'Pause Button', description: "Pause and resume the rhythm check timer" },
+        { id: 'recalibrate', x: 51.0, y: 4.2, number: 7, title: 'Recalibrate Button', description: "The app estimates a rhythm check of 6 seconds. Recalibrate the timer to match reality if your rhythm checks are longer." },
+        { id: 'tabs', x: 50, y: 10.75, number: 8, title: 'Checklists', description: "Quick access to checklists for the reversible causes of arrest, ROSC and Prehospital emergency anaesthesia (PHEA)" },
+        { id: 'addTxBtn', x: 75, y: 95.4, number: 9, title: 'Add Treatment Button', description: "Tap here to log treatments and interventions during the arrest" },
       ],
     },
     addTxMenu: {
@@ -579,7 +664,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/2.png?raw=true',
       nextScreen: 'adrenalineDose',
       elements: [
-        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 1, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
+        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 10, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
       ],
     },
     adrenalineDose: {
@@ -587,7 +672,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/4.png?raw=true',
       nextScreen: 'home2',
       elements: [
-        { id: 'medications', x: 53.2, y: 44.2, number: 1, title: 'Medications', description: "Each medication will bring up one or multiple age/weight based dosage options depending on the indication. Custom doses can also be added. Let's log adrenaline and amiodarone." },
+        { id: 'medications', x: 53.2, y: 44.2, number: 11, title: 'Medications', description: "Each medication will bring up one or multiple age/weight based dosage options depending on the indication. Custom doses can also be added. Let's log adrenaline and amiodarone." },
       ],
     },
     home2: {
@@ -595,7 +680,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'home2_summary',
       elements: [
-        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 1, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
+        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 12, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
       ],
     },
     home2_summary: {
@@ -603,7 +688,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'summary',
       elements: [
-        { id: 'summaryBtn', x: 26.6, y: 95.4, number: 1, title: 'Summary Button', description: "Next, let's have a look at the running case summary page" },
+        { id: 'summaryBtn', x: 26.6, y: 95.4, number: 13, title: 'Summary Button', description: "Next, let's have a look at the running case summary page" },
       ],
     },
     summary: {
@@ -611,8 +696,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/6.png?raw=true',
       nextScreen: 'home2_close',
       elements: [
-        { id: 'pharmaSummary', x: 50, y: 50, number: 1, title: 'Medication Summary', description: "All medications logged will appear here, with an accumulative tally of the total amount of each drug given." },
-        { id: 'treatmentLog', x: 50, y: 70.9, number: 2, title: 'Treatment Log', description: "Chronological record of all logged interventions. Timestamps show the exact time, the elapsed time on the monitor, and how long ago each Tx was logged." },
+        { id: 'pharmaSummary', x: 50, y: 50, number: 14, title: 'Medication Summary', description: "All medications logged will appear here, with an accumulative tally of the total amount of each drug given." },
+        { id: 'treatmentLog', x: 50, y: 70.9, number: 15, title: 'Treatment Log', description: "Chronological record of all logged interventions. Timestamps show the exact time, the elapsed time on the monitor, and how long ago each Tx was logged." },
       ],
     },
     home2_close: {
@@ -620,7 +705,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'caseSummary',
       elements: [
-        { id: 'close', x: 82.2, y: 4.2, number: 1, title: 'Close Button', description: "Let's say we've either stopped resuscitative efforts or we've handed our patient over at hospital. We can now close the case." },
+        { id: 'close', x: 82.2, y: 4.2, number: 16, title: 'Close Button', description: "Let's say we've either stopped resuscitative efforts or we've handed our patient over at hospital. We can now close the case." },
       ],
     },
     caseSummary: {
@@ -628,9 +713,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/8.png?raw=true',
       nextScreen: null,
       elements: [
-        { id: 'finalStats', x: 50, y: 61.64, number: 1, title: 'Final Case Data', description: "Now the case is over, the treatment log shows times to the second, not just to the minute" },
-        { id: 'export', x: 27, y: 14, number: 2, title: 'Export PDF', description: "Export the case summary and Tx log to a pdf, which you can then email for later review." },
-        { id: 'delete', x: 73, y: 14, number: 3, title: 'Delete Case', description: "Permanently delete the case information from the app" },
+        { id: 'finalStats', x: 50, y: 61.64, number: 17, title: 'Final Case Data', description: "Now the case is over, the treatment log shows times to the second, not just to the minute" },
+        { id: 'export', x: 27, y: 14, number: 18, title: 'Export PDF', description: "Export the case summary and Tx log to a pdf, which you can then email for later review." },
+        { id: 'delete', x: 73, y: 14, number: 19, title: 'Delete Case', description: "Permanently delete the case information from the app" },
       ],
     },
   };
@@ -638,6 +723,13 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
   const currentScreenData = screens[currentScreen];
   const requiredElements = new Set(currentScreenData.elements.map(el => el.id));
   const allExplored = Array.from(requiredElements).every(id => exploredElements.has(id));
+
+  // Notify parent when all timing method nodes explored so it can flash the CPR button
+  useEffect(() => {
+    if (currentScreen === 'timingMethod' && allExplored && onTimingNodesComplete) {
+      onTimingNodesComplete();
+    }
+  }, [currentScreen, allExplored]);
 
   // Preload all tutorial images when component mounts
   useEffect(() => {
@@ -681,17 +773,18 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
+      backgroundColor: ['intro1', 'intro2', 'intro3', 'intro4', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      justifyContent: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      padding: ['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
+      alignItems: ['intro1', 'intro2', 'intro3', 'intro4', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      justifyContent: ['intro1', 'intro2', 'intro3', 'intro4', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      padding: ['intro1', 'intro2', 'intro3', 'intro4', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       zIndex: 9999,
       overflowY: 'auto',
+      pointerEvents: currentScreen === 'timingMethod' ? 'none' : 'auto',
     }}>
-      {/* Render static components for various screens */}
+      {/* Render static components for non-catchup screens only */}
       {currentScreen === 'home1' && <StaticHomeScreen />}
       {currentScreen === 'addTxMenu' && <StaticAddTxMenu />}
       {currentScreen === 'adrenalineDose' && <StaticAdrenalineDose />}
@@ -699,89 +792,11 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
       {currentScreen === 'summary' && <StaticSummary />}
       {currentScreen === 'caseSummary' && <StaticCaseSummary />}
       
-      {/* Exit button overlay for static screens */}
-      {['home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) && (
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            zIndex: 10001,
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-            fontSize: '20px',
-            fontWeight: '700',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          ×
-        </button>
-      )}
-      
-      {/* Screenshot rendering for intro screens only */}
-      {(currentScreen === 'intro1' || currentScreen === 'intro2') && (
-        <div style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: '400px',
-          backgroundColor: '#000',
-          borderRadius: '20px',
-          overflow: 'hidden',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-        }}>
-          {/* Exit button for testing */}
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '10px',
-              right: '10px',
-              zIndex: 10001,
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '20px',
-              fontWeight: '700',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            ×
-          </button>
-
-          <img
-            src={currentScreenData.image}
-            alt={currentScreenData.title}
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-            }}
-          />
-        </div>
-      )}
-
-      {/* Intro message boxes for intro1 and intro2 screens */}
-      {(currentScreen === 'intro1' || currentScreen === 'intro2') && (
+      {/* Intro pages: dark overlay over the live catchup behind */}
+      {(currentScreen === 'intro1' || currentScreen === 'intro2' || currentScreen === 'intro3' || currentScreen === 'intro4') && (
         <div style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
+          top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.85)',
           display: 'flex',
           alignItems: 'center',
@@ -797,22 +812,21 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
             width: '85%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
-            <div style={{
-              color: '#1a1a1a',
-              fontSize: '16px',
-              lineHeight: '1.6',
-              textAlign: 'center',
-              marginBottom: '20px',
-            }}>
-              {currentScreen === 'intro1' && 
-                "The Big One is a tool that you can use when acting as the team leader during cardiac arrest cases to help you stay on top of everything."
-              }
-              {currentScreen === 'intro2' && 
-                "On opening the app, you'll need to enter some times from the monitor and details about the patient. You'll then be brought to the home screen."
-              }
-            </div>
-            
-            {/* Next button at bottom of box */}
+            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
+              {currentScreen === 'intro1' && 'Welcome!'}
+              {currentScreen === 'intro2' && 'Navigating the Tutorial'}
+              {currentScreen === 'intro3' && 'Getting Started'}
+              {currentScreen === 'intro4' && 'Time Keeping'}
+            </h2>
+            {renderIntroDescription(
+              currentScreen === 'intro1'
+                ? "The Big One is a cognitive aid for use during cardiac arrests.\n\nWith times and medications tracked automatically, you can focus on situational awareness and team leadership."
+                : currentScreen === 'intro2'
+                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
+                : currentScreen === 'intro3'
+                ? "On opening The Big One, you'll need to set up the case by entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been performed"
+                : "After you've entered the patient information and Tx you've already performed, you'll need to choose one of three options for keeping track of rhythm check times."
+            )}
             <button
               onClick={handleNext}
               style={{
@@ -842,9 +856,11 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         const exploredNumbers = currentScreenData.elements
           .filter(el => exploredElements.has(el.id))
           .map(el => el.number);
+        const allNumbers = currentScreenData.elements.map(el => el.number);
+        const minNumber = Math.min(...allNumbers);
         const nextNumber = exploredNumbers.length > 0 
           ? Math.max(...exploredNumbers) + 1 
-          : 1;
+          : minNumber;
         
         // Only render this node if it's the next in sequence
         if (element.number !== nextNumber) return null;
@@ -862,6 +878,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
               transform: 'translate(-50%, -50%)',
               cursor: 'pointer',
               zIndex: 10,
+              pointerEvents: 'auto',
             }}
           >
             <div style={{
@@ -921,6 +938,10 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
             transform: translateX(-50%) scale(1.05);
             box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
           }
+        }
+        @keyframes cprCardFade {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.45; }
         }
       `}</style>
 
@@ -1178,8 +1199,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
         </button>
       )}
       
-      {/* Regular Next button for intro screens only */}
-      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'home1' && currentScreen !== 'addTxMenu' && currentScreen !== 'adrenalineDose' && currentScreen !== 'home2' && currentScreen !== 'home2_summary' && currentScreen !== 'home2_close' && currentScreen !== 'summary' && currentScreen !== 'caseSummary' && (
+      {/* Regular Next button for non-special screens */}
+      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'intro3' && currentScreen !== 'intro4' && currentScreen !== 'timingMethod' && currentScreen !== 'home1' && currentScreen !== 'addTxMenu' && currentScreen !== 'adrenalineDose' && currentScreen !== 'home2' && currentScreen !== 'home2_summary' && currentScreen !== 'home2_close' && currentScreen !== 'summary' && currentScreen !== 'caseSummary' && (
         <button
           onClick={handleNext}
           style={{
@@ -1241,6 +1262,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
             justifyContent: 'center',
             padding: '20px',
             zIndex: 10000,
+            pointerEvents: 'auto',
           }}
         >
           <div
@@ -1265,9 +1287,10 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
             <p style={{
               margin: '0 0 20px 0',
               fontSize: '15px',
-              lineHeight: '1.5',
+              lineHeight: '1.6',
               color: '#444',
               textAlign: 'center',
+              whiteSpace: 'pre-line',
             }}>
               {activeExplanation.description}
             </p>
@@ -1293,5 +1316,51 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose }) =>
     </div>
   );
 };
+
+function renderIntroDescription(text: string) {
+  const segments = text.split('\n\n');
+  const groups: Array<{ type: 'text' | 'bullets'; items: string[] }> = [];
+  for (const seg of segments) {
+    if (seg.startsWith('•')) {
+      const last = groups[groups.length - 1];
+      if (last?.type === 'bullets') {
+        last.items.push(seg);
+      } else {
+        groups.push({ type: 'bullets', items: [seg] });
+      }
+    } else {
+      groups.push({ type: 'text', items: [seg] });
+    }
+  }
+  return (
+    <div style={{ color: '#555', marginBottom: '20px', lineHeight: '1.6', textAlign: 'left' }}>
+      {groups.map((group, gi) => {
+        const isLast = gi === groups.length - 1;
+        if (group.type === 'bullets') {
+          return (
+            <div key={gi} style={{
+              backgroundColor: '#f3f4f6',
+              border: '1px solid #e5e7eb',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              marginBottom: isLast ? 0 : '0.9em',
+            }}>
+              {group.items.map((bullet, bi) => (
+                <p key={bi} style={{ margin: 0, marginBottom: bi < group.items.length - 1 ? '0.46em' : 0, whiteSpace: 'pre-line' }}>
+                  {bullet}
+                </p>
+              ))}
+            </div>
+          );
+        }
+        return (
+          <p key={gi} style={{ margin: 0, marginBottom: isLast ? 0 : '0.9em', whiteSpace: 'pre-line' }}>
+            {group.items[0]}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
 
 export default InteractiveTutorial;
