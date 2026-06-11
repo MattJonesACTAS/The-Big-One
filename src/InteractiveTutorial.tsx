@@ -1279,6 +1279,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             <h3 style={{
               margin: '0 0 12px 0',
               fontSize: '20px',
+              fontWeight: '700',
               color: '#1a1a1a',
               textAlign: 'center',
             }}>
