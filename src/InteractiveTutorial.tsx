@@ -641,8 +641,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'home1',
       elements: [
-        { id: 'timingLog',     x: 50, y: 25, number: 1, title: 'Tx log only',   description: "This option means the app will only help you record the times of interventions.\n\nIt will not assist you to keep track of times." },
-        { id: 'timingCPR',     x: 50, y: 47, number: 3, title: 'CPR timer',     description: "Choose this option if you are using the monitor's inbuilt CPR timer, found above the compression depth diamond on the CPR screen.\n\nFor the tutorial we will use this option, because it's likely the one you're least familiar with.\n\nChoose 'CPR Timer' to progress in the tutorial." },
+        { id: 'timingLog',     x: 50, y: 25, number: 1, title: 'Tx log only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of times during the case.\n\nThis option can also be useful to keep an accurate record of Tx performed when spectating a simulation." },
+        { id: 'timingCPR',     x: 50, y: 47, number: 3, title: 'CPR timer',     description: "Choose this option if you are using the monitor's inbuilt CPR timer, found above the compression depth diamond on the CPR screen.\n\nLet's use this option for the tutorial, as it's likely the time keeping method you're least familiar with.\n\nChoose 'CPR timer' to progress in the tutorial." },
         { id: 'timingElapsed', x: 50, y: 70, number: 2, title: 'Elapsed time',  description: "Choose this option if you are using the elapsed time found at the top right corner of the monitor.\n\nYou can then choose whether you are performing rhythm checks on even or odd minutes." },
       ],
     },
@@ -820,12 +820,34 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             </h2>
             {renderIntroDescription(
               currentScreen === 'intro1'
-                ? "The Big One is a cognitive aid for use during cardiac arrests.\n\nWith times and medications tracked automatically, you can focus on situational awareness and team leadership."
+                ? "The Big One is a cognitive aid for use during cardiac arrests.
+
+It is designed to assist you to keep track of:
+
+• Rhythm check intervals
+
+• Medication re-dosing intervals
+
+• The times events occurred, making case sheets easy and accurate
+
+By offloading this cognitive load, you can focus on situational awareness and team leadership."
                 : currentScreen === 'intro2'
-                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
+                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.
+
+Click on the icons to learn about these features.
+
+You'll need to clear all icons and complete any instructions to progress through the tutorial."
                 : currentScreen === 'intro3'
-                ? "On opening The Big One, you'll need to set up the case by entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been performed"
-                : "After you've entered the patient information and Tx you've already performed, you'll need to choose one of three options for keeping track of rhythm check times."
+                ? "On opening The Big One, you'll need to set up the case by choosing/entering:
+
+• Adult or paediatric patient
+
+• Estimated patient weight
+
+• The interventions that have already been performed"
+                : "After setting up the case, you'll need to choose one of three options for how you want to keep track of rhythm checks.
+
+Let's look at those options."
             )}
             <button
               onClick={handleNext}
@@ -1317,6 +1339,16 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
   );
 };
 
+function renderWithItalics(text: string) {
+  const parts = text.split('The Big One');
+  return parts.map((part, i) => (
+    <React.Fragment key={i}>
+      {part}
+      {i < parts.length - 1 && <em>The Big One</em>}
+    </React.Fragment>
+  ));
+}
+
 function renderIntroDescription(text: string) {
   const segments = text.split('\n\n');
   const groups: Array<{ type: 'text' | 'bullets'; items: string[] }> = [];
@@ -1355,7 +1387,7 @@ function renderIntroDescription(text: string) {
         }
         return (
           <p key={gi} style={{ margin: 0, marginBottom: isLast ? 0 : '0.9em', whiteSpace: 'pre-line' }}>
-            {group.items[0]}
+            {renderWithItalics(group.items[0])}
           </p>
         );
       })}
