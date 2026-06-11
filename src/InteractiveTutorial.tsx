@@ -820,34 +820,12 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             </h2>
             {renderIntroDescription(
               currentScreen === 'intro1'
-                ? "The Big One is a cognitive aid for use during cardiac arrests.
-
-It is designed to assist you to keep track of:
-
-• Rhythm check intervals
-
-• Medication re-dosing intervals
-
-• The times events occurred, making case sheets easy and accurate
-
-By offloading this cognitive load, you can focus on situational awareness and team leadership."
+                ? "The Big One is a cognitive aid for use during cardiac arrests.\n\nIt is designed to assist you to keep track of:\n\n• Rhythm check intervals\n\n• Medication re-dosing intervals\n\n• The times events occurred, making case sheets easy and accurate\n\nBy offloading this cognitive load, you can focus on situational awareness and team leadership."
                 : currentScreen === 'intro2'
-                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.
-
-Click on the icons to learn about these features.
-
-You'll need to clear all icons and complete any instructions to progress through the tutorial."
+                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
                 : currentScreen === 'intro3'
-                ? "On opening The Big One, you'll need to set up the case by choosing/entering:
-
-• Adult or paediatric patient
-
-• Estimated patient weight
-
-• The interventions that have already been performed"
-                : "After setting up the case, you'll need to choose one of three options for how you want to keep track of rhythm checks.
-
-Let's look at those options."
+                ? "On opening The Big One, you'll need to set up the case by choosing/entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been performed"
+                : "After setting up the case, you'll need to choose one of three options for how you want to keep track of rhythm checks.\n\nLet's look at those options."
             )}
             <button
               onClick={handleNext}
