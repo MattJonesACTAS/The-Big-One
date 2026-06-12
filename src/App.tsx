@@ -2096,6 +2096,7 @@ export default function App() {
                           setTutorialMode(true);
                         }
                       }}
+                      disabled={showInteractiveTutorial && !timingNodesComplete}
                       data-tutorial="cpr-btn"
                       className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'cpr' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
                     >
