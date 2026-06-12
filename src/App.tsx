@@ -174,7 +174,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Suxamethonium': { 
     doses: [
-      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation' },
+      { dose: '1.5mg/kg', population: 'adult', indication: 'Intubation', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
