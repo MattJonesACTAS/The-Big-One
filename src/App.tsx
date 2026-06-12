@@ -2066,6 +2066,7 @@ export default function App() {
                     {/* Record keeping only */}
                     <button
                       onClick={() => setTimingMode('log')}
+                      disabled={showInteractiveTutorial}
                       className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'log' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
                     >
                       <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
@@ -2124,6 +2125,7 @@ export default function App() {
                     {/* Elapsed time */}
                     <button
                       onClick={() => setTimingMode('elapsed')}
+                      disabled={showInteractiveTutorial}
                       className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'elapsed' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
                     >
                       <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
