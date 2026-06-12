@@ -225,7 +225,8 @@ const calculateDose = (doseStr: string, weight: number | null): string => {
   
   const [_, amount, unit] = match;
   const calculated = parseFloat(amount) * (typeof weight === 'number' ? weight : parseFloat(String(weight)));
-  const rounded = Math.round(calculated * 10) / 10;
+  // Round to 2 decimal places, then strip trailing zeros
+  const rounded = parseFloat((Math.round(calculated * 100) / 100).toFixed(2));
   
   return `${amount}${unit}/kg (${rounded}${unit})`;
 };
