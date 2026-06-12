@@ -1250,8 +1250,8 @@ export default function App() {
         </div>
       )}
       {/* Top Controls */}
-      <div className={`grid gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0 ${timingMode === 'log' ? 'grid-cols-1' : 'grid-cols-3'}`}>
-        {timingMode !== 'log' && (
+      <div className={`grid gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0 ${timingMode === 'log' ? 'grid-cols-1' : timingMode === 'elapsed' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+        {timingMode !== 'log' && timingMode !== 'elapsed' && (
           <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
             {(state.running && !state.rhythmCheckPaused) ? <Pause size={14} className="sm:w-4 sm:h-4" /> : <Play size={14} className="sm:w-4 sm:h-4" />} 
             {(state.running && !state.rhythmCheckPaused) ? 'Pause' : 'Play'}
