@@ -36,6 +36,10 @@ const ALL_NODES: GlobalNode[] = [
       {
         title: 'Timer Behaviour',
         description: "When the timer reaches 00:10 you will be forced back to the home screen so that you don't miss the rhythm check.\n\nWhen the timer reaches 0:00, it allows 6 seconds for the rhythm check, then restarts from 2:00.\n\nYou will then be forced to record whether you shocked or disarmed."
+      },
+      {
+        title: 'Elapsed Time Option',
+        description: "If you had selected to use the monitor's elapsed time to keep track of rhythm checks, the elapsed time would appear here instead."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
@@ -133,7 +137,7 @@ const ALL_NODES: GlobalNode[] = [
   },
   {
     id: 'delete', type: 'positioned', x: 73, y: 14, displayNumber: 18,
-    pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nDelete the case to finish the tutorial." }],
+    pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nDelete the case to finish the tutorial, and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }
 ];
