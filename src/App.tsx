@@ -1495,7 +1495,7 @@ export default function App() {
                         : formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))
                   }
                 </div>
-                <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 ${
+                <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 ${timingMode === 'elapsed' ? 'translate-y-0.5' : ''} ${
                   timingMode === 'elapsed' ? 'text-[11px] sm:text-[14px]' : 'text-[14px] sm:text-[18px]'
                 } ${
                   state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' : 'text-neutral-400'
