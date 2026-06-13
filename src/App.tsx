@@ -48,6 +48,7 @@ const INITIAL_STATE: AppState = {
   startClockTime: null,
   patientWeight: null,
   patientType: null,
+  patientAge: null,
   reversiblesChecked: [],
   roscChecked: [],
   pheaChecked: [],
@@ -309,6 +310,7 @@ export default function App() {
   const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
   const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
   const [paedWeightMethod, setPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
+  const [paedAgeLabel, setPaedAgeLabel] = useState<string>('');
   const [weightInput, setWeightInput] = useState('');
   const [priorCounts, setPriorCounts] = useState({ shock: 0, disarm: 0, adrenaline: 0 });
   const [priorTxs, setPriorTxs] = useState<string[]>([]);
@@ -328,6 +330,9 @@ export default function App() {
   const [showTimerAdjust, setShowTimerAdjust] = useState(false);
   const [timerAdjustValue, setTimerAdjustValue] = useState({ mins: 2, secs: 0 });
   const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
+  const [showRecalibrateMenu, setShowRecalibrateMenu] = useState(false);
+  const [showWeightChange, setShowWeightChange] = useState(false);
+  const [newWeightInput, setNewWeightInput] = useState('');
   const [showRearrestIntervalPicker, setShowRearrestIntervalPicker] = useState(false);
   const [rearrestElapsed, setRearrestElapsed] = useState<number>(0);
   const [roscButtonFlashing, setRoscButtonFlashing] = useState(false);
@@ -1077,7 +1082,8 @@ export default function App() {
       catchupElapsed: adjustedElapsed,
       startClockTime: startClockTime,
       patientWeight: parsedWeight || (tutorialMode ? 70 : null),
-      patientType: weightType || (tutorialMode ? 'adult' : null)
+      patientType: weightType || (tutorialMode ? 'adult' : null),
+      patientAge: (weightType === 'paed' && paedWeightMethod === 'age' && paedAgeLabel) ? paedAgeLabel : null,
     });
     
     // Reset all UI states for clean new case
@@ -1151,18 +1157,18 @@ export default function App() {
         {(() => {
           const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
           const vitalRows = [
-            { label: 'Heart Rate',     value: v.hr,   unit: 'bpm'    },
-            { label: 'Resp Rate',      value: v.rr,   unit: 'br/min' },
+            { label: 'HR',     value: v.hr,   unit: 'bpm'    },
+            { label: 'RR',      value: v.rr,   unit: 'br/min' },
             { label: 'SpO₂',           value: v.spo2, unit: '%'      },
             { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
-            { label: 'Blood Pressure', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+            { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
             { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
             { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
-            { label: 'Temperature',    value: v.temp, unit: '°C'     },
+            { label: 'Temp',    value: v.temp, unit: '°C'     },
           ].filter(r => r.value !== '');
           return (
             <div className="rounded-xl overflow-hidden border border-neutral-100">
-              <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider">VITAL SIGNS</div>
+              <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
               {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
                 <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
                   <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
@@ -1179,7 +1185,7 @@ export default function App() {
 
         <PharmaSummarySection pharmaSummary={pharmaSummary} />
         
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} timingMode={timingMode} />
 
         {showDeleteWarning && (
@@ -1265,31 +1271,19 @@ export default function App() {
         </div>
       )}
       {/* Top Controls */}
-      <div className={`grid gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0 ${timingMode === 'log' ? 'grid-cols-1' : timingMode === 'elapsed' ? 'grid-cols-2' : 'grid-cols-3'}`}>
+      <div className={`grid gap-2 sm:gap-3 mb-3 sm:mb-4 flex-shrink-0 ${timingMode === 'log' ? 'grid-cols-2' : timingMode === 'elapsed' ? 'grid-cols-2' : 'grid-cols-3'}`}>
         {timingMode !== 'log' && timingMode !== 'elapsed' && (
           <button onClick={confirmPause} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base">
             {(state.running && !state.rhythmCheckPaused) ? <Pause size={14} className="sm:w-4 sm:h-4" /> : <Play size={14} className="sm:w-4 sm:h-4" />} 
             {(state.running && !state.rhythmCheckPaused) ? 'Pause' : 'Play'}
           </button>
         )}
-        {timingMode !== 'log' && (
-          <button 
-            onClick={() => {
-              if (timingMode === 'elapsed') {
-                setShowElapsedRecalibrate(true);
-              } else {
-                const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
-                const mins = Math.floor(currentCountdown / 60);
-                const secs = currentCountdown % 60;
-                setTimerAdjustValue({ mins, secs });
-                setShowTimerAdjust(true);
-              }
-            }} 
-            className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
-          >
-            <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
-          </button>
-        )}
+        <button 
+          onClick={() => setShowRecalibrateMenu(true)} 
+          className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
+        >
+          <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
+        </button>
         <button onClick={() => setShowCloseWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="close-case">
           <XCircle size={14} className="sm:w-4 sm:h-4" /> Close Case
         </button>
@@ -1355,9 +1349,38 @@ export default function App() {
           /* Log mode: scrollable running summary is the home screen */
           <div className="h-full flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <SummaryStats state={state} pharmaSummary={pharmaSummary} />
+              <ArrestSummarySection state={state} />
+              {(() => {
+                const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
+                const vitalRows = [
+                  { label: 'HR',     value: v.hr,   unit: 'bpm'    },
+                  { label: 'RR',      value: v.rr,   unit: 'br/min' },
+                  { label: 'SpO₂',           value: v.spo2, unit: '%'      },
+                  { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
+                  { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+                  { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
+                  { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
+                  { label: 'Temp',    value: v.temp, unit: '°C'     },
+                ].filter(r => r.value !== '');
+                return (
+                  <div className="rounded-xl overflow-hidden border border-neutral-100">
+                    <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
+                    {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
+                      <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
+                        <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
+                        <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
+                          {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
+                        </span>
+                      </div>
+                    )) : (
+                      <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded yet.</div>
+                    )}
+                  </div>
+                );
+              })()}
+              <PharmaSummarySection pharmaSummary={pharmaSummary} />
               <div>
-                <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
+                <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
                 <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))} />
               </div>
             </div>
@@ -1910,6 +1933,8 @@ export default function App() {
                           onChange={(e) => {
                             setPaedWeightMethod('age');
                             setWeightInput(e.target.value);
+                            const opt = e.target.options[e.target.selectedIndex];
+                            setPaedAgeLabel(opt.text.split(' (')[0]);
                           }}
                           className="w-full bg-white border-2 border-pink-300 rounded-xl px-4 py-4 text-base font-semibold focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all"
                         >
@@ -2326,6 +2351,110 @@ export default function App() {
         </div>
       )}
 
+      {showRecalibrateMenu && (
+        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-4">
+            <h2 className="text-2xl font-bold text-neutral-900 text-center">Recalibrate</h2>
+            {timingMode !== 'log' && (
+            <button
+              onClick={() => {
+                setShowRecalibrateMenu(false);
+                if (timingMode === 'elapsed') {
+                  setShowElapsedRecalibrate(true);
+                } else {
+                  const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
+                  const mins = Math.floor(currentCountdown / 60);
+                  const secs = currentCountdown % 60;
+                  setTimerAdjustValue({ mins, secs });
+                  setShowTimerAdjust(true);
+                }
+              }}
+              className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
+            >
+              <div className="text-base">Recalibrate timer</div>
+              <div className="text-xs text-neutral-500 font-medium mt-0.5">{timingMode === 'elapsed' ? 'Adjust the current elapsed time or rhythm check' : 'Adjust the current rhythm check countdown'}</div>
+            </button>
+            )}
+            <button
+              onClick={() => {
+                setNewWeightInput(String(state.patientWeight ?? ''));
+                setShowRecalibrateMenu(false);
+                setShowWeightChange(true);
+              }}
+              className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
+            >
+              <div className="text-base">Change patient weight</div>
+              <div className="text-xs text-neutral-500 font-medium mt-0.5">Currently {state.patientWeight}kg</div>
+            </button>
+            <button onClick={() => setShowRecalibrateMenu(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showWeightChange && (
+        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
+            <h2 className="text-2xl font-bold text-neutral-900 text-center">Change Weight</h2>
+            {state.patientType === 'adult' ? (
+              <select
+                value={newWeightInput}
+                onChange={e => setNewWeightInput(e.target.value)}
+                className="w-full bg-white border-2 border-emerald-300 rounded-xl px-4 py-4 text-base font-semibold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              >
+                <option value="">Select weight</option>
+                <option value="35">35 kg</option>
+                <option value="40">40 kg</option>
+                <option value="50">50 kg</option>
+                <option value="60">60 kg</option>
+                <option value="70">70 kg</option>
+                <option value="80">80 kg</option>
+                <option value="90">90 kg</option>
+                <option value="100">100 kg</option>
+                <option value="110">110 kg</option>
+                <option value="120">120 kg</option>
+                <option value="130">130 kg</option>
+                <option value="140">140 kg</option>
+                <option value="150">150 kg</option>
+                <option value="160">160 kg</option>
+                <option value="170">170 kg</option>
+                <option value="180">180 kg</option>
+                <option value="190">190 kg</option>
+                <option value="200">200 kg</option>
+              </select>
+            ) : (
+              <div className="relative">
+                <input
+                  type="number"
+                  value={newWeightInput}
+                  onChange={e => setNewWeightInput(e.target.value)}
+                  className="w-full border-2 border-pink-300 rounded-xl px-4 py-4 pr-12 text-base font-semibold focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none"
+                  placeholder="Enter weight"
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 font-bold pointer-events-none">kg</span>
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => setShowWeightChange(false)} className="p-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
+              <button
+                onClick={() => {
+                  const w = parseFloat(newWeightInput);
+                  if (!isNaN(w) && w > 0) {
+                    setState(prev => ({ ...prev, patientWeight: w }));
+                  }
+                  setShowWeightChange(false);
+                }}
+                disabled={!newWeightInput}
+                className="p-3 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-40"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showElapsedRecalibrate && (
         <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
@@ -2567,15 +2696,15 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
 function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onChange: (v: AppState['vitals']) => void }) {
   const update = (key: keyof AppState['vitals'], val: string) => onChange({ ...vitals, [key]: val });
   const fields: { key: keyof AppState['vitals'], label: string }[] = [
-    { key: 'hr',   label: 'Heart Rate'    },
-    { key: 'rr',   label: 'Resp Rate'     },
-    { key: 'spo2', label: 'SpO₂'          },
-    { key: 'etco2',label: 'EtCO₂'         },
-    { key: 'bpSys',label: 'BP Systolic'   },
-    { key: 'bpDia',label: 'BP Diastolic'  },
-    { key: 'gcs',  label: 'GCS'           },
-    { key: 'bgl',  label: 'BGL'           },
-    { key: 'temp', label: 'Temperature'   },
+    { key: 'hr',   label: 'HR'           },
+    { key: 'rr',   label: 'RR'           },
+    { key: 'spo2', label: 'SpO₂'         },
+    { key: 'etco2',label: 'EtCO₂'        },
+    { key: 'bpSys',label: 'Systolic BP'  },
+    { key: 'bpDia',label: 'Diastolic BP' },
+    { key: 'gcs',  label: 'GCS'          },
+    { key: 'bgl',  label: 'BGL'          },
+    { key: 'temp', label: 'Temp'         },
   ];
   return (
     <div className="h-full overflow-y-auto">
@@ -2900,21 +3029,21 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   const patientLabel = state.patientType === 'adult'
     ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
     : state.patientType === 'paed'
-    ? `Paediatric · ${state.patientWeight}kg`
+    ? state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`
     : null;
 
   return (
     <div className="space-y-6">
       {patientLabel && (
         <div className="rounded-xl overflow-hidden border border-neutral-100">
-          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider">PATIENT</div>
+          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider text-center">PATIENT</div>
           <div className="bg-white px-4 py-3">
-            <span className="text-[17px] font-bold text-neutral-900">{patientLabel}</span>
+            <span className="text-[17px] font-bold text-neutral-900 text-center block">{patientLabel}</span>
           </div>
         </div>
       )}
        <div>
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
@@ -2923,7 +3052,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
       </div>
 
       <div>
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">PHARMA SUMMARY</div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">PHARMA SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
           {Object.keys(pharmaSummary).length === 0 ? (
             <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
@@ -2943,20 +3072,20 @@ function ArrestSummarySection({ state }: { state: AppState }) {
   const patientLabel = state.patientType === 'adult'
     ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
     : state.patientType === 'paed'
-    ? `Paediatric · ${state.patientWeight}kg`
+    ? state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`
     : null;
   return (
     <div className="space-y-6">
       {patientLabel && (
         <div className="rounded-xl overflow-hidden border border-neutral-100">
-          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider">PATIENT</div>
+          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider text-center">PATIENT</div>
           <div className="bg-white px-4 py-3">
-            <span className="text-[17px] font-bold text-neutral-900">{patientLabel}</span>
+            <span className="text-[17px] font-bold text-neutral-900 text-center block">{patientLabel}</span>
           </div>
         </div>
       )}
       <div>
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">ARREST SUMMARY</div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
@@ -2970,7 +3099,7 @@ function ArrestSummarySection({ state }: { state: AppState }) {
 function PharmaSummarySection({ pharmaSummary }: { pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
   return (
     <div>
-      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">PHARMA SUMMARY</div>
+      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">PHARMA SUMMARY</div>
       <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
         {Object.keys(pharmaSummary).length === 0 ? (
           <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
@@ -2988,21 +3117,21 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete }: { state:
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
-    { label: 'Heart Rate',     value: v.hr,   unit: 'bpm'    },
-    { label: 'Resp Rate',      value: v.rr,   unit: 'br/min' },
+    { label: 'HR',     value: v.hr,   unit: 'bpm'    },
+    { label: 'RR',      value: v.rr,   unit: 'br/min' },
     { label: 'SpO₂',           value: v.spo2, unit: '%'      },
     { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
-    { label: 'Blood Pressure', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+    { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
     { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
     { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
-    { label: 'Temperature',    value: v.temp, unit: '°C'     },
+    { label: 'Temp',    value: v.temp, unit: '°C'     },
   ].filter(r => r.value !== '');
 
   return (
     <div className="space-y-6 pb-20">
       <ArrestSummarySection state={state} />
       <div className="rounded-xl overflow-hidden border border-neutral-100">
-        <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider">VITAL SIGNS</div>
+        <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
         {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
           <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
             <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
@@ -3016,7 +3145,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete }: { state:
       </div>
       <PharmaSummarySection pharmaSummary={pharmaSummary} />
       <div>
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider">TREATMENT LOG</div>
+        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={onDelete} />
       </div>
     </div>

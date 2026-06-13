@@ -29,6 +29,7 @@ export interface AppState {
   startClockTime: number | null;
   patientWeight: number | null;
   patientType: 'adult' | 'paed' | null;
+  patientAge: string | null;
   reversiblesChecked: string[];
   roscChecked: string[];
   pheaChecked: string[];
