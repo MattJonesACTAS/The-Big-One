@@ -1715,7 +1715,7 @@ export default function App() {
               exit={{ x: '-100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 30, stiffness: 280 }}
               className={`bg-white rounded-[28px] max-w-md w-[90%] shadow-2xl overflow-hidden overflow-x-hidden ${catchupTxMode ? '' : 'p-6 absolute'}`}
-              style={catchupTxMode ? { height: '80vh' } : {}}
+              style={catchupTxMode ? { height: '68vh' } : {}}
             >
               {catchupTxMode && (
                 <div className="flex flex-col h-full overflow-hidden" style={{ width: '100%', boxSizing: 'border-box' }}>
