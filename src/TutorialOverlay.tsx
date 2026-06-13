@@ -108,7 +108,7 @@ const ALL_NODES: GlobalNode[] = [
       },
       {
         title: 'Treatment Log',
-        description: 'At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the x button to the left of each entry in the Tx log.'
+        description: 'At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the 'x' button to the left of each entry in the Tx log.'
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
