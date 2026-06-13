@@ -304,6 +304,7 @@ export default function App() {
     }
   });
   const [catchupStep, setCatchupStep] = useState(1);
+  const [catchupTxMode, setCatchupTxMode] = useState(false);
   const [catchupElapsed, setCatchupElapsed] = useState({ mins: 0, secs: 0 });
   const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
   const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
@@ -678,8 +679,15 @@ export default function App() {
       elapsed: state.elapsedSeconds,
       round: state.cprRound,
       clock: getLocalTime(now),
-      clockSeconds: getLocalTimeWithSeconds(now)
+      clockSeconds: getLocalTimeWithSeconds(now),
+      ...(catchupTxMode ? { prior: true } : {})
     };
+
+    if (catchupTxMode) {
+      setState(prev => ({ ...prev, treatments: [...prev.treatments, treatment] }));
+      setCatchupTxMode(false);
+      return;
+    }
 
     setState(prev => {
       const isShockOrDisarm = name.includes('Shock') || name.includes('Disarm');
@@ -1048,6 +1056,10 @@ export default function App() {
       initialTxs.push({ name: `Adrenaline push #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
     }
     
+    // Include any treatments added via the Full Tx list button
+    const extraPriorTxs = state.treatments.filter(t => t.prior);
+    const allInitialTxs = [...extraPriorTxs, ...initialTxs];
+
     setState({
       ...INITIAL_STATE,
       running: true,
@@ -1057,7 +1069,7 @@ export default function App() {
       rhythmCheckTarget: rhythmCheckTarget,
       cprRound: Math.max(1, priorCounts.shock + priorCounts.disarm),
       shocks: priorCounts.shock,
-      treatments: initialTxs,
+      treatments: allInitialTxs,
       catchupElapsed: adjustedElapsed,
       startClockTime: startClockTime,
       patientWeight: parsedWeight || (tutorialMode ? 70 : null),
@@ -1066,6 +1078,7 @@ export default function App() {
     
     // Reset all UI states for clean new case
     setShowCatchup(false);
+    setCatchupTxMode(false);
     setDisregardAdrenaline(null);
     setDisregardAmiodarone(null);
     setShowLoggedNotification(false);
@@ -1179,7 +1192,6 @@ export default function App() {
          </div>
         )}
 
-        {/* Tutorial Overlay - also show on case summary */}
         {tutorialMode && (
           <TutorialOverlay
             appState={state}
@@ -1697,14 +1709,32 @@ export default function App() {
         {showCatchup && (
           <div className="fixed inset-0 bg-black/90 z-[1000] flex items-center justify-center p-4">
             <motion.div 
-              key={catchupStep}
+              key={catchupTxMode ? 'catchupTx' : catchupStep}
               initial={{ x: '100%', opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-              className="bg-white rounded-[28px] p-6 max-w-md w-[90%] shadow-2xl overflow-hidden absolute"
+              className={`bg-white rounded-[28px] max-w-md w-[90%] shadow-2xl overflow-hidden overflow-x-hidden ${catchupTxMode ? '' : 'p-6 absolute'}`}
+              style={catchupTxMode ? { height: '80vh' } : {}}
             >
-              {catchupStep === 1 && (
+              {catchupTxMode && (
+                <div className="flex flex-col h-full overflow-hidden" style={{ width: '100%', boxSizing: 'border-box' }}>
+                  <div className="flex-1 overflow-hidden" style={{ width: '100%' }}>
+                    <TreatmentSelection
+                      addTreatment={(name) => { addTreatment(name); }}
+                      state={{ ...state, patientType: weightType as any, patientWeight: weightInput ? parseFloat(weightInput) : state.patientWeight }}
+                      isShockForced={false}
+                      patientTypeOverride={weightType}
+                    />
+                  </div>
+                  <div className="flex-shrink-0 p-4 border-t border-neutral-100">
+                    <button onClick={() => setCatchupTxMode(false)} className="w-full bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold">
+                      Back
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!catchupTxMode && catchupStep === 1 && (
                 <div className="text-center space-y-6">
                   {/* Header with gradient accent */}
                   <div className="space-y-4">
@@ -1751,7 +1781,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 2 && (
+              {!catchupTxMode && catchupStep === 2 && (
                 <div className="space-y-6 px-4 max-w-md mx-auto">
                   <div className="text-center space-y-2">
                     <h2 className="text-2xl font-bold text-neutral-900">Patient Details</h2>
@@ -1977,7 +2007,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 5 && (
+              {!catchupTxMode && catchupStep === 5 && (
                 <div className="text-center space-y-6">
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter current CPR timer</h2>
                   <p className="text-neutral-600 text-sm px-4">This is the countdown above the diamond on the monitor</p>
@@ -2047,7 +2077,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 3 && (
+              {!catchupTxMode && catchupStep === 3 && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
                   <div className="space-y-2 py-3 px-2">
@@ -2065,6 +2095,12 @@ export default function App() {
                         </button>
                       ))}
                     </div>
+                    <button
+                      onClick={() => setCatchupTxMode(true)}
+                      className="w-full p-3 rounded-xl font-bold text-base bg-neutral-100 text-neutral-600 flex items-center justify-center gap-2"
+                    >
+                      <Plus size={16} /> Full Tx list
+                    </button>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
@@ -2073,7 +2109,7 @@ export default function App() {
                 </div>
               )}
 
-              {catchupStep === 6 && (
+              {!catchupTxMode && catchupStep === 6 && (
                 <div className="space-y-5 px-4 max-w-md mx-auto">
                   <div className="text-center space-y-2">
                     <h2 className="text-2xl font-bold text-neutral-900">Timing Method</h2>
@@ -3005,7 +3041,7 @@ function StatRow({ label, value, color = "text-neutral-900", stacked = false }: 
   );
 }
 
-function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatment: (n: string) => void, state: AppState, isShockForced?: boolean }) {
+function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOverride, noScroll }: { addTreatment: (n: string) => void, state: AppState, isShockForced?: boolean, patientTypeOverride?: string | null, noScroll?: boolean }) {
   const [customTx, setCustomTx] = useState('');
   const [selectedMed, setSelectedMed] = useState<string | null>(null);
   const [customDose, setCustomDose] = useState('');
@@ -3119,8 +3155,9 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   
   if (selectedMed && DOSE_CONFIG[selectedMed]) {
     const allDoses = DOSE_CONFIG[selectedMed].doses;
-    const filteredDoses = state.patientType 
-      ? allDoses.filter(d => d.population === 'both' || d.population === state.patientType)
+    const effectivePatientType = patientTypeOverride ?? state.patientType;
+    const filteredDoses = effectivePatientType 
+      ? allDoses.filter(d => d.population === 'both' || d.population === effectivePatientType)
       : allDoses;
     
     // Check if a dose is a unit-only custom input (e.g., "mg/h", "mg")
@@ -3171,7 +3208,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       }
       
       // Amiodarone paed: cap display at 300mg for arrest, 150mg for VT with output
-      if (selectedMed === 'Amiodarone' && doseOpt.dose.includes('/kg') && state.patientType === 'paed') {
+      if (selectedMed === 'Amiodarone' && doseOpt.dose.includes('/kg') && (effectivePatientType ?? state.patientType) === 'paed') {
         const base = calculateDose(doseOpt.dose, state.patientWeight);
         const mgMatch = base.match(/\(([\d.]+)mg\)/);
         if (mgMatch) {
@@ -3373,7 +3410,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   }
   
   return (
-    <div className="h-full overflow-y-auto pb-4">
+    <div className={`w-full ${noScroll ? 'pb-4' : 'h-full overflow-y-auto pb-4'}`}>
       {isShockForced && (
         <div className="bg-[#b91c1c] text-white p-4 text-center font-bold sticky top-0 z-[100] animate-pulse">
            RHYTHM CHECK: SELECT SHOCK STATUS
@@ -3430,18 +3467,18 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
             onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
           />
           
-          <div className="p-6 border-t border-neutral-100 bg-neutral-50 px-2 sm:px-6 mb-4">
-            <div className="flex gap-2">
+          <div className="py-3 px-2 border-t border-neutral-100 bg-neutral-50 mb-4">
+            <div className="flex gap-2 w-full">
               <input 
                 type="text" 
                 value={customTx}
                 onChange={e => setCustomTx(e.target.value)}
                 placeholder="Custom treatment..."
-                className="flex-1 bg-white border border-neutral-200 rounded-xl p-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
+                className="flex-1 min-w-0 bg-white border border-neutral-200 rounded-xl p-4 text-base focus:ring-2 focus:ring-emerald-500 outline-none"
               />
               <button 
                 onClick={() => { if(customTx) { addTreatment(customTx); setCustomTx(''); } }} 
-                className="bg-emerald-600 text-white px-6 rounded-xl font-bold btn-base"
+                className="bg-emerald-600 text-white px-4 rounded-xl font-bold btn-base flex-shrink-0"
               >
                 Add
               </button>
