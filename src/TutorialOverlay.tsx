@@ -99,16 +99,16 @@ const ALL_NODES: GlobalNode[] = [
         description: 'The top of the running summary lists the number of CPR rounds, along with the number of shocks and disarms.'
       },
       {
-        title: 'Pharma Summary',
-        description: 'Next, we have the pharmacological summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
-      },
-      {
         title: 'Vital Signs Survey',
         description: "Next, we have the vital signs survey. Any vital signs entered via the VSS tab will appear here for quick reference during the case and at handover."
       },
       {
+        title: 'Pharma Summary',
+        description: 'Next, we have the pharmacological summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
+      },
+      {
         title: 'Treatment Log',
-        description: 'At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the 'x' button to the left of each entry in the Tx log.'
+        description: 'At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the \'x\' button to the left of each entry in the Tx log.'
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
