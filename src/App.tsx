@@ -16,6 +16,7 @@ import {
   ChevronDown, 
   AlertCircle,
   XCircle,
+  X,
   Clock,
   Zap,
   ShieldCheck,
@@ -57,7 +58,7 @@ const INITIAL_STATE: AppState = {
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
   'Atropine', 'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine push', 'Ketamine infusion', 'Lignocaine',
-  'Magnesium', 'Midazolam', 'Morphine', 'Normal Saline', 'Oxygen', 'Sodium Bicarbonate', 'Suxamethonium'
+  'Magnesium', 'Midazolam', 'Morphine', 'Normal saline', 'Oxygen', 'Sodium bicarbonate', 'Suxamethonium'
 ];
 
 type DoseOption = {
@@ -158,14 +159,14 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
       { dose: 'mg', population: 'adult', indication: 'Post intubation sedation with midazolam - push dose' }
     ]
   },
-  'Normal Saline': { 
+  'Normal saline': { 
     doses: [
       { dose: '250mL', population: 'both' },
       { dose: '500mL', population: 'both' },
       { dose: 'Other', population: 'both' }
     ] 
   },
-  'Sodium Bicarbonate': { 
+  'Sodium bicarbonate': { 
     doses: [
       { dose: '1mMol/kg', population: 'both', indication: 'Cardiac arrest: Hyperkalaemia/OD / Cardioactive drug OD with output', calculated: true },
       { dose: '0.5mMol/kg', population: 'both', indication: 'Hyperkalaemia with output', calculated: true },
@@ -241,50 +242,28 @@ const cleanDoseForLog = (doseStr: string): string => {
 };
 
 const formatGlucose10Dose = (doseStr: string): string => {
-  // For Glucose 10%, format as (xxxml/xxg) - 0.1g per mL
-  // Extract mL amount from various formats: "200mls", "200mL", "200ml", "2.5mL/kg (200mL)"
-  console.log('formatGlucose10Dose input:', doseStr);
   const mlMatch = doseStr.match(/([\d.]+)\s*(?:ml|mls|mL|mLs)/i);
-  console.log('formatGlucose10Dose match:', mlMatch);
   if (mlMatch) {
     const mls = parseFloat(mlMatch[1]);
-    const grams = Math.round(mls * 0.1 * 10) / 10; // 0.1g per mL, rounded to 1 decimal
-    const result = `(${mls}ml/${grams}g)`;
-    console.log('formatGlucose10Dose output:', result);
-    return result;
+    const grams = Math.round(mls * 0.1 * 10) / 10;
+    return `${mls}mL/${grams}g`;
   }
-  console.log('formatGlucose10Dose no match, returning:', doseStr);
   return doseStr;
 };
 
 const formatSodiumBicarbonateDose = (doseStr: string): string => {
-  // For Sodium Bicarbonate 8.4%, format as (xxxmMol/xxxml) - 1mMol/mL concentration
-  // Extract mMol amount from various formats: "80mMol", "1mMol/kg (80mMol)"
-  console.log('formatSodiumBicarbonateDose input:', doseStr);
   const mmolMatch = doseStr.match(/([\d.]+)\s*(?:mmol|mMol|MMOL)/i);
-  console.log('formatSodiumBicarbonateDose match:', mmolMatch);
   if (mmolMatch) {
     const mmol = parseFloat(mmolMatch[1]);
-    const mls = Math.round(mmol * 10) / 10; // 1mMol = 1mL, rounded to 1 decimal
-    const result = `(${mmol}mMol/${mls}ml)`;
-    console.log('formatSodiumBicarbonateDose output:', result);
-    return result;
+    return `${mmol}mMol`;
   }
-  console.log('formatSodiumBicarbonateDose no match, returning:', doseStr);
   return doseStr;
 };
 
 const formatCalciumDose = (doseStr: string, weight: number | null): string => {
-  // Calcium chloride 10% = 100mg/mL
-  // 10mg/kg, max 1g (10mL)
   if (!weight) return doseStr;
-  if (weight >= 100) {
-    return `10mg/kg — 1g max (10mL of 10%)`;
-  }
-  const calculatedMg = 10 * weight; // 10mg/kg
-  const mg = Math.min(Math.round(calculatedMg * 10) / 10, 1000);
-  const mL = Math.round(mg / 100 * 10) / 10; // 100mg/mL
-  return `10mg/kg (${mg}mg / ${mL}mL of 10%)`;
+  const calculatedMg = Math.min(10 * (typeof weight === 'number' ? weight : parseFloat(String(weight))), 1000);
+  return calculatedMg >= 1000 ? `1g` : `${calculatedMg}mg`;
 };
 
 export default function App() {
@@ -568,7 +547,7 @@ export default function App() {
           let nextPaused = prev.rhythmCheckPaused;
           
           // Only update rhythm check if not paused
-          if (!prev.rhythmCheckPaused) {
+          if (!prev.rhythmCheckPaused && timingMode !== 'log') {
             const countdown = prev.rhythmCheckTarget - newElapsed;
 
             // Auto-close overlay ONCE at 10s (not in tutorial)
@@ -939,9 +918,13 @@ export default function App() {
     Object.keys(summary).forEach(med => {
       const { totalDose, unit, count } = summary[med];
       if (totalDose > 0 && unit) {
-        // Round to 2 decimal places and remove trailing zeros
         const roundedDose = parseFloat(totalDose.toFixed(2));
-        summary[med].display = `${roundedDose}${unit} (${count})`;
+        if (med === 'Glucose 10%' && unit === 'mL') {
+          const grams = Math.round(roundedDose * 0.1 * 10) / 10;
+          summary[med].display = `${roundedDose}mL/${grams}g (${count})`;
+        } else {
+          summary[med].display = `${roundedDose}${unit} (${count})`;
+        }
       } else {
         summary[med].display = `${count}`;
       }
@@ -966,7 +949,6 @@ export default function App() {
 
   // --- Catchup Handlers ---
   const handleCatchupStart = (overrideWeight?: string) => {
-    console.log('handleCatchupStart called', { overrideWeight, weightInput });
     
     // Clear localStorage for a completely fresh start
     localStorage.clear();
@@ -994,8 +976,6 @@ export default function App() {
         }
       }
     }
-    
-    console.log('Parsed weight:', parsedWeight);
     
     // Adjust times based on elapsed time since they were entered
     if (elapsedTimestamp) {
@@ -1083,7 +1063,6 @@ export default function App() {
       patientWeight: parsedWeight || (tutorialMode ? 70 : null),
       patientType: weightType || (tutorialMode ? 'adult' : null)
     });
-    console.log('State set with weight:', parsedWeight, 'and type:', weightType);
     
     // Reset all UI states for clean new case
     setShowCatchup(false);
@@ -2758,8 +2737,38 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
 
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
-    const doseMatch = name.match(/^(.+?)\s+([\d.]+(?:mg\/kg|mMol\/kg|mL\/kg|mcg|mg|mL|mMol|g|kg|%|\/\d+mL))$/);
-    if (doseMatch) return { med: doseMatch[1], dose: doseMatch[2] };
+    // Oxygen: split route onto second line
+    if (name.startsWith('Oxygen ')) {
+      return { med: 'Oxygen', dose: name.slice(7) };
+    }
+    // Sodium bicarbonate: abbreviate in Tx log
+    if (name.startsWith('Sodium bicarbonate')) {
+      const rest = name.slice('Sodium bicarbonate'.length).trim();
+      return { med: 'Sodium bic.', dose: rest || null };
+    }
+    // Shock/Disarm: split on ' - '
+    if (name.startsWith('Shock - ')) {
+      return { med: 'Shock', dose: name.slice(8) };
+    }
+    if (name.startsWith('Disarm - ')) {
+      return { med: 'Disarm', dose: name.slice(9) };
+    }
+    // Match known medication names first, then treat remainder as dose
+    const knownMeds = [
+      'Adrenaline infusion', 'Adrenaline push', 'Amiodarone', 'Atropine',
+      'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine infusion', 'Ketamine push',
+      'Lignocaine', 'Magnesium', 'Midazolam', 'Morphine', 'Normal saline',
+      'Suxamethonium', 'Morph/midaz infusion'
+    ];
+    for (const med of knownMeds) {
+      if (name.startsWith(med + ' ')) {
+        let dose = name.slice(med.length).trim();
+        // For weight-based doses "0.01mg/kg (0.13mg)", show only the calculated value
+        const calcMatch = dose.match(/\(([\d.]+(?:mg|mL|mMol|mcg|g))\)/i);
+        if (calcMatch) dose = calcMatch[1];
+        return { med, dose: dose || null };
+      }
+    }
     return { med: name, dose: null };
   };
 
@@ -2775,7 +2784,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
       <div className={`grid ${gridCols} gap-1 bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
-        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left">Treatment</div>
+        <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>}
@@ -2795,18 +2804,24 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const { med, dose } = splitTreatmentName(tx.name);
 
             return (
-              <div
-                key={i}
-                className={`grid ${gridCols} px-4 py-4 items-center gap-1 ${onDelete ? 'cursor-pointer active:bg-neutral-50' : ''}`}
-                onClick={() => onDelete && setPendingDelete(realIndex)}
-              >
-                <div className="pr-1">
-                  <div className={`text-[15px] font-bold ${
-                    tx.name.toLowerCase().includes('shock') ? 'text-red-600' :
-                    tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' :
-                    'text-neutral-900'
-                  }`}>{med}</div>
-                  {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
+              <div key={i} className={`grid ${gridCols} px-4 py-4 items-center gap-1`}>
+                <div className="pr-1 flex items-center gap-3">
+                  {onDelete && (
+                    <button
+                      onClick={() => setPendingDelete(realIndex)}
+                      className="-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-red-100 text-neutral-400 hover:text-red-500 transition-colors"
+                    >
+                      <X size={8} />
+                    </button>
+                  )}
+                  <div>
+                    <div className={`text-[15px] font-bold ${
+                      tx.name.toLowerCase().includes('shock') ? 'text-red-600' :
+                      tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' :
+                      'text-neutral-900'
+                    }`}>{med}</div>
+                    {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
+                  </div>
                 </div>
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
@@ -2959,22 +2974,17 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
   
   const handleDoseSelect = (dose: string) => {
     if (selectedMed) {
-      console.log('handleDoseSelect - selectedMed:', selectedMed);
-      console.log('handleDoseSelect - dose:', dose);
+
       const displayDose = calculateDose(dose, state.patientWeight);
-      console.log('handleDoseSelect - displayDose:', displayDose);
       let cleanDose = cleanDoseForLog(displayDose);
-      console.log('handleDoseSelect - cleanDose:', cleanDose);
       
       // For Glucose 10%, add gram calculation
       if (selectedMed === 'Glucose 10%') {
-        console.log('handleDoseSelect - formatting Glucose 10%');
         cleanDose = formatGlucose10Dose(cleanDose);
       }
       
       // For Sodium Bicarbonate, add mls calculation
-      if (selectedMed === 'Sodium Bicarbonate') {
-        console.log('handleDoseSelect - formatting Sodium Bicarbonate');
+      if (selectedMed === 'Sodium bicarbonate') {
         cleanDose = formatSodiumBicarbonateDose(cleanDose);
       }
       
@@ -2999,10 +3009,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
           }
         }
       }
-      
-      console.log('handleDoseSelect - final cleanDose:', cleanDose);
       const finalTreatment = `${selectedMed} ${cleanDose}`;
-      console.log('handleDoseSelect - adding treatment:', finalTreatment);
       addTreatment(finalTreatment);
       setSelectedMed(null);
       setCustomDose('');
@@ -3039,7 +3046,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       }
       
       // For Sodium Bicarbonate, add mls calculation
-      if (selectedMed === 'Sodium Bicarbonate') {
+      if (selectedMed === 'Sodium bicarbonate') {
         doseWithUnit = formatSodiumBicarbonateDose(doseWithUnit);
       }
       
@@ -3091,34 +3098,62 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
       }
     };
     
-    // Display dose on button — applies max caps and special formatting
+    // Display dose on button — calculated dose first, formula in brackets
     const getButtonDisplayDose = (doseOpt: { dose: string; indication?: string }) => {
-      const base = calculateDose(doseOpt.dose, state.patientWeight);
       const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
-      // Calcium: show mg and mL with 1g max cap
-      if (selectedMed === 'Calcium' && doseOpt.dose.includes('/kg')) {
-        return formatCalciumDose(base, weight);
+      
+      // Glucose 10%: show mL/dose with formula
+      if (selectedMed === 'Glucose 10%' && doseOpt.dose.includes('/kg')) {
+        const base = calculateDose(doseOpt.dose, state.patientWeight);
+        const mlMatch = base.match(/\(([\d.]+)mL\)/i);
+        if (mlMatch) {
+          const mls = parseFloat(mlMatch[1]);
+          const grams = Math.round(mls * 0.1 * 10) / 10;
+          return `${mls}mL/${grams}g (${doseOpt.dose})`;
+        }
+        return base;
       }
+      
+      // Calcium: show calculated dose first, formula after
+      if (selectedMed === 'Calcium' && doseOpt.dose.includes('/kg')) {
+        const calculatedMg = Math.min(10 * weight, 1000);
+        const doseDisplay = calculatedMg >= 1000 ? `1g` : `${calculatedMg}mg`;
+        return `${doseDisplay} (10mg/kg)`;
+      }
+      
       // Amiodarone paed: cap display at 300mg for arrest, 150mg for VT with output
       if (selectedMed === 'Amiodarone' && doseOpt.dose.includes('/kg') && state.patientType === 'paed') {
+        const base = calculateDose(doseOpt.dose, state.patientWeight);
         const mgMatch = base.match(/\(([\d.]+)mg\)/);
         if (mgMatch) {
           const calculated = parseFloat(mgMatch[1]);
           if (doseOpt.indication?.includes('cardiac arrest') && !doseOpt.indication?.includes('repeat')) {
             const capped = Math.min(calculated, 300);
-            return `5mg/kg (${capped}mg${calculated > 300 ? ' — 300mg max' : ''})`;
+            return `${capped}mg (5mg/kg${calculated > 300 ? ' - 300mg max' : ''})`;
           }
           if (doseOpt.indication?.includes('repeat')) {
             const capped = Math.min(calculated, 150);
-            return `2.5mg/kg (${capped}mg${calculated > 150 ? ' — 150mg max' : ''})`;
+            return `${capped}mg (2.5mg/kg${calculated > 150 ? ' - 150mg max' : ''})`;
           }
           if (doseOpt.indication?.includes('VT with output')) {
             const capped = Math.min(calculated, 150);
-            return `5mg/kg (${capped}mg${calculated > 150 ? ' — 150mg max' : ''})`;
+            return `${capped}mg (5mg/kg${calculated > 150 ? ' - 150mg max' : ''})`;
           }
         }
       }
-      return base;
+      
+      // Weight-based: reorder to "Xcalculated (formula)"
+      if (doseOpt.dose.includes('/kg')) {
+        const base = calculateDose(doseOpt.dose, state.patientWeight);
+        const calcMatch = base.match(/\(([\d.]+)(mg|mL|mMol|mcg|g)\)/i);
+        if (calcMatch) {
+          return `${calcMatch[1]}${calcMatch[2]} (${doseOpt.dose})`;
+        }
+        return base;
+      }
+      
+      // Fixed dose: just return as-is
+      return doseOpt.dose;
     };
 
     return (
@@ -3230,7 +3265,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced }: { addTreatme
                   return `/ ${grams}g`;
                 }
                 
-                if (selectedMed === 'Sodium Bicarbonate') {
+                if (selectedMed === 'Sodium bicarbonate') {
                   const mls = Math.round(value * 10) / 10;
                   return `/ ${mls}ml`;
                 }
