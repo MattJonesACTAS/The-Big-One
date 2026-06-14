@@ -306,7 +306,7 @@ export default function App() {
   });
   const [catchupStep, setCatchupStep] = useState(1);
   const [catchupTxMode, setCatchupTxMode] = useState(false);
-  const [catchupElapsed, setCatchupElapsed] = useState({ mins: 0, secs: 0 });
+  const [catchupElapsed, setCatchupElapsed] = useState({ hrs: 0, mins: 0, secs: 0 });
   const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
   const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
   const [paedWeightMethod, setPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
@@ -971,7 +971,7 @@ export default function App() {
     localStorage.clear();
     sessionStorage.clear();
     
-    let adjustedElapsed = catchupElapsed.mins * 60 + catchupElapsed.secs;
+    let adjustedElapsed = catchupElapsed.hrs * 3600 + catchupElapsed.mins * 60 + catchupElapsed.secs;
     let adjustedRhythm = catchupRhythm.mins * 60 + catchupRhythm.secs;
     
     // If rhythm check is too short (<= 6 seconds), start with full 2:00 instead
@@ -2008,7 +2008,7 @@ export default function App() {
                 <div className="text-center space-y-6">
                   <h2 className="text-xl font-bold text-neutral-900 px-4">Enter elapsed time</h2>
                   <p className="text-neutral-600 text-sm px-4">This is the time at the top right corner of the monitor</p>
-                  <TimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
+                  <ElapsedTimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   
                   <div className="grid grid-cols-2 gap-3">
                     <button 
@@ -2252,7 +2252,7 @@ export default function App() {
                     <button disabled={showInteractiveTutorial} onClick={() => setCatchupStep(3)} className={`bg-neutral-100 py-4 rounded-xl font-bold transition-colors ${showInteractiveTutorial ? 'text-neutral-300 cursor-default' : 'text-neutral-700 hover:bg-neutral-200'}`}>Back</button>
                     <button
                       onClick={() => {
-                        if (timingMode === 'cpr') setCatchupStep(5);
+                        if (timingMode === 'cpr') { setCatchupRhythm({ mins: 0, secs: 0 }); setCatchupStep(5); }
                         else if (timingMode === 'elapsed') setCatchupStep(7);
                         else if (timingMode === 'log') handleCatchupStart();
                       }}
@@ -2591,6 +2591,47 @@ export default function App() {
 }
 
 // --- Sub-components ---
+
+function ElapsedTimePicker({ value, onChange }: { value: { hrs: number, mins: number, secs: number }, onChange: (v: { hrs: number, mins: number, secs: number }) => void }) {
+  const adjust = (type: 'hrs' | 'mins' | 'secs', delta: number) => {
+    const totalSecs = value.hrs * 3600 + value.mins * 60 + value.secs + (
+      type === 'hrs' ? delta * 3600 : type === 'mins' ? delta * 60 : delta
+    );
+    if (totalSecs < 0) return;
+    onChange({
+      hrs: Math.floor(totalSecs / 3600),
+      mins: Math.floor((totalSecs % 3600) / 60),
+      secs: totalSecs % 60,
+    });
+  };
+
+  const col = (label: string, val: number, type: 'hrs' | 'mins' | 'secs', bigStep?: number) => (
+    <div className="flex flex-col items-center">
+      <div className="flex gap-1">
+        {bigStep && <button onClick={() => adjust(type, bigStep)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▲</button>}
+        <button onClick={() => adjust(type, 1)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▲</button>
+      </div>
+      <div className="text-5xl font-bold text-neutral-900 tabular-nums my-2">{val.toString().padStart(2, '0')}</div>
+      <div className="flex gap-1">
+        {bigStep && <button onClick={() => adjust(type, -bigStep)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▼</button>}
+        <button onClick={() => adjust(type, -1)} className="p-2 bg-neutral-100 rounded-lg text-lg font-bold text-neutral-400 hover:text-neutral-900">▼</button>
+      </div>
+      <span className="text-neutral-400 font-bold uppercase text-xs mt-2">{label}</span>
+    </div>
+  );
+
+  const sep = <div className="text-5xl font-bold text-neutral-400 mb-8">:</div>;
+
+  return (
+    <div className="flex items-center justify-center gap-3">
+      {col('hr', value.hrs, 'hrs')}
+      {sep}
+      {col('min', value.mins, 'mins')}
+      {sep}
+      {col('sec', value.secs, 'secs', 10)}
+    </div>
+  );
+}
 
 function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, secs: number }, onChange: (v: { mins: number, secs: number }) => void, maxSeconds?: number }) {
   const adjust = (type: 'mins' | 'secs', delta: number) => {
