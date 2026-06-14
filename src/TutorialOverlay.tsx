@@ -40,6 +40,10 @@ const ALL_NODES: GlobalNode[] = [
       {
         title: 'Elapsed Time Option',
         description: "If you had selected to use the monitor's elapsed time to keep track of rhythm checks, the elapsed time would appear here instead."
+      },
+      {
+        title: 'Tx Log Only Option',
+        description: "If you had selected the 'Tx log only' option, then the app will only help you keep a log of interventions you apply during the case.\n\nIt will not assist you to keep track of rhythm checks."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
