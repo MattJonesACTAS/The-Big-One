@@ -130,7 +130,7 @@ function StaticTimingMethodScreen({ cprFading = false }: { cprFading?: boolean }
                 <div className="px-3 py-2"><span className="text-[11px] text-neutral-400 italic">No entries yet</span></div>
               </div>
             </div>
-            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">No timer — record keeping only</div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700"><div>No timer</div><div className="font-medium">(record keeping only)</div></div>
           </div>
           {/* CPR timer */}
           <div className="w-full rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white" style={cprFading ? { animation: 'cprCardFade 2s ease-in-out infinite' } : {}}>
@@ -146,7 +146,7 @@ function StaticTimingMethodScreen({ cprFading = false }: { cprFading?: boolean }
                 </div>
               </div>
             </div>
-            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">Inbuilt monitor CPR timer</div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">Monitor's inbuilt CPR timer</div>
           </div>
           {/* Elapsed time */}
           <div className="w-full rounded-2xl overflow-hidden border-2 border-neutral-200 bg-white">
@@ -162,7 +162,7 @@ function StaticTimingMethodScreen({ cprFading = false }: { cprFading?: boolean }
                 </div>
               </div>
             </div>
-            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700">Elapsed time — odds/evens</div>
+            <div className="py-2.5 text-sm font-bold text-center border-t border-neutral-200 bg-white text-neutral-700"><div>Monitor's elapsed case time</div><div className="font-medium">(odds/evens method)</div></div>
           </div>
         </div>
       </div>
@@ -822,7 +822,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
               currentScreen === 'intro1'
                 ? "The Big One is a cognitive aid for use during cardiac arrests.\n\nIt is designed to assist you to keep track of:\n\n• Rhythm check intervals\n\n• Medication re-dosing intervals\n\n• The times events occurred, making case sheets easy and accurate\n\nBy offloading this cognitive load, you can focus on situational awareness and team leadership."
                 : currentScreen === 'intro2'
-                ? "In this tutorial you'll see blue numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
+                ? "In this tutorial you'll see red numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
                 : currentScreen === 'intro3'
                 ? "On opening The Big One, you'll need to set up the case by choosing/entering:\n\n• Adult or paediatric patient\n\n• Estimated patient weight\n\n• The interventions that have already been performed"
                 : "After setting up the case, you'll need to choose one of three options for how you want to keep track of rhythm checks.\n\nLet's look at those options."
@@ -873,44 +873,26 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
               position: 'absolute',
               left: `${element.x}%`,
               top: `${element.y}%`,
-              width: '43px',
-              height: '43px',
               transform: 'translate(-50%, -50%)',
+              width: '50px',
+              height: '50px',
               cursor: 'pointer',
               zIndex: 10,
               pointerEvents: 'auto',
             }}
           >
             <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '100%',
-              height: '100%',
-              transform: 'translate(-50%, -50%)',
+              width: '50px',
+              height: '50px',
               borderRadius: '50%',
-              border: '2px solid #10b981',
-              animation: 'ripple 2s infinite',
-              opacity: 0.6,
-            }} />
-            
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              width: '26px',
-              height: '26px',
-              transform: 'translate(-50%, -50%)',
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              border: '3px solid #10b981',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+              backgroundColor: '#ef4444',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '15px',
+              fontSize: '20px',
               fontWeight: '700',
-              color: '#10b981',
+              color: 'white',
+              animation: 'nodeBreath 2s ease-in-out infinite',
             }}>
               {element.number}
             </div>
@@ -919,15 +901,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       })}
 
       <style>{`
-        @keyframes ripple {
-          0% {
-            transform: translate(-50%, -50%) scale(1);
-            opacity: 0.6;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(1.8);
-            opacity: 0;
-          }
+        @keyframes nodeBreath {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
         }
         @keyframes buttonPulse {
           0%, 100% {

@@ -31,11 +31,11 @@ const ALL_NODES: GlobalNode[] = [
     pages: [
       {
         title: 'Rhythm Check Timer',
-        description: "The countdown to the next rhythm check.\n\nDuring configuration, you will be prompted to copy this time from the monitor and enter it into the app.\n\nYou'll find this time counting down from 2:00 in its own central banner on the monitor screen."
+        description: "The countdown to the next rhythm check.\n\nIf during configuration you choose 'CPR Timer' as your method of rhythm check time keeping, you will be prompted to copy the actual live CPR timer on the monitor into the app (you just did this earlier).\n\nThe CPR timer is then shown here for your reference."
       },
       {
         title: 'Timer Behaviour',
-        description: "When the timer reaches 00:10 you will be forced back to the home screen so that you don't miss the rhythm check.\n\nWhen the timer reaches 0:00, it allows 6 seconds for the rhythm check, then restarts from 2:00.\n\nYou will then be forced to record whether you shocked or disarmed."
+        description: "When the timer reaches 00:10 you will be forced back to the home screen so that you don't miss the rhythm check.\n\nWhen the timer reaches 0:00, it allows six seconds for the rhythm check, then restarts from 2:00.\n\nYou will then be forced to record whether you shocked or disarmed."
       },
       {
         title: 'Elapsed Time Option',
@@ -51,7 +51,7 @@ const ALL_NODES: GlobalNode[] = [
   },
   {
     id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2, displayNumber: 7,
-    pages: [{ title: 'Recalibrate Button', description: 'The app estimates a rhythm check of 6 seconds.\n\nRecalibrate the timer if your last rhythm check was longer.' }],
+    pages: [{ title: 'Recalibrate Button', description: 'The app estimates a rhythm check of six seconds.\n\nRecalibrate the timer if your last rhythm check was longer.\n\nYou can also use this button to change the estimated patient weight.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
@@ -108,7 +108,7 @@ const ALL_NODES: GlobalNode[] = [
       },
       {
         title: 'Treatment Log',
-        description: 'At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the \'x\' button to the left of each entry in the Tx log.'
+        description: "At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the 'x' button to the left of each entry in the Tx log."
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
@@ -233,22 +233,29 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
 
       {/* Positioned node circle */}
       {currentNode?.type === 'positioned' && conditionMet && !activePositioned && !tutorialDone && (
-        <button
+        <div
           onClick={handleNodeClick}
           style={{
             position: 'absolute',
             left: `${currentNode.x}%`, top: `${currentNode.y}%`,
             transform: 'translate(-50%, -50%)',
-            width: '50px', height: '50px', borderRadius: '50%',
-            backgroundColor: '#3b82f6', color: 'white',
-            fontSize: '20px', fontWeight: '700', border: 'none',
+            width: '50px', height: '50px',
             cursor: 'pointer', zIndex: 10001, pointerEvents: 'auto',
-            animation: 'tutorialPulse 2s infinite',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}
         >
-          {currentNode.displayNumber}
-        </button>
+          <div style={{
+            width: '50px', height: '50px',
+            borderRadius: '50%',
+            backgroundColor: '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '20px', fontWeight: '700', color: 'white',
+            animation: 'nodeBreath 2s ease-in-out infinite',
+          }}>
+            {currentNode.displayNumber}
+          </div>
+        </div>
       )}
 
       {/* Popup modal */}
@@ -297,9 +304,9 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
       )}
 
       <style>{`
-        @keyframes tutorialPulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-          50% { transform: translate(-50%, -50%) scale(1.1); box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+        @keyframes nodeBreath {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.15); }
         }
         @keyframes slideInPage {
           from { transform: translateX(40px); opacity: 0; }
