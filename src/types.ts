@@ -30,6 +30,7 @@ export interface AppState {
   patientWeight: number | null;
   patientType: 'adult' | 'paed' | null;
   patientAge: string | null;
+  infusionDoses: Record<string, string>;
   reversiblesChecked: string[];
   roscChecked: string[];
   pheaChecked: string[];

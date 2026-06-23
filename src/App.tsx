@@ -49,6 +49,7 @@ const INITIAL_STATE: AppState = {
   patientWeight: null,
   patientType: null,
   patientAge: null,
+  infusionDoses: {} as Record<string, string>,
   reversiblesChecked: [],
   roscChecked: [],
   pheaChecked: [],
@@ -58,14 +59,17 @@ const INITIAL_STATE: AppState = {
 
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
-  'Atropine', 'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine push', 'Ketamine infusion', 'Lignocaine',
-  'Magnesium', 'Midazolam', 'Morphine', 'Normal saline', 'Oxygen', 'Sodium bicarbonate', 'Suxamethonium'
+  'Atropine', 'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine push', 'Ketamine infusion', 'Levetiracetam (Kepra)', 'Lignocaine',
+  'Magnesium', 'Midazolam push', 'Morph/midaz infusion', 'Normal saline', 'Oxygen', 'Sodium bicarbonate', 'Suxamethonium'
 ];
 
 type DoseOption = {
   dose: string;
   population: 'adult' | 'paed' | 'both';
   indication?: string;
+  calculated?: boolean;
+  minWeight?: number;
+  maxWeight?: number;
 };
 
 
@@ -79,10 +83,9 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Adrenaline infusion': { 
     doses: [
+      { dose: '3mg/50mL', population: 'both', indication: 'Infusion pump — adult or large paed (≥21kg)', minWeight: 21 },
+      { dose: '300mcg/50mL', population: 'paed', indication: 'Infusion pump — small paed (≤20kg)', maxWeight: 20 },
       { dose: '1mg/500mL', population: 'both', indication: 'Gravity fed — adult & paed' },
-      { dose: '3mg/50mL', population: 'both', indication: 'Infusion pump — adult or large paed (≥21kg)' },
-      { dose: '300mcg/50mL', population: 'paed', indication: 'Infusion pump — small paed (≤20kg)' },
-      { dose: 'Other', population: 'both' }
     ] 
   },
   'Amiodarone': { 
@@ -131,7 +134,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Ketamine infusion': {
     doses: [
-      { dose: 'mg/h', population: 'both', indication: 'Post intubation analgosedation' }
+      { dose: '400mg/40mL', population: 'adult', indication: 'Post-intubation analgosedation' },
     ]
   },
   'Lignocaine': { 
@@ -147,17 +150,15 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
       { dose: 'Other', population: 'both' }
     ] 
   },
-  'Midazolam': { 
+  'Midazolam push': { 
     doses: [
-      { dose: '0.05mg/kg', population: 'both', indication: 'Post intubation sedation with ketamine' },
-      { dose: 'mg/h', population: 'adult', indication: 'Post intubation sedation morph/midaz infusion' },
-      { dose: 'mg', population: 'adult', indication: 'Post intubation sedation with morphine - push dose' }
+      { dose: '0.05mg/kg', population: 'both', indication: 'Post-intubation sedation (adjunct to ketamine)', calculated: true },
+      { dose: 'Other', population: 'both' }
     ] 
   },
   'Morphine': {
     doses: [
-      { dose: 'mg/h', population: 'adult', indication: 'Post intubation sedation morph/midaz infusion' },
-      { dose: 'mg', population: 'adult', indication: 'Post intubation sedation with midazolam - push dose' }
+      { dose: 'Other', population: 'both' }
     ]
   },
   'Normal saline': { 
@@ -186,8 +187,21 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
       { dose: 'NRB', population: 'both' },
       { dose: 'BVM', population: 'both' }
     ]
+  },
+  'Morph/midaz infusion': {
+    doses: [
+      { dose: '30mg/30mL', population: 'adult', indication: 'Post-intubation analgosedation' },
+    ]
+  },
+  'Levetiracetam (Kepra)': {
+    doses: [
+      { dose: '40mg/kg', population: 'both', indication: 'Seizure', calculated: true },
+      { dose: 'Other', population: 'both' }
+    ]
   }
 };
+
+const INFUSION_DRUGS = ['Adrenaline infusion', 'Ketamine infusion', 'Morph/midaz infusion'];
 
 // --- Utilities ---
 const formatTime = (seconds: number) => {
@@ -1183,7 +1197,7 @@ export default function App() {
           );
         })()}
 
-        <PharmaSummarySection pharmaSummary={pharmaSummary} />
+        <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} timingMode={timingMode} />
@@ -1378,7 +1392,7 @@ export default function App() {
                   </div>
                 );
               })()}
-              <PharmaSummarySection pharmaSummary={pharmaSummary} />
+              <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
                 <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))} />
@@ -1398,6 +1412,7 @@ export default function App() {
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                   timingMode={timingMode}
                   onDeleteTreatment={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))}
+                  onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
                 />
               )}
             </AnimatePresence>
@@ -1563,6 +1578,7 @@ export default function App() {
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                 timingMode={timingMode}
                 onDeleteTreatment={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))}
+                  onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
               />
             )}
           </AnimatePresence>
@@ -2701,7 +2717,7 @@ function CounterItem({ label, value, onChange }: { label: string, value: number,
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onUpdateInfusionDose }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -2712,7 +2728,8 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void,
   onVitalsChange: (v: AppState['vitals']) => void,
   timingMode?: string | null,
-  onDeleteTreatment?: (idx: number) => void
+  onDeleteTreatment?: (idx: number) => void,
+  onUpdateInfusionDose?: (drug: string, dose: string) => void
 }) {
   const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
   
@@ -2729,7 +2746,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
@@ -2974,7 +2991,8 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
     const knownMeds = [
       'Adrenaline infusion', 'Adrenaline push', 'Amiodarone', 'Atropine',
       'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine infusion', 'Ketamine push',
-      'Lignocaine', 'Magnesium', 'Midazolam', 'Morphine', 'Normal saline',
+      'Levetiracetam (Kepra)', 'Lignocaine',
+      'Levetiracetam (Kepra)', 'Lignocaine', 'Magnesium', 'Midazolam push', 'Morph/midaz infusion', 'Normal saline',
       'Suxamethonium', 'Morph/midaz infusion'
     ];
     for (const med of knownMeds) {
@@ -3139,24 +3157,57 @@ function ArrestSummarySection({ state }: { state: AppState }) {
   );
 }
 
-function PharmaSummarySection({ pharmaSummary }: { pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
+function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, onUpdateInfusionDose }: { 
+  pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
+  infusionDoses?: Record<string, string>,
+  activeInfusions?: string[],
+  onUpdateInfusionDose?: (drug: string, dose: string) => void
+}) {
+  const nonInfusionEntries = Object.entries(pharmaSummary).filter(([name]) => !INFUSION_DRUGS.includes(name));
+  const hasContent = nonInfusionEntries.length > 0 || (activeInfusions && activeInfusions.length > 0);
+
   return (
     <div>
       <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">PHARMA SUMMARY</div>
       <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
-        {Object.keys(pharmaSummary).length === 0 ? (
+        {!hasContent ? (
           <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
         ) : (
-          Object.entries(pharmaSummary).map(([name, info]) => (
-            <StatRow key={name} label={name} value={info.display} />
-          ))
+          <>
+            {nonInfusionEntries.map(([name, info]) => (
+              <StatRow key={name} label={name} value={info.display} />
+            ))}
+            {activeInfusions && activeInfusions.map(drug => (
+              <div key={drug} className="flex items-center justify-between p-2 px-3">
+                <span className="text-neutral-500 text-[16px] font-medium">{drug}</span>
+                {onUpdateInfusionDose ? (
+                  <div className="flex items-center bg-neutral-50 border border-neutral-200 rounded-lg overflow-hidden focus-within:border-emerald-400">
+                    <input
+                      type="text"
+                      value={infusionDoses?.[drug] ?? ''}
+                      onChange={e => onUpdateInfusionDose(drug, e.target.value)}
+                      placeholder="0"
+                      className="w-16 text-right text-[16px] font-black text-neutral-900 bg-transparent px-2 py-1 outline-none"
+                    />
+                    <span className="text-[13px] font-medium text-neutral-400 pr-2 w-8 text-left flex-shrink-0">
+                      {drug === 'Adrenaline infusion' ? 'mcg' : 'mg'}
+                    </span>
+                  </div>
+                ) : (
+                  <span className="text-[16px] font-black text-neutral-900">
+                    {infusionDoses?.[drug] ? `${infusionDoses[drug]}${drug === 'Adrenaline infusion' ? 'mcg' : 'mg'}` : '—'}
+                  </span>
+                )}
+              </div>
+            ))}
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void }) {
+function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
@@ -3186,7 +3237,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete }: { state:
           <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded yet.</div>
         )}
       </div>
-      <PharmaSummarySection pharmaSummary={pharmaSummary} />
+      <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={onDelete} />
@@ -3335,8 +3386,14 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
   if (selectedMed && DOSE_CONFIG[selectedMed]) {
     const allDoses = DOSE_CONFIG[selectedMed].doses;
     const effectivePatientType = patientTypeOverride ?? state.patientType;
+    const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
     const filteredDoses = effectivePatientType 
-      ? allDoses.filter(d => d.population === 'both' || d.population === effectivePatientType)
+      ? allDoses.filter(d => {
+          if (d.population !== 'both' && d.population !== effectivePatientType) return false;
+          if (d.minWeight !== undefined && !isNaN(weight) && weight < d.minWeight) return false;
+          if (d.maxWeight !== undefined && !isNaN(weight) && weight > d.maxWeight) return false;
+          return true;
+        })
       : allDoses;
     
     // Check if a dose is a unit-only custom input (e.g., "mg/h", "mg")
@@ -3407,6 +3464,18 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         }
       }
       
+      // Levetiracetam: 40mg/kg max 3000mg
+      if (selectedMed === 'Levetiracetam (Kepra)' && doseOpt.dose.includes('/kg')) {
+        const base = calculateDose(doseOpt.dose, state.patientWeight);
+        const calcMatch = base.match(/\(([\d.]+)(mg)\)/i);
+        if (calcMatch) {
+          const calculated = parseFloat(calcMatch[1]);
+          const capped = Math.min(calculated, 3000);
+          return `${capped}mg (40mg/kg${calculated > 3000 ? ' - 3000mg max' : ''})`;
+        }
+        return base;
+      }
+
       // Weight-based: reorder to "Xcalculated (formula)"
       if (doseOpt.dose.includes('/kg')) {
         const base = calculateDose(doseOpt.dose, state.patientWeight);
@@ -3502,13 +3571,13 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
                 const unitMatches = doses
                   .filter(d => d !== 'Other')
                   .map(d => {
-                    // Match common patterns: mg/kg, mL, mg, g, etc.
                     const match = d.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
-                    return match ? match[1] : null;
+                    if (!match) return null;
+                    // Strip /kg — custom entry is a flat dose, not weight-based
+                    return match[1].replace('/kg', '');
                   })
                   .filter(Boolean);
                 
-                // Return most common unit or first found
                 if (unitMatches.length > 0) {
                   return unitMatches[0] as string;
                 }
@@ -3516,9 +3585,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
               };
               
               const doses = filteredDoses.map(d => d.dose);
-              // Use customUnit if specified, otherwise extract from dose options
               const unit = DOSE_CONFIG[selectedMed].customUnit || getUnitFromDoses(doses);
-              const placeholder = unit ? `Custom dose (${unit})...` : 'Custom dose...';
+              const placeholder = unit ? `Enter dose...` : 'Enter dose...';
               
               // Calculate secondary unit for live display
               const getSecondaryUnit = () => {
