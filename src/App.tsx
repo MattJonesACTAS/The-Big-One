@@ -73,11 +73,11 @@ type DoseOption = {
 };
 
 
-const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
+const DOSE_CONFIG: Record<string, { doses: DoseOption[], customUnit?: string }> = {
   'Adrenaline push': { 
     doses: [
       { dose: '1mg', population: 'adult', indication: 'Cardiac arrest' },
-      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -91,7 +91,7 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   'Amiodarone': { 
     doses: [
       { dose: '300mg', population: 'adult', indication: 'VF/pVT cardiac arrest' },
-      { dose: '150mg', population: 'adult', indication: 'VT/AF/A.flutter with output' },
+      { dose: '150mg', population: 'adult', indication: 'VT/AF/atrial flutter with output / VF/pVT cardiac arrest (repeat)' },
       { dose: '5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest', calculated: true },
       { dose: '2.5mg/kg', population: 'paed', indication: 'VF/pVT cardiac arrest (repeat)', calculated: true },
       { dose: '5mg/kg', population: 'paed', indication: 'VT with output', calculated: true },
@@ -125,10 +125,10 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Ketamine push': { 
     doses: [
-      { dose: '0.5mg/kg', population: 'both', indication: 'CPR induced consciousness' },
-      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with Suxamethonium / Post intubation analgosedation' },
-      { dose: '1mg/kg', population: 'paed', indication: 'Post intubation analgosedation' },
-      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated' },
+      { dose: '0.5mg/kg', population: 'both', indication: 'CPR induced consciousness', calculated: true },
+      { dose: '1mg/kg', population: 'adult', indication: 'Intubation induction with suxamethonium / Post-intubation analgosedation', calculated: true },
+      { dose: '1mg/kg', population: 'paed', indication: 'Post-intubation analgosedation', calculated: true },
+      { dose: '2mg/kg', population: 'adult', indication: 'Intubation when suxamethonium is contraindicated', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -139,14 +139,16 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[] }> = {
   },
   'Lignocaine': { 
     doses: [
-      { dose: '1mg/kg', population: 'both', indication: 'VT with output' },
+      { dose: '1mg/kg', population: 'both', indication: 'VT with output', calculated: true },
+      { dose: '40mg (via IO)', population: 'adult', indication: 'Conscious IO' },
+      { dose: '0.5mg/kg (via IO)', population: 'paed', indication: 'Conscious IO', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
   'Magnesium': { 
     doses: [
-      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT' },
-      { dose: '50mg/kg', population: 'paed', indication: 'pVT secondary to prolonged QT' },
+      { dose: '2.5g', population: 'adult', indication: 'pVT secondary to prolonged QT / Torsades de pointes / Pre-eclampsia / Seizures due to eclampsia' },
+      { dose: '50mg/kg', population: 'paed', indication: 'With cardiac output / Without cardiac output', calculated: true },
       { dose: 'Other', population: 'both' }
     ] 
   },
@@ -3464,6 +3466,18 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         }
       }
       
+      // Suxamethonium: 1.5mg/kg max 150mg
+      if (selectedMed === 'Suxamethonium' && doseOpt.dose.includes('/kg')) {
+        const base = calculateDose(doseOpt.dose, state.patientWeight);
+        const calcMatch = base.match(/\(([\d.]+)(mg)\)/i);
+        if (calcMatch) {
+          const calculated = parseFloat(calcMatch[1]);
+          const capped = Math.min(calculated, 150);
+          return `${capped}mg (1.5mg/kg${calculated > 150 ? ' — 150mg max' : ''})`;
+        }
+        return base;
+      }
+
       // Levetiracetam: 40mg/kg max 3000mg
       if (selectedMed === 'Levetiracetam (Kepra)' && doseOpt.dose.includes('/kg')) {
         const base = calculateDose(doseOpt.dose, state.patientWeight);
