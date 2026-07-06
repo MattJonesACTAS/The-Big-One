@@ -579,9 +579,9 @@ export default function App() {
               hasAutoClosedAt10.current = true;
             }
 
-            // Beep logic: in elapsed mode beep at 5s to 0s; in CPR mode beep at 10s to 5s
-            const beepStart = timingMode === 'elapsed' ? 5 : 10;
-            const beepEnd = timingMode === 'elapsed' ? 0 : 5;
+            // Beep logic: beep each second from 10s to 5s in both modes
+            const beepStart = 10;
+            const beepEnd = 5;
             if (countdown <= beepStart && countdown > beepEnd && lastBeepSecond.current !== newElapsed) {
               playBeep();
               lastBeepSecond.current = newElapsed;
