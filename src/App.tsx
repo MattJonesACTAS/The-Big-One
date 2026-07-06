@@ -1557,7 +1557,9 @@ export default function App() {
                 <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 ${timingMode === 'elapsed' ? 'translate-y-0.5' : ''} ${
                   timingMode === 'elapsed' ? 'text-[11px] sm:text-[14px]' : 'text-[14px] sm:text-[18px]'
                 } ${
-                  state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' : 'text-neutral-400'
+                  state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' :
+                  (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 && !state.rhythmCheckPaused ? 'text-red-600' :
+                  'text-neutral-400'
                 }`}>
                   {timingMode === 'elapsed' ? 'Elapsed Time' : 'Rhythm Check'}
                 </div>
