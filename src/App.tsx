@@ -717,7 +717,8 @@ export default function App() {
       const isRearrest = name === 'Rearrest';
       const wasRhythmCheckPaused = prev.rhythmCheckPaused;
       // Increment round if shock/disarm logged out of turn (before timer hit 0)
-      const isOutOfTurn = isShockOrDisarm && !isROSC && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
+      // Do NOT increment if responding to a forced rhythm check overlay (already incremented by timer)
+      const isOutOfTurn = isShockOrDisarm && !isROSC && !isShockForced && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
       
       // Auto-add OPA before BVM
       const newTreatments = [...prev.treatments];
