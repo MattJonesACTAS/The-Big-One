@@ -22,6 +22,11 @@ interface GlobalNode {
 const ALL_NODES: GlobalNode[] = [
   // --- Home screen nodes ---
   {
+    id: 'homeIntro', type: 'popup',
+    pages: [{ title: 'Home Page', description: "You've now made it to the home page for your case, let's take a look around." }],
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
+  },
+  {
     id: 'cprRound', type: 'positioned', x: 80.2, y: 22, displayNumber: 7,
     pages: [{ title: 'CPR Round', description: "The current round of CPR.\n\nThe CPR round counter will update every time the rhythm check counter reaches 0:00." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
