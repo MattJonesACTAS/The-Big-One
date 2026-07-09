@@ -2168,8 +2168,8 @@ export default function App() {
                     <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} />
                     <CounterItem label="Adrenaline" value={priorCounts.adrenaline} onChange={v => setPriorCounts(p => ({ ...p, adrenaline: v }))} />
                     <CounterItem label="Amiodarone" value={priorCounts.amiodarone} onChange={v => setPriorCounts(p => ({ ...p, amiodarone: Math.min(2, v) }))} />
-                    <div className="grid grid-cols-3 gap-2">
-                      {['BVM', 'LMA', 'IO'].map(tx => (
+                    <div className="grid grid-cols-4 gap-2">
+                      {['BVM', 'LMA', 'IO', 'IV'].map(tx => (
                         <button 
                           key={tx}
                           onClick={() => setPriorTxs(p => p.includes(tx) ? p.filter(t => t !== tx) : [...p, tx])}
