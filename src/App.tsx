@@ -2163,25 +2163,38 @@ export default function App() {
               {!catchupTxMode && catchupStep === 3 && (
                 <div className="text-center space-y-5">
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
-                  <div className="space-y-2 py-3 px-2">
-                    <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} />
-                    <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} />
-                    <CounterItem label="Adrenaline" value={priorCounts.adrenaline} onChange={v => setPriorCounts(p => ({ ...p, adrenaline: v }))} />
-                    <CounterItem label="Amiodarone" value={priorCounts.amiodarone} onChange={v => setPriorCounts(p => ({ ...p, amiodarone: Math.min(2, v) }))} />
-                    <div className="grid grid-cols-4 gap-2">
-                      {['BVM', 'LMA', 'IO', 'IV'].map(tx => (
-                        <button 
-                          key={tx}
-                          onClick={() => setPriorTxs(p => p.includes(tx) ? p.filter(t => t !== tx) : [...p, tx])}
-                          className={`p-3 rounded-xl font-bold text-base ${priorTxs.includes(tx) ? 'bg-amber-100 text-amber-900 ring-2 ring-amber-400' : 'bg-neutral-100 text-neutral-600'}`}
-                        >
-                          {tx}
-                        </button>
-                      ))}
+                  <div className="space-y-3 py-3 px-2">
+                    <div className="bg-red-50 border border-red-200 rounded-2xl p-3.5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-red-900 text-center mb-2.5">Rhythm check</p>
+                      <div className="space-y-2">
+                        <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} activeBorderClass="border-red-700" />
+                        <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} activeBorderClass="border-red-700" />
+                      </div>
+                    </div>
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-emerald-900 text-center mb-2.5">Medications</p>
+                      <div className="space-y-2">
+                        <CounterItem label="Adrenaline" value={priorCounts.adrenaline} onChange={v => setPriorCounts(p => ({ ...p, adrenaline: v }))} activeBorderClass="border-emerald-700" />
+                        <CounterItem label="Amiodarone" value={priorCounts.amiodarone} onChange={v => setPriorCounts(p => ({ ...p, amiodarone: Math.min(2, v) }))} activeBorderClass="border-emerald-700" />
+                      </div>
+                    </div>
+                    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3.5">
+                      <p className="text-xs font-bold uppercase tracking-wide text-blue-900 text-center mb-2.5">Airway and access</p>
+                      <div className="grid grid-cols-4 gap-2">
+                        {['BVM', 'LMA', 'IO', 'IV'].map(tx => (
+                          <button 
+                            key={tx}
+                            onClick={() => setPriorTxs(p => p.includes(tx) ? p.filter(t => t !== tx) : [...p, tx])}
+                            className={`p-3 rounded-xl font-bold text-base bg-white ${priorTxs.includes(tx) ? 'border-2 border-blue-800 text-blue-900' : 'border border-neutral-200 text-neutral-600'}`}
+                          >
+                            {tx}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <button
                       onClick={() => setCatchupTxMode(true)}
-                      className="w-full p-3 rounded-xl font-bold text-base bg-neutral-100 text-neutral-600 flex items-center justify-center gap-2"
+                      className="w-full p-3 rounded-xl font-bold text-base bg-neutral-100 text-neutral-700 flex items-center justify-center gap-2"
                       style={{ marginTop: '20px' }}
                     >
                       <Plus size={16} /> Full Tx list
@@ -2742,9 +2755,9 @@ function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, se
   );
 }
 
-function CounterItem({ label, value, onChange }: { label: string, value: number, onChange: (v: number) => void }) {
+function CounterItem({ label, value, onChange, activeBorderClass }: { label: string, value: number, onChange: (v: number) => void, activeBorderClass?: string }) {
   return (
-    <div className="flex items-center justify-between bg-neutral-50 p-2.5 rounded-2xl border border-neutral-100">
+    <div className={`flex items-center justify-between bg-white p-2.5 rounded-2xl ${value > 0 ? `border-2 ${activeBorderClass || 'border-neutral-400'}` : 'border border-neutral-200'}`}>
       <span className="text-base font-bold text-neutral-800 ml-2">{label}</span>
       <div className="flex items-center gap-4">
         <button onClick={() => onChange(Math.max(0, value - 1))} className="w-9 h-9 bg-white shadow-sm border border-neutral-200 rounded-xl font-bold text-xl flex items-center justify-center">−</button>
