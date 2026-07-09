@@ -2165,7 +2165,7 @@ export default function App() {
                   <h2 className="text-xl font-bold text-neutral-900">What treatments have<br />you already applied?</h2>
                   <div className="space-y-3 py-3 px-2">
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-3.5">
-                      <p className="text-xs font-bold uppercase tracking-wide text-red-900 text-center mb-2.5">Rhythm check</p>
+                      <p className="text-xs font-bold uppercase tracking-wide text-red-900 text-center mb-2.5">Rhythm checks</p>
                       <div className="space-y-2">
                         <CounterItem label="Shock" value={priorCounts.shock} onChange={v => setPriorCounts(p => ({ ...p, shock: v }))} activeBorderClass="border-red-700" />
                         <CounterItem label="Disarm" value={priorCounts.disarm} onChange={v => setPriorCounts(p => ({ ...p, disarm: v }))} activeBorderClass="border-red-700" />
