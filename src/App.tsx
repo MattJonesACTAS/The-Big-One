@@ -2162,7 +2162,7 @@ export default function App() {
 
               {!catchupTxMode && catchupStep === 3 && (
                 <div className="text-center space-y-5">
-                  <h2 className="text-xl font-bold text-neutral-900">What treatments have you already applied?</h2>
+                  <h2 className="text-xl font-bold text-neutral-900">What treatments have<br />you already applied?</h2>
                   <div className="space-y-3 py-3 px-2">
                     <div className="bg-red-50 border border-red-200 rounded-2xl p-3.5">
                       <p className="text-xs font-bold uppercase tracking-wide text-red-900 text-center mb-2.5">Rhythm check</p>
@@ -2198,7 +2198,7 @@ export default function App() {
                     >
                       <Plus size={16} /> Full Tx list
                     </button>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 pt-2">
                       <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                       <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
                     </div>
