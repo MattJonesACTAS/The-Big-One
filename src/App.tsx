@@ -2182,6 +2182,7 @@ export default function App() {
                     <button
                       onClick={() => setCatchupTxMode(true)}
                       className="w-full p-3 rounded-xl font-bold text-base bg-neutral-100 text-neutral-600 flex items-center justify-center gap-2"
+                      style={{ marginTop: '20px' }}
                     >
                       <Plus size={16} /> Full Tx list
                     </button>
