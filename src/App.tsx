@@ -2185,7 +2185,7 @@ export default function App() {
                           <button 
                             key={tx}
                             onClick={() => setPriorTxs(p => p.includes(tx) ? p.filter(t => t !== tx) : [...p, tx])}
-                            className={`p-3 rounded-xl font-bold text-base bg-white ${priorTxs.includes(tx) ? 'border-2 border-blue-800 text-blue-900' : 'border border-neutral-200 text-neutral-600'}`}
+                            className={`p-3 rounded-xl font-bold text-base bg-white border-2 ${priorTxs.includes(tx) ? 'border-blue-800 text-blue-900' : 'border-neutral-200 text-neutral-600'}`}
                           >
                             {tx}
                           </button>
@@ -2756,7 +2756,7 @@ function TimePicker({ value, onChange, maxSeconds }: { value: { mins: number, se
 
 function CounterItem({ label, value, onChange, activeBorderClass }: { label: string, value: number, onChange: (v: number) => void, activeBorderClass?: string }) {
   return (
-    <div className={`flex items-center justify-between bg-white p-2.5 rounded-2xl ${value > 0 ? `border-2 ${activeBorderClass || 'border-neutral-400'}` : 'border border-neutral-200'}`}>
+    <div className={`flex items-center justify-between bg-white p-2.5 rounded-2xl border-2 ${value > 0 ? (activeBorderClass || 'border-neutral-400') : 'border-neutral-200'}`}>
       <span className="text-base font-bold text-neutral-800 ml-2">{label}</span>
       <div className="flex items-center gap-4">
         <button onClick={() => onChange(Math.max(0, value - 1))} className="w-9 h-9 bg-white shadow-sm border border-neutral-200 rounded-xl font-bold text-xl flex items-center justify-center">−</button>
