@@ -685,7 +685,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/2.png?raw=true',
       nextScreen: 'adrenalineDose',
       elements: [
-        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 13, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
+        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 13, title: 'Add Tx Submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
       ],
     },
     adrenalineDose: {
@@ -701,7 +701,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'home2_summary',
       elements: [
-        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 15, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
+        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 15, title: 'Medication Alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
       ],
     },
     home2_summary: {

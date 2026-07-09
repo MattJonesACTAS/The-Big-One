@@ -2058,7 +2058,7 @@ export default function App() {
 
               {catchupStep === 4 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter elapsed time</h2>
+                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter Elapsed Time</h2>
                   <p className="text-neutral-600 text-sm px-4">This is the time at the top right corner of the monitor</p>
                   <ElapsedTimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   
@@ -2092,7 +2092,7 @@ export default function App() {
 
               {!catchupTxMode && catchupStep === 5 && (
                 <div className="text-center space-y-6">
-                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter current CPR timer</h2>
+                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter Current CPR Timer</h2>
                   <p className="text-neutral-600 text-sm px-4">This is the countdown above the diamond on the monitor</p>
                   <TimePicker 
                     value={catchupRhythm} 

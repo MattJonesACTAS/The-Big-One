@@ -91,7 +91,7 @@ const ALL_NODES: GlobalNode[] = [
   // --- Home with medication alerts ---
   {
     id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82, displayNumber: 14,
-    pages: [{ title: 'Medication alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
+    pages: [{ title: 'Medication Alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
   {
