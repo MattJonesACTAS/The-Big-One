@@ -2195,14 +2195,13 @@ export default function App() {
                     <button
                       onClick={() => setCatchupTxMode(true)}
                       className="w-full p-3 rounded-xl font-bold text-base bg-neutral-100 text-neutral-700 flex items-center justify-center gap-2"
-                      style={{ marginTop: '20px' }}
                     >
                       <Plus size={16} /> Full Tx list
                     </button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
+                      <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                    </div>
                   </div>
                 </div>
               )}
