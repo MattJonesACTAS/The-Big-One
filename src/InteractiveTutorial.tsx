@@ -651,11 +651,19 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
     timingMethod: {
       title: 'Time Keeping',
       image: '',
-      nextScreen: 'home1',
+      nextScreen: 'cprTimerEntry',
       elements: [
         { id: 'timingLog',     x: 50, y: 25, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
         { id: 'timingCPR',     x: 50, y: 47, number: 5, title: 'CPR Timer',     description: "Choose this option if you are using the monitor's inbuilt CPR timer, found above the compression depth diamond on the CPR screen.\n\nLet's use this option for the tutorial, as it's likely the time keeping method you're least familiar with.\n\nChoose 'CPR timer' to progress in the tutorial." },
         { id: 'timingElapsed', x: 50, y: 70, number: 4, title: 'Elapsed Time',  description: "Choose this option if you are using the elapsed time found at the top right corner of the monitor.\n\nYou can then choose whether you are performing rhythm checks on even or odd minutes." },
+      ],
+    },
+    cprTimerEntry: {
+      title: 'Enter Current CPR Timer',
+      image: '',
+      nextScreen: 'home1', // progression driven by real catchupStep, not by Next click
+      elements: [
+        { id: 'cprTimerEntry', x: 50, y: 50, number: 6, title: 'Enter Current CPR Timer', description: "If you select either the elapsed timer or CPR timer options, you will need to make the app's timer match the monitor's.\n\nEnter any time you like to move forward." },
       ],
     },
     home1: {
@@ -663,20 +671,21 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/1.png?raw=true',
       nextScreen: 'addTxMenu',
       elements: [
-        { id: 'cprRound', x: 80.2, y: 22, number: 6, title: 'CPR Round', description: "The current round of CPR" },
-        { id: 'timer', x: 50, y: 52, number: 7, title: 'Rhythm Check Timer', description: "The countdown to the next rhythm check.\n\nWhen the timer reaches 0:00, it pauses for 6 seconds to allow for the rhythm check, then restarts from 2:00." },
-        { id: 'pause', x: 19.0, y: 4.2, number: 8, title: 'Pause Button', description: "Pause and resume the rhythm check timer" },
-        { id: 'recalibrate', x: 51.0, y: 4.2, number: 9, title: 'Recalibrate Button', description: "The app estimates a rhythm check of 6 seconds.\n\nRecalibrate the timer to match reality if your rhythm checks are longer." },
-        { id: 'tabs', x: 50, y: 10.75, number: 10, title: 'Checklists', description: "Quick access to checklists for the reversible causes of arrest, ROSC and Prehospital emergency anaesthesia (PHEA)" },
-        { id: 'addTxBtn', x: 75, y: 95.4, number: 11, title: 'Add Treatment Button', description: "Tap here to log treatments and interventions during the arrest" },
+        { id: 'cprRound', x: 80.2, y: 22, number: 7, title: 'CPR Round', description: "The current round of CPR" },
+        { id: 'timer', x: 50, y: 52, number: 8, title: 'Rhythm Check Timer', description: "The countdown to the next rhythm check.\n\nWhen the timer reaches 0:00, it pauses for 6 seconds to allow for the rhythm check, then restarts from 2:00." },
+        { id: 'pause', x: 19.0, y: 4.2, number: 9, title: 'Pause Button', description: "Pause and resume the rhythm check timer" },
+        { id: 'recalibrate', x: 51.0, y: 4.2, number: 10, title: 'Recalibrate Button', description: "The app estimates a rhythm check of 6 seconds.\n\nRecalibrate the timer to match reality if your rhythm checks are longer." },
+        { id: 'tabs', x: 50, y: 10.75, number: 11, title: 'Checklists', description: "Quick access to checklists for the reversible causes of arrest, ROSC and Prehospital emergency anaesthesia (PHEA)" },
+        { id: 'addTxBtn', x: 75, y: 95.4, number: 12, title: 'Add Treatment Button', description: "Tap here to log treatments and interventions during the arrest" },
       ],
+
     },
     addTxMenu: {
       title: 'Add Treatment Menu',
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/2.png?raw=true',
       nextScreen: 'adrenalineDose',
       elements: [
-        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 12, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
+        { id: 'addTxSubmenu', x: 50, y: 45.9, number: 13, title: 'Add Tx submenu', description: "After pressing the Add Tx button, you will be brought to a submenu containing multiple kinds of treatments you can log" },
       ],
     },
     adrenalineDose: {
@@ -684,7 +693,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/4.png?raw=true',
       nextScreen: 'home2',
       elements: [
-        { id: 'medications', x: 53.2, y: 44.2, number: 13, title: 'Medications', description: "Each medication will bring up one or multiple age/weight based dosage options depending on the indication.\n\nCustom doses can also be added.\n\nLet's log adrenaline and amiodarone." },
+        { id: 'medications', x: 53.2, y: 44.2, number: 14, title: 'Medications', description: "Each medication will bring up one or multiple age/weight based dosage options depending on the indication.\n\nCustom doses can also be added.\n\nLet's log adrenaline and amiodarone." },
       ],
     },
     home2: {
@@ -692,7 +701,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'home2_summary',
       elements: [
-        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 14, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
+        { id: 'adrenalineAlert', x: 28.4, y: 82.82, number: 15, title: 'Medication alerts', description: "When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due." },
       ],
     },
     home2_summary: {
@@ -700,7 +709,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'summary',
       elements: [
-        { id: 'summaryBtn', x: 26.6, y: 95.4, number: 15, title: 'Summary Button', description: "Next, let's have a look at the running case summary page" },
+        { id: 'summaryBtn', x: 26.6, y: 95.4, number: 16, title: 'Summary Button', description: "Next, let's have a look at the running case summary page" },
       ],
     },
     summary: {
@@ -708,8 +717,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/6.png?raw=true',
       nextScreen: 'home2_close',
       elements: [
-        { id: 'pharmaSummary', x: 50, y: 50, number: 16, title: 'Medication Summary', description: "All medications logged will appear here, with an accumulative tally of the total amount of each drug given." },
-        { id: 'treatmentLog', x: 50, y: 70.9, number: 17, title: 'Treatment Log', description: "Chronological record of all logged interventions.\n\nTimestamps show the exact time, the elapsed time on the monitor, and how long ago each Tx was logged." },
+        { id: 'pharmaSummary', x: 50, y: 50, number: 17, title: 'Medication Summary', description: "All medications logged will appear here, with an accumulative tally of the total amount of each drug given." },
+        { id: 'treatmentLog', x: 50, y: 70.9, number: 18, title: 'Treatment Log', description: "Chronological record of all logged interventions.\n\nTimestamps show the exact time, the elapsed time on the monitor, and how long ago each Tx was logged." },
       ],
     },
     home2_close: {
@@ -717,7 +726,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/5.png?raw=true',
       nextScreen: 'caseSummary',
       elements: [
-        { id: 'close', x: 82.2, y: 4.2, number: 18, title: 'Close Button', description: "Let's say we've either stopped resuscitative efforts or we've handed our patient over at hospital.\n\nWe can now close the case." },
+        { id: 'close', x: 82.2, y: 4.2, number: 19, title: 'Close Button', description: "Let's say we've either stopped resuscitative efforts or we've handed our patient over at hospital.\n\nWe can now close the case." },
       ],
     },
     caseSummary: {
@@ -725,9 +734,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: 'https://github.com/MattJonesACTAS/The-Big-One/blob/main/public/tutorial/8.png?raw=true',
       nextScreen: null,
       elements: [
-        { id: 'finalStats', x: 50, y: 61.64, number: 19, title: 'Final Case Data', description: "Now the case is over, the treatment log shows times to the second, not just to the minute" },
-        { id: 'export', x: 27, y: 14, number: 20, title: 'Export PDF', description: "Export the case summary and Tx log to a pdf, which you can then email for later review." },
-        { id: 'delete', x: 73, y: 14, number: 21, title: 'Delete Case', description: "Permanently delete the case information from the app" },
+        { id: 'finalStats', x: 50, y: 61.64, number: 20, title: 'Final Case Data', description: "Now the case is over, the treatment log shows times to the second, not just to the minute" },
+        { id: 'export', x: 27, y: 14, number: 21, title: 'Export PDF', description: "Export the case summary and Tx log to a pdf, which you can then email for later review." },
+        { id: 'delete', x: 73, y: 14, number: 22, title: 'Delete Case', description: "Permanently delete the case information from the app" },
       ],
     },
   };
@@ -749,9 +758,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
   // not by an internal 'Next' click.
   useEffect(() => {
     if (catchupStep === undefined) return;
-    const stepToScreen: Record<number, string> = { 2: 'patientDetails', 3: 'previousTreatments', 6: 'timingMethod' };
+    const stepToScreen: Record<number, string> = { 2: 'patientDetails', 3: 'previousTreatments', 6: 'timingMethod', 5: 'cprTimerEntry' };
     const targetScreen = stepToScreen[catchupStep];
-    const catchupLinkedScreens = ['patientDetails', 'previousTreatments', 'timingMethod'];
+    const catchupLinkedScreens = ['patientDetails', 'previousTreatments', 'timingMethod', 'cprTimerEntry'];
     if (targetScreen && catchupLinkedScreens.includes(currentScreen) && currentScreen !== targetScreen) {
       setCurrentScreen(targetScreen);
       setExploredElements(new Set());
@@ -800,16 +809,16 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
+      backgroundColor: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'cprTimerEntry', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      justifyContent: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      padding: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'home1', 'timingMethod', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
+      alignItems: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'cprTimerEntry', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      justifyContent: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'cprTimerEntry', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      padding: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'cprTimerEntry', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       zIndex: 9999,
       overflowY: 'auto',
-      pointerEvents: ['timingMethod', 'patientDetails', 'previousTreatments'].includes(currentScreen) ? 'none' : 'auto',
+      pointerEvents: ['timingMethod', 'patientDetails', 'previousTreatments', 'cprTimerEntry'].includes(currentScreen) ? 'none' : 'auto',
     }}>
       {/* Render static components for non-catchup screens only */}
       {currentScreen === 'home1' && <StaticHomeScreen />}
@@ -1246,7 +1255,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       )}
       
       {/* Regular Next button for non-special screens */}
-      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'intro3' && currentScreen !== 'patientDetails' && currentScreen !== 'previousTreatments' && currentScreen !== 'timingMethod' && currentScreen !== 'home1' && currentScreen !== 'addTxMenu' && currentScreen !== 'adrenalineDose' && currentScreen !== 'home2' && currentScreen !== 'home2_summary' && currentScreen !== 'home2_close' && currentScreen !== 'summary' && currentScreen !== 'caseSummary' && (
+      {allExplored && currentScreenData.nextScreen && currentScreen !== 'intro1' && currentScreen !== 'intro2' && currentScreen !== 'intro3' && currentScreen !== 'patientDetails' && currentScreen !== 'previousTreatments' && currentScreen !== 'timingMethod' && currentScreen !== 'cprTimerEntry' && currentScreen !== 'home1' && currentScreen !== 'addTxMenu' && currentScreen !== 'adrenalineDose' && currentScreen !== 'home2' && currentScreen !== 'home2_summary' && currentScreen !== 'home2_close' && currentScreen !== 'summary' && currentScreen !== 'caseSummary' && (
         <button
           onClick={handleNext}
           style={{
