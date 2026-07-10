@@ -2,7 +2,7 @@
  * TutorialOverlay - Global sequential tutorial nodes with multi-page support
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface NodePage {
   title: string;
@@ -16,7 +16,7 @@ interface GlobalNode {
   y?: number;
   displayNumber?: number;
   pages: NodePage[];
-  condition?: (appState: any, isShockForced?: boolean) => boolean;
+  condition?: (appState: any, isShockForced?: boolean, initialPatientWeight?: number | null) => boolean;
 }
 
 const ALL_NODES: GlobalNode[] = [
@@ -60,13 +60,13 @@ const ALL_NODES: GlobalNode[] = [
   },
   {
     id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2, displayNumber: 10,
-    pages: [{ title: 'Recalibrate Button', description: 'The app estimates a rhythm check of six seconds.\n\nRecalibrate the timer if your last rhythm check was longer.\n\nYou can also use this button to change the estimated patient weight.' }],
+    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Update the CPR timer if it has become desynchronised with the monitor\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'tabs', type: 'positioned', x: 50, y: 10.75, displayNumber: 11,
     pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
+    condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
     id: 'addTxBtn', type: 'positioned', x: 75, y: 95.4, displayNumber: 12,
@@ -167,6 +167,11 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   const [activePositioned, setActivePositioned] = useState<GlobalNode | null>(null);
   const [pageAnimKey, setPageAnimKey] = useState(0);
 
+  // Captures the patient weight as it was when the tutorial started, so the
+  // 'tabs' node can require a real weight change (not just visiting the page)
+  // before it appears.
+  const initialWeightRef = useRef<number | null>(appState.patientWeight ?? null);
+
   const globalNodeIndex = externalNodeIndex;
   const tutorialDone = globalNodeIndex >= ALL_NODES.length;
 
@@ -181,7 +186,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   const inRhythmCheckWindow = appState.running && isShockForced;
 
   const conditionMet = !inRhythmCheckWindow && currentNode
-    ? (currentNode.condition ? currentNode.condition(appState, isShockForced) : true)
+    ? (currentNode.condition ? currentNode.condition(appState, isShockForced, initialWeightRef.current) : true)
     : false;
 
   // Auto-show popup when condition met

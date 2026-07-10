@@ -440,6 +440,19 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-cpr-btn');
     }
     
+    // Node 3 (recalibrate) complete - flash Recalibrate button (index 5 = waiting for weight change)
+    // then, once the Recalibrate menu is open, flash the Change Patient Weight button instead.
+    if (tutorialMode && tutorialScreen.index === 5 && !showRecalibrateMenu && !showWeightChange) {
+      document.body.classList.add('tutorial-flash-recalibrate');
+    } else {
+      document.body.classList.remove('tutorial-flash-recalibrate');
+    }
+    if (tutorialMode && tutorialScreen.index === 5 && showRecalibrateMenu) {
+      document.body.classList.add('tutorial-flash-weight');
+    } else {
+      document.body.classList.remove('tutorial-flash-weight');
+    }
+
     // Node 6 (addTxBtn) complete - flash Add Tx button (index 7 = waiting for treatment screen)
     if (tutorialMode && tutorialScreen.index === 7 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-add-tx');
@@ -486,6 +499,8 @@ export default function App() {
     
     return () => {
       document.body.classList.remove('tutorial-flash-cpr-btn');
+      document.body.classList.remove('tutorial-flash-recalibrate');
+      document.body.classList.remove('tutorial-flash-weight');
       document.body.classList.remove('tutorial-flash-add-tx');
       document.body.classList.remove('tutorial-flash-adrenaline');
       document.body.classList.remove('tutorial-flash-dose');
@@ -494,7 +509,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-close');
       document.body.classList.remove('tutorial-flash-delete');
     };
-  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete]);
+  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
@@ -1334,6 +1349,7 @@ export default function App() {
         )}
         <button 
           onClick={() => setShowRecalibrateMenu(true)} 
+          data-button="recalibrate"
           className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
         >
           <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
@@ -2470,6 +2486,7 @@ export default function App() {
                 setShowRecalibrateMenu(false);
                 setShowWeightChange(true);
               }}
+              data-button="change-weight"
               className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
             >
               <div className="text-base">Change patient weight</div>
