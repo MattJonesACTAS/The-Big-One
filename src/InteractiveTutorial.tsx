@@ -603,10 +603,11 @@ interface TutorialScreens {
 interface InteractiveTutorialProps {
   onClose: () => void;
   onTimingNodesComplete?: () => void;
+  onCatchupNodeStatusChange?: (screen: string, cleared: boolean) => void;
   catchupStep?: number;
 }
 
-const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTimingNodesComplete, catchupStep }) => {
+const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTimingNodesComplete, onCatchupNodeStatusChange, catchupStep }) => {
   const [currentScreen, setCurrentScreen] = useState('intro1');
   const [exploredElements, setExploredElements] = useState<Set<string>>(new Set());
   const [showingInfoBox, setShowingInfoBox] = useState(false);
@@ -749,6 +750,17 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
   useEffect(() => {
     if (currentScreen === 'timingMethod' && allExplored && onTimingNodesComplete) {
       onTimingNodesComplete();
+    }
+  }, [currentScreen, allExplored]);
+
+  // Notify parent whether the current page's node(s) have been cleared, so the
+  // real Continue/Next button on that page can be gated until the user has
+  // actually read it (timingMethod uses its own onTimingNodesComplete above
+  // since the CPR button there is gated separately).
+  useEffect(() => {
+    const gatedScreens = ['patientDetails', 'previousTreatments', 'cprTimerEntry'];
+    if (gatedScreens.includes(currentScreen) && onCatchupNodeStatusChange) {
+      onCatchupNodeStatusChange(currentScreen, allExplored);
     }
   }, [currentScreen, allExplored]);
 

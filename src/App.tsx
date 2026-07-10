@@ -388,6 +388,7 @@ export default function App() {
   const [tutorialMode, setTutorialMode] = useState(false);
   const [showInteractiveTutorial, setShowInteractiveTutorial] = useState(false);
   const [timingNodesComplete, setTimingNodesComplete] = useState(false);
+  const [catchupNodeCleared, setCatchupNodeCleared] = useState(false);
   const [tutorialScreen, setTutorialScreen] = useState({ index: -1, complete: false, nodeIndex: 0 });
   const [tutorialNodeIndex, setTutorialNodeIndex] = useState(0);
 
@@ -1284,6 +1285,7 @@ export default function App() {
             setTutorialMode(true);
           }}
           onTimingNodesComplete={() => setTimingNodesComplete(true)}
+          onCatchupNodeStatusChange={(_screen, cleared) => setCatchupNodeCleared(cleared)}
         />
       )}
 
@@ -2041,9 +2043,9 @@ export default function App() {
                     </button>
                     <button
                       onClick={() => weightInput && setCatchupStep(3)}
-                      disabled={!weightInput}
+                      disabled={!weightInput || (showInteractiveTutorial && !catchupNodeCleared)}
                       className={`py-4 rounded-xl font-bold transition-all ${
-                        weightInput
+                        weightInput && !(showInteractiveTutorial && !catchupNodeCleared)
                           ? weightType === 'adult'
                             ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
                             : 'bg-pink-400 text-white hover:bg-pink-500 shadow-md'
@@ -2110,7 +2112,8 @@ export default function App() {
                         }
                         handleCatchupStart();
                       }}
-                      className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base"
+                      disabled={showInteractiveTutorial && !catchupNodeCleared}
+                      className={`p-3 rounded-xl font-bold btn-base ${showInteractiveTutorial && !catchupNodeCleared ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed' : 'bg-emerald-600 text-white'}`}
                     >
                       Start Case
                     </button>
@@ -2204,7 +2207,13 @@ export default function App() {
                     </button>
                     <div className="grid grid-cols-2 gap-3 pt-2">
                       <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                      <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-emerald-600 text-white p-3 rounded-xl font-bold btn-base">Next</button>
+                      <button
+                        onClick={() => { setCatchupStep(6); setTimingMode(null); }}
+                        disabled={showInteractiveTutorial && !catchupNodeCleared}
+                        className={`p-3 rounded-xl font-bold btn-base ${showInteractiveTutorial && !catchupNodeCleared ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed' : 'bg-emerald-600 text-white'}`}
+                      >
+                        Next
+                      </button>
                     </div>
                   </div>
                 </div>
