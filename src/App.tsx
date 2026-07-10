@@ -2544,35 +2544,44 @@ export default function App() {
       )}
 
       {showModeChange && (
-        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-4">
+        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6 overflow-y-auto">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4 my-6">
             <div className="text-center space-y-1">
               <h2 className="text-2xl font-bold text-neutral-900">Change Timing Mode</h2>
               <p className="text-neutral-500 text-sm">How do you want to keep track of rhythm checks from now on?</p>
             </div>
+
             <div className="flex flex-col gap-3">
+
+              {/* Tx Log Only */}
               <button
                 disabled={timingMode === 'log'}
                 onClick={() => {
                   setTimingMode('log');
                   setShowModeChange(false);
                 }}
-                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'log' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
+                className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'log' ? 'border-neutral-200 opacity-50 cursor-not-allowed' : 'border-neutral-200 hover:border-emerald-400'}`}
               >
-                Tx Log Only
+                <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                  <div className="w-full max-w-[220px] rounded-xl border border-neutral-200 overflow-hidden text-left bg-white shadow-sm">
+                    <div className="bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-800 tracking-widest uppercase">Treatment Log</div>
+                    <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1 border-b border-neutral-100">
+                      <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest">Treatment</span>
+                      <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</span>
+                      <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</span>
+                    </div>
+                    <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1">
+                      <span className="text-[11px] text-neutral-400 italic">No entries yet</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'log' ? 'bg-neutral-100 text-neutral-400' : 'bg-white text-neutral-700'}`}>
+                  <div>No timer</div>
+                  <div className="font-medium">(record keeping only){timingMode === 'log' ? ' — current mode' : ''}</div>
+                </div>
               </button>
-              <button
-                disabled={timingMode === 'elapsed'}
-                onClick={() => {
-                  setTimingMode('elapsed');
-                  if (!rhythmInterval) setRhythmInterval('evens');
-                  setShowModeChange(false);
-                  setShowElapsedRecalibrate(true);
-                }}
-                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'elapsed' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
-              >
-                Elapsed Time
-              </button>
+
+              {/* CPR timer */}
               <button
                 disabled={timingMode === 'cpr'}
                 onClick={() => {
@@ -2581,11 +2590,64 @@ export default function App() {
                   setShowModeChange(false);
                   setShowTimerAdjust(true);
                 }}
-                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'cpr' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
+                className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'cpr' ? 'border-neutral-200 opacity-50 cursor-not-allowed' : 'border-neutral-200 hover:border-emerald-400'}`}
               >
-                CPR Timer
+                <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                  <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                      <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeDasharray="276.5"
+                        strokeDashoffset={0}
+                      />
+                    </svg>
+                    <div className="flex flex-col items-center z-10">
+                      <span className="text-[22px] font-bold tabular-nums leading-none text-neutral-900">2:00</span>
+                      <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Rhythm Check</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'cpr' ? 'bg-neutral-100 text-neutral-400' : 'bg-white text-neutral-700'}`}>
+                  Monitor's inbuilt CPR timer{timingMode === 'cpr' ? ' — current mode' : ''}
+                </div>
               </button>
+
+              {/* Elapsed time */}
+              <button
+                disabled={timingMode === 'elapsed'}
+                onClick={() => {
+                  setTimingMode('elapsed');
+                  if (!rhythmInterval) setRhythmInterval('evens');
+                  setShowModeChange(false);
+                  setShowElapsedRecalibrate(true);
+                }}
+                className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'elapsed' ? 'border-neutral-200 opacity-50 cursor-not-allowed' : 'border-neutral-200 hover:border-emerald-400'}`}
+              >
+                <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
+                  <div className="relative w-[100px] h-[100px] flex items-center justify-center">
+                    <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
+                      <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5"
+                        strokeLinecap="round"
+                        strokeDasharray="276.5"
+                        strokeDashoffset={0}
+                      />
+                    </svg>
+                    <div className="flex flex-col items-center z-10">
+                      <span className="text-[16px] font-bold tabular-nums leading-none text-neutral-900">00:02:00</span>
+                      <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Elapsed Time</span>
+                    </div>
+                  </div>
+                </div>
+                <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'elapsed' ? 'bg-neutral-100 text-neutral-400' : 'bg-white text-neutral-700'}`}>
+                  <div>Monitor's elapsed case time</div>
+                  <div className="font-medium">(odds/evens method){timingMode === 'elapsed' ? ' — current mode' : ''}</div>
+                </div>
+              </button>
+
             </div>
+
             <button onClick={() => setShowModeChange(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
               Cancel
             </button>
