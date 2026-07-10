@@ -370,6 +370,7 @@ export default function App() {
   const [timerAdjustValue, setTimerAdjustValue] = useState({ mins: 2, secs: 0 });
   const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
   const [showRecalibrateMenu, setShowRecalibrateMenu] = useState(false);
+  const [showModeChange, setShowModeChange] = useState(false);
   const [showWeightChange, setShowWeightChange] = useState(false);
   const [newWeightInput, setNewWeightInput] = useState('');
   const [showRearrestIntervalPicker, setShowRearrestIntervalPicker] = useState(false);
@@ -2463,6 +2464,16 @@ export default function App() {
               <div className="text-base">Change patient weight</div>
               <div className="text-xs text-neutral-500 font-medium mt-0.5">Currently {state.patientWeight}kg</div>
             </button>
+            <button
+              onClick={() => {
+                setShowRecalibrateMenu(false);
+                setShowModeChange(true);
+              }}
+              className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
+            >
+              <div className="text-base">Change timing mode</div>
+              <div className="text-xs text-neutral-500 font-medium mt-0.5">Currently {timingMode === 'cpr' ? 'CPR Timer' : timingMode === 'elapsed' ? 'Elapsed Time' : 'Tx Log Only'}</div>
+            </button>
             <button onClick={() => setShowRecalibrateMenu(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
               Cancel
             </button>
@@ -2528,6 +2539,56 @@ export default function App() {
                 Save
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {showModeChange && (
+        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-4">
+            <div className="text-center space-y-1">
+              <h2 className="text-2xl font-bold text-neutral-900">Change Timing Mode</h2>
+              <p className="text-neutral-500 text-sm">How do you want to keep track of rhythm checks from now on?</p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <button
+                disabled={timingMode === 'log'}
+                onClick={() => {
+                  setTimingMode('log');
+                  setShowModeChange(false);
+                }}
+                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'log' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
+              >
+                Tx Log Only
+              </button>
+              <button
+                disabled={timingMode === 'elapsed'}
+                onClick={() => {
+                  setTimingMode('elapsed');
+                  if (!rhythmInterval) setRhythmInterval('evens');
+                  setShowModeChange(false);
+                  setShowElapsedRecalibrate(true);
+                }}
+                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'elapsed' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
+              >
+                Elapsed Time
+              </button>
+              <button
+                disabled={timingMode === 'cpr'}
+                onClick={() => {
+                  setTimingMode('cpr');
+                  setTimerAdjustValue({ mins: 2, secs: 0 });
+                  setShowModeChange(false);
+                  setShowTimerAdjust(true);
+                }}
+                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'cpr' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
+              >
+                CPR Timer
+              </button>
+            </div>
+            <button onClick={() => setShowModeChange(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
+              Cancel
+            </button>
           </div>
         </div>
       )}
