@@ -390,6 +390,7 @@ export default function App() {
   
   // Tutorial mode state
   const [tutorialMode, setTutorialMode] = useState(false);
+  const tutorialInitialWeightRef = useRef<number | null>(null);
   const [showInteractiveTutorial, setShowInteractiveTutorial] = useState(false);
   const [timingNodesComplete, setTimingNodesComplete] = useState(false);
   const [catchupNodeCleared, setCatchupNodeCleared] = useState(false);
@@ -411,6 +412,17 @@ export default function App() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [state.running, state.rhythmCheckPaused]);
+
+  // Capture the patient weight as it was when the tutorial started, so we know
+  // once it's actually been changed (used to stop the recalibrate/weight flash).
+  useEffect(() => {
+    if (tutorialMode && tutorialInitialWeightRef.current === null) {
+      tutorialInitialWeightRef.current = state.patientWeight;
+    }
+    if (!tutorialMode) {
+      tutorialInitialWeightRef.current = null;
+    }
+  }, [tutorialMode, state.patientWeight]);
 
   // Inject tutorial CPR button flash CSS
   useEffect(() => {
@@ -442,12 +454,14 @@ export default function App() {
     
     // Node 3 (recalibrate) complete - flash Recalibrate button (index 5 = waiting for weight change)
     // then, once the Recalibrate menu is open, flash the Change Patient Weight button instead.
-    if (tutorialMode && tutorialScreen.index === 5 && !showRecalibrateMenu && !showWeightChange) {
+    // Both stop as soon as the weight actually changes, even before the node is dismissed.
+    const weightUnchanged = state.patientWeight === tutorialInitialWeightRef.current;
+    if (tutorialMode && tutorialScreen.index === 5 && !showRecalibrateMenu && !showWeightChange && weightUnchanged) {
       document.body.classList.add('tutorial-flash-recalibrate');
     } else {
       document.body.classList.remove('tutorial-flash-recalibrate');
     }
-    if (tutorialMode && tutorialScreen.index === 5 && showRecalibrateMenu) {
+    if (tutorialMode && tutorialScreen.index === 5 && showRecalibrateMenu && weightUnchanged) {
       document.body.classList.add('tutorial-flash-weight');
     } else {
       document.body.classList.remove('tutorial-flash-weight');
@@ -509,7 +523,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-close');
       document.body.classList.remove('tutorial-flash-delete');
     };
-  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
+  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, state.patientWeight, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
