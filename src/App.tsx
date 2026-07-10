@@ -374,6 +374,8 @@ export default function App() {
   const [showWeightChange, setShowWeightChange] = useState(false);
   const [newWeightInput, setNewWeightInput] = useState('');
   const [newPatientType, setNewPatientType] = useState<'adult' | 'paed' | null>(null);
+  const [newPaedWeightMethod, setNewPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
+  const [newPaedAgeLabel, setNewPaedAgeLabel] = useState<string | null>(null);
   const [showRearrestIntervalPicker, setShowRearrestIntervalPicker] = useState(false);
   const [rearrestElapsed, setRearrestElapsed] = useState<number>(0);
   const [roscButtonFlashing, setRoscButtonFlashing] = useState(false);
@@ -2458,6 +2460,13 @@ export default function App() {
               onClick={() => {
                 setNewWeightInput(String(state.patientWeight ?? ''));
                 setNewPatientType(state.patientType as 'adult' | 'paed');
+                if (state.patientType === 'paed' && state.patientAge) {
+                  setNewPaedWeightMethod('age');
+                  setNewPaedAgeLabel(state.patientAge);
+                } else {
+                  setNewPaedWeightMethod('weight');
+                  setNewPaedAgeLabel(null);
+                }
                 setShowRecalibrateMenu(false);
                 setShowWeightChange(true);
               }}
@@ -2505,6 +2514,7 @@ export default function App() {
               <button
                 onClick={() => {
                   setNewPatientType('paed');
+                  if (!newPaedWeightMethod) setNewPaedWeightMethod('age');
                   setNewWeightInput('');
                 }}
                 className={`p-3 rounded-xl font-bold text-center transition-all duration-200 ${
@@ -2544,15 +2554,58 @@ export default function App() {
                 <option value="200">200 kg</option>
               </select>
             ) : (
-              <div className="relative">
-                <input
-                  type="number"
-                  value={newWeightInput}
-                  onChange={e => setNewWeightInput(e.target.value)}
-                  className="w-full border-2 border-pink-300 rounded-xl px-4 py-4 pr-12 text-base font-semibold focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none"
-                  placeholder="Enter weight"
-                />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 font-bold pointer-events-none">kg</span>
+              <div className="bg-pink-50 rounded-2xl p-6 border-2 border-pink-200 space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-pink-900 mb-3">Select weight by age</label>
+                  <select
+                    value={newPaedWeightMethod === 'age' ? newWeightInput : ''}
+                    onChange={(e) => {
+                      setNewPaedWeightMethod('age');
+                      setNewWeightInput(e.target.value);
+                      const opt = e.target.options[e.target.selectedIndex];
+                      setNewPaedAgeLabel(opt.text.split(' (')[0]);
+                    }}
+                    className="w-full bg-white border-2 border-pink-300 rounded-xl px-4 py-4 text-base font-semibold focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all"
+                  >
+                    <option value="">Choose age</option>
+                    {[
+                      ['Newborn', 3], ['3 months', 5], ['6 months', 7],
+                      ['12 months', 11], ['2 years', 13],
+                      ['3 years', 15], ['4 years', 17], ['5 years', 19], ['6 years', 21],
+                      ['7 years', 23], ['8 years', 25], ['9 years', 27], ['10 years', 30],
+                      ['11 years', 33]
+                    ].map(([age, weight]) => (
+                      <option key={age} value={weight}>{age} ({weight} kg)</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-pink-200"></div>
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-pink-50 px-3 text-xs font-bold text-pink-400">OR</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-pink-900 mb-3">Custom Weight</label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      placeholder="Enter weight"
+                      value={newPaedWeightMethod === 'weight' ? newWeightInput : ''}
+                      onChange={(e) => {
+                        setNewPaedWeightMethod('weight');
+                        setNewWeightInput(e.target.value);
+                        setNewPaedAgeLabel(null);
+                      }}
+                      className="w-full bg-white border-2 border-pink-300 rounded-xl px-4 py-4 pr-12 text-base font-semibold focus:ring-2 focus:ring-pink-400 focus:border-pink-400 outline-none transition-all"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 font-bold pointer-events-none">kg</span>
+                  </div>
+                </div>
               </div>
             )}
             <div className="grid grid-cols-2 gap-3">
@@ -2561,7 +2614,12 @@ export default function App() {
                 onClick={() => {
                   const w = parseFloat(newWeightInput);
                   if (!isNaN(w) && w > 0) {
-                    setState(prev => ({ ...prev, patientWeight: w, patientType: newPatientType }));
+                    setState(prev => ({
+                      ...prev,
+                      patientWeight: w,
+                      patientType: newPatientType,
+                      patientAge: (newPatientType === 'paed' && newPaedWeightMethod === 'age' && newPaedAgeLabel) ? newPaedAgeLabel : null,
+                    }));
                   }
                   setShowWeightChange(false);
                 }}
