@@ -54,6 +54,8 @@ const INITIAL_STATE: AppState = {
   roscChecked: [],
   pheaChecked: [],
   isROSCMode: false,
+  timingMode: null,
+  rhythmInterval: null,
   vitals: { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }
 };
 
@@ -356,8 +358,8 @@ export default function App() {
   const [useManualEntry, setUseManualEntry] = useState(false);
   const [elapsedTimestamp, setElapsedTimestamp] = useState<number | null>(null);
   const [cprTimestamp, setCprTimestamp] = useState<number | null>(null);
-  const [timingMode, setTimingMode] = useState<'cpr' | 'elapsed' | 'log' | null>(null);
-  const [rhythmInterval, setRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds' | null>(null);
+  const [timingMode, setTimingMode] = useState<'cpr' | 'elapsed' | 'log' | null>(() => state.timingMode);
+  const [rhythmInterval, setRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds' | null>(() => state.rhythmInterval);
   const [demoTick, setDemoTick] = useState(0); // drives animated timers on mode selection screen
   const [isCaseClosed, setIsCaseClosed] = useState(false);
   const [showCloseWarning, setShowCloseWarning] = useState(false);
@@ -412,6 +414,16 @@ export default function App() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [state.running, state.rhythmCheckPaused]);
+
+  // Mirror timingMode/rhythmInterval into persisted state so a page reload
+  // mid-case (crash, phone restart, tab close) restores the correct timing
+  // method instead of losing it.
+  useEffect(() => {
+    setState(prev => {
+      if (prev.timingMode === timingMode && prev.rhythmInterval === rhythmInterval) return prev;
+      return { ...prev, timingMode, rhythmInterval };
+    });
+  }, [timingMode, rhythmInterval]);
 
   // Capture the patient weight as it was when the tutorial started, so we know
   // once it's actually been changed (used to stop the recalibrate/weight flash).
@@ -1928,7 +1940,7 @@ export default function App() {
                         <div className="text-center">
                           <div className="font-bold text-lg">Adult</div>
                           <div className={`text-xs mt-1 ${weightType === 'adult' ? 'text-emerald-100' : 'text-neutral-400'}`}>
-                            35 - 200 kg
+                            ≥12 years
                           </div>
                         </div>
                       </div>

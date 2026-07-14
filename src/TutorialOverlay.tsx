@@ -19,7 +19,7 @@ interface GlobalNode {
   condition?: (appState: any, isShockForced?: boolean, initialPatientWeight?: number | null) => boolean;
 }
 
-const ALL_NODES: GlobalNode[] = [
+const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   // --- Home screen nodes ---
   {
     id: 'homeIntro', type: 'popup',
@@ -27,12 +27,12 @@ const ALL_NODES: GlobalNode[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'cprRound', type: 'positioned', x: 80.2, y: 22, displayNumber: 7,
+    id: 'cprRound', type: 'positioned', x: 80.2, y: 22,
     pages: [{ title: 'CPR Round', description: "The current round of CPR.\n\nThe CPR round counter will update every time the rhythm check counter reaches 0:00." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'timer', type: 'positioned', x: 50, y: 52, displayNumber: 8,
+    id: 'timer', type: 'positioned', x: 50, y: 52,
     pages: [
       {
         title: 'Rhythm Check Timer',
@@ -54,28 +54,28 @@ const ALL_NODES: GlobalNode[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'pause', type: 'positioned', x: 19.0, y: 4.2, displayNumber: 9,
+    id: 'pause', type: 'positioned', x: 19.0, y: 4.2,
     pages: [{ title: 'Pause Button', description: 'Pause and resume the rhythm check timer.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2, displayNumber: 10,
+    id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2,
     pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Update the CPR timer if it has become desynchronised with the monitor\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'tabs', type: 'positioned', x: 50, y: 10.75, displayNumber: 11,
+    id: 'tabs', type: 'positioned', x: 50, y: 10.75,
     pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey' }],
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
-    id: 'addTxBtn', type: 'positioned', x: 75, y: 95.4, displayNumber: 12,
+    id: 'addTxBtn', type: 'positioned', x: 75, y: 95.4,
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.\n\nPress the \u2018+ Add Tx\u2019 button so we can log our first Tx.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Treatment screen ---
   {
-    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 40, displayNumber: 13,
+    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 40,
     pages: [
       {
         title: 'Add Tx Submenu',
@@ -90,18 +90,18 @@ const ALL_NODES: GlobalNode[] = [
   },
   // --- Home with medication alerts ---
   {
-    id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82, displayNumber: 14,
+    id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82,
     pages: [{ title: 'Medication Alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
   {
-    id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 15,
+    id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4,
     pages: [{ title: 'Summary Button', description: "Next, let's have a look at the running case summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
   // --- Summary overlay ---
   {
-    id: 'summaryInfo', type: 'positioned', x: 50, y: 50, displayNumber: 16,
+    id: 'summaryInfo', type: 'positioned', x: 50, y: 50,
     pages: [
       {
         title: 'Arrest Summary',
@@ -123,33 +123,48 @@ const ALL_NODES: GlobalNode[] = [
     condition: (s) => s.currentOverlay === 'summary'
   },
   {
-    id: 'closeOverlay', type: 'positioned', x: 26.6, y: 95.4, displayNumber: 17,
+    id: 'closeOverlay', type: 'positioned', x: 26.6, y: 95.4,
     pages: [{ title: 'Return to Home', description: 'Press the close button to return to the home page.' }],
     condition: (s) => s.currentOverlay === 'summary'
   },
   // --- Home after summary ---
   {
-    id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2, displayNumber: 18,
+    id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2,
     pages: [{ title: 'Close Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can close the case.\n\nLet's close the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Case summary ---
   {
-    id: 'finalStats', type: 'positioned', x: 50, y: 61.64, displayNumber: 19,
+    id: 'finalStats', type: 'positioned', x: 50, y: 61.64,
     pages: [{ title: 'Final Case Data', description: 'Now the case is over, the treatment log shows times to the second, not just to the minute.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'export', type: 'positioned', x: 27, y: 14, displayNumber: 20,
+    id: 'export', type: 'positioned', x: 27, y: 14,
     pages: [{ title: 'Export PDF', description: 'Here you can export the case summary and Tx log to a PDF, which you can then download or email for later review.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'delete', type: 'positioned', x: 73, y: 14, displayNumber: 21,
+    id: 'delete', type: 'positioned', x: 73, y: 14,
     pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nDelete the case to finish the tutorial, and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }
 ];
+
+// displayNumber is derived automatically from array position rather than
+// hand-typed on each node, so adding/removing/reordering a node can never
+// silently produce a duplicate or skipped number again. Only 'positioned'
+// nodes get a visible number (popups like homeIntro don't).
+// BASE_TUTORIAL_NUMBER is the last number used by InteractiveTutorial.tsx's
+// catchup-flow nodes (Patient Type=1 ... Enter Current CPR Timer=6) — this
+// picks up right after that.
+const BASE_TUTORIAL_NUMBER = 6;
+let positionedCount = 0;
+const ALL_NODES: GlobalNode[] = RAW_NODES.map(node => {
+  if (node.type !== 'positioned') return node;
+  positionedCount += 1;
+  return { ...node, displayNumber: BASE_TUTORIAL_NUMBER + positionedCount };
+});
 
 interface Props {
   appState: any;
