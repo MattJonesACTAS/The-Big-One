@@ -2657,6 +2657,9 @@ export default function App() {
                 onClick={() => {
                   const w = parseFloat(newWeightInput);
                   if (!isNaN(w) && w > 0) {
+                    if (w !== state.patientWeight) {
+                      addTreatment(`Weight changed: ${state.patientWeight ?? '?'}kg → ${w}kg`);
+                    }
                     setState(prev => ({
                       ...prev,
                       patientWeight: w,
