@@ -788,6 +788,9 @@ export default function App() {
       // Increment round if shock/disarm logged out of turn (before timer hit 0)
       // Do NOT increment if responding to a forced rhythm check overlay (already incremented by timer)
       const isOutOfTurn = isShockOrDisarm && !isROSC && !isShockForced && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
+      // In CPR timer mode, an out-of-turn shock/disarm restarts the 2:00 countdown
+      // (the crew has effectively just done a rhythm check, on or off the clock).
+      const shouldResetTimer = isROSC || (isShockOrDisarm && wasRhythmCheckPaused) || (isOutOfTurn && timingMode === 'cpr');
       
       // Auto-add OPA before BVM
       const newTreatments = [...prev.treatments];
@@ -809,11 +812,12 @@ export default function App() {
         shocks: (name.includes('Shock') && !name.includes('Disarm')) ? prev.shocks + 1 : prev.shocks,
         cprRound: isOutOfTurn ? prev.cprRound + 1 : prev.cprRound,
         currentOverlay: isRearrest ? 'treatment' : null,
-        // Reset rhythm check to 2:00 for ROSC or when unpausing via other shock/disarm
-        rhythmCheckTarget: (isROSC || (isShockOrDisarm && wasRhythmCheckPaused)) 
+        // Reset rhythm check to 2:00 for ROSC, when unpausing via other shock/disarm,
+        // or when an out-of-turn shock/disarm is logged in CPR mode
+        rhythmCheckTarget: shouldResetTimer 
           ? prev.elapsedSeconds + 120 
           : prev.rhythmCheckTarget,
-        rhythmCheckOvertime: (isROSC || (isShockOrDisarm && wasRhythmCheckPaused)) ? 0 : prev.rhythmCheckOvertime,
+        rhythmCheckOvertime: shouldResetTimer ? 0 : prev.rhythmCheckOvertime,
         // Pause for ROSC, unpause for other shock/disarm; Rearrest exits ROSC mode
         rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused,
         // For ROSC, freeze the countdown at 2:00
