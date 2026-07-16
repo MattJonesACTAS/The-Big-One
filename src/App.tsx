@@ -373,6 +373,7 @@ export default function App() {
   const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
   const [showRecalibrateMenu, setShowRecalibrateMenu] = useState(false);
   const [showModeChange, setShowModeChange] = useState(false);
+  const [pendingModeChangeFrom, setPendingModeChangeFrom] = useState<'cpr' | 'elapsed' | 'log' | null>(null);
   const [showWeightChange, setShowWeightChange] = useState(false);
   const [newWeightInput, setNewWeightInput] = useState('');
   const [newPatientType, setNewPatientType] = useState<'adult' | 'paed' | null>(null);
@@ -2704,6 +2705,7 @@ export default function App() {
               <button
                 disabled={timingMode === 'elapsed'}
                 onClick={() => {
+                  setPendingModeChangeFrom(timingMode);
                   setTimingMode('elapsed');
                   if (!rhythmInterval) setRhythmInterval('evens');
                   setShowModeChange(false);
@@ -2716,6 +2718,7 @@ export default function App() {
               <button
                 disabled={timingMode === 'cpr'}
                 onClick={() => {
+                  setPendingModeChangeFrom(timingMode);
                   setTimingMode('cpr');
                   setTimerAdjustValue({ mins: 2, secs: 0 });
                   setShowModeChange(false);
@@ -2790,12 +2793,29 @@ export default function App() {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowElapsedRecalibrate(false)}
-              className="w-full bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
-            >
-              Done
-            </button>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => {
+                  setShowElapsedRecalibrate(false);
+                  if (pendingModeChangeFrom !== null) {
+                    setTimingMode(pendingModeChangeFrom);
+                    setPendingModeChangeFrom(null);
+                  }
+                }}
+                className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowElapsedRecalibrate(false);
+                  setPendingModeChangeFrom(null);
+                }}
+                className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2819,13 +2839,20 @@ export default function App() {
                 onClick={() => {
                   setShowTimerAdjust(false);
                   setTimerAdjustValue({ mins: 2, secs: 0 });
+                  if (pendingModeChangeFrom !== null) {
+                    setTimingMode(pendingModeChangeFrom);
+                    setPendingModeChangeFrom(null);
+                  }
                 }} 
                 className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base"
               >
                 Cancel
               </button>
               <button 
-                onClick={applyTimerAdjustment} 
+                onClick={() => {
+                  applyTimerAdjustment();
+                  setPendingModeChangeFrom(null);
+                }} 
                 className="bg-emerald-600 p-4 rounded-xl font-bold text-white btn-base"
               >
                 Set Timer
