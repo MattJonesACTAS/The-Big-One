@@ -374,6 +374,8 @@ export default function App() {
   const [showRecalibrateMenu, setShowRecalibrateMenu] = useState(false);
   const [showModeChange, setShowModeChange] = useState(false);
   const [pendingModeChangeFrom, setPendingModeChangeFrom] = useState<'cpr' | 'elapsed' | 'log' | null>(null);
+  const [stagedElapsedSeconds, setStagedElapsedSeconds] = useState(0);
+  const [stagedRhythmInterval, setStagedRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds'>('evens');
   const [showWeightChange, setShowWeightChange] = useState(false);
   const [newWeightInput, setNewWeightInput] = useState('');
   const [newPatientType, setNewPatientType] = useState<'adult' | 'paed' | null>(null);
@@ -2488,6 +2490,8 @@ export default function App() {
               onClick={() => {
                 setShowRecalibrateMenu(false);
                 if (timingMode === 'elapsed') {
+                  setStagedElapsedSeconds(state.elapsedSeconds);
+                  setStagedRhythmInterval(rhythmInterval || 'evens');
                   setShowElapsedRecalibrate(true);
                 } else {
                   const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
@@ -2707,7 +2711,10 @@ export default function App() {
                 onClick={() => {
                   setPendingModeChangeFrom(timingMode);
                   setTimingMode('elapsed');
-                  if (!rhythmInterval) setRhythmInterval('evens');
+                  const startingInterval = rhythmInterval || 'evens';
+                  if (!rhythmInterval) setRhythmInterval(startingInterval);
+                  setStagedElapsedSeconds(state.elapsedSeconds);
+                  setStagedRhythmInterval(startingInterval);
                   setShowModeChange(false);
                   setShowElapsedRecalibrate(true);
                 }}
@@ -2747,18 +2754,9 @@ export default function App() {
             <div>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 text-center">Elapsed Time</p>
               <TimePicker
-                value={{ mins: Math.floor(state.elapsedSeconds / 60), secs: state.elapsedSeconds % 60 }}
+                value={{ mins: Math.floor(stagedElapsedSeconds / 60), secs: stagedElapsedSeconds % 60 }}
                 onChange={(v) => {
-                  const newElapsed = v.mins * 60 + v.secs;
-                  const newTarget = calcNextIntervalTarget(newElapsed, rhythmInterval || 'evens');
-                  setState(prev => ({
-                    ...prev,
-                    elapsedSeconds: newElapsed,
-                    startTime: Date.now(),
-                    pausedTime: newElapsed * 1000,
-                    rhythmCheckTarget: newTarget,
-                    rhythmCheckOvertime: 0
-                  }));
+                  setStagedElapsedSeconds(v.mins * 60 + v.secs);
                 }}
                 maxSeconds={5999}
               />
@@ -2775,19 +2773,15 @@ export default function App() {
                 ] as const).map(({ key, label, example }) => (
                   <button
                     key={key}
-                    onClick={() => {
-                      setRhythmInterval(key);
-                      const newTarget = calcNextIntervalTarget(state.elapsedSeconds, key);
-                      setState(prev => ({ ...prev, rhythmCheckTarget: newTarget, rhythmCheckOvertime: 0 }));
-                    }}
+                    onClick={() => setStagedRhythmInterval(key)}
                     className={`p-3 rounded-xl transition-all duration-200 ${
-                      rhythmInterval === key
+                      stagedRhythmInterval === key
                         ? 'bg-emerald-500 text-white shadow-md'
                         : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-emerald-300'
                     }`}
                   >
                     <div className="font-bold text-sm">{label}</div>
-                    <div className={`text-xs mt-0.5 ${rhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
+                    <div className={`text-xs mt-0.5 ${stagedRhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
                   </button>
                 ))}
               </div>
@@ -2796,6 +2790,7 @@ export default function App() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 onClick={() => {
+                  // Discard staged changes entirely - nothing here was ever written to state.
                   setShowElapsedRecalibrate(false);
                   if (pendingModeChangeFrom !== null) {
                     setTimingMode(pendingModeChangeFrom);
@@ -2808,6 +2803,17 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
+                  // Commit staged changes to real state.
+                  const newTarget = calcNextIntervalTarget(stagedElapsedSeconds, stagedRhythmInterval);
+                  setRhythmInterval(stagedRhythmInterval);
+                  setState(prev => ({
+                    ...prev,
+                    elapsedSeconds: stagedElapsedSeconds,
+                    startTime: Date.now(),
+                    pausedTime: stagedElapsedSeconds * 1000,
+                    rhythmCheckTarget: newTarget,
+                    rhythmCheckOvertime: 0
+                  }));
                   setShowElapsedRecalibrate(false);
                   setPendingModeChangeFrom(null);
                 }}
