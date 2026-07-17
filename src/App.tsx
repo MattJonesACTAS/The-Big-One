@@ -233,12 +233,12 @@ const formatTimeHMM = (seconds: number) => {
 
 const getLocalTime = (date?: Date) => {
   const d = date || new Date();
-  return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
 };
 
 const getLocalTimeWithSeconds = (date?: Date) => {
   const d = date || new Date();
-  return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
 };
 
 const calculateDose = (doseStr: string, weight: number | null): string => {
@@ -3316,8 +3316,8 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
   const showAgo = !isSummary;
 
   const gridCols = isSummary
-    ? (showElapsed ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2fr_1fr]')
-    : (showElapsed ? 'grid-cols-[2.1fr_0.8fr_1.3fr_1.1fr]' : 'grid-cols-[2.1fr_0.8fr_1.1fr]');
+    ? (showElapsed ? 'grid-cols-[1.8fr_1.2fr_1fr]' : 'grid-cols-[1.8fr_1.2fr]')
+    : (showElapsed ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]');
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
