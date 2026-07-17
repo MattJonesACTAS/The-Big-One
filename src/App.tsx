@@ -777,6 +777,7 @@ export default function App() {
       round: state.cprRound,
       clock: getLocalTime(now),
       clockSeconds: getLocalTimeWithSeconds(now),
+      loggedAt: now.getTime(),
       ...(catchupTxMode ? { prior: true } : {})
     };
 
@@ -806,7 +807,8 @@ export default function App() {
           elapsed: state.elapsedSeconds,
           round: state.cprRound,
           clock: getLocalTime(now),
-          clockSeconds: getLocalTimeWithSeconds(now)
+          clockSeconds: getLocalTimeWithSeconds(now),
+          loggedAt: now.getTime()
         };
         newTreatments.push(opaTreatment);
       }
@@ -3333,7 +3335,9 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const timeVal = isSummary ? tx.clockSeconds : tx.clock;
             const timeDisplay = tx.prior ? `< ${timeVal}` : timeVal;
             const elapsedDisplay = tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed));
-            const agoVal = tx.prior ? elapsedSeconds : (elapsedSeconds - tx.elapsed);
+            const agoVal = tx.prior
+              ? elapsedSeconds
+              : (tx.loggedAt != null ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000)) : (elapsedSeconds - tx.elapsed));
             const ago = tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal);
             const { med, dose } = splitTreatmentName(tx.name);
 

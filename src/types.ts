@@ -10,6 +10,7 @@ export interface Treatment {
   clock: string;
   clockSeconds: string;
   prior?: boolean;
+  loggedAt?: number;
 }
 
 export interface AppState {
