@@ -35,6 +35,7 @@ import TutorialOverlay from './TutorialOverlay';
 const INITIAL_STATE: AppState = {
   running: false,
   caseOpenedAt: null,
+  caseClosedAt: null,
   startTime: null,
   pausedTime: 0,
   elapsedSeconds: 0,
@@ -1232,7 +1233,7 @@ export default function App() {
 
   const closeCase = () => {
     addTreatment('Close case');
-    setState(prev => ({ ...prev, running: false }));
+    setState(prev => ({ ...prev, running: false, caseClosedAt: Date.now() }));
     setIsCaseClosed(true);
     setShowCloseWarning(false);
   };
@@ -1258,7 +1259,7 @@ export default function App() {
           </button>
         </div>
 
-        <ArrestSummarySection state={state} />
+        <ArrestSummarySection state={state} showRecordingDuration />
 
         {(() => {
           const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
@@ -3455,7 +3456,7 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
           {showRecordingDuration && (
             <StatRow
               label="App recording for"
-              value={state.caseOpenedAt ? formatTimeHMM(Math.floor((Date.now() - state.caseOpenedAt) / 1000)) : '—'}
+              value={state.caseOpenedAt ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
             />
           )}
           <StatRow label="CPR Rounds" value={state.cprRound} />

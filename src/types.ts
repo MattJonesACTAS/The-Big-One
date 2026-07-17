@@ -16,6 +16,7 @@ export interface Treatment {
 export interface AppState {
   running: boolean;
   caseOpenedAt: number | null;
+  caseClosedAt: number | null;
   startTime: number | null;
   pausedTime: number;
   elapsedSeconds: number;
