@@ -241,6 +241,42 @@ const getLocalTimeWithSeconds = (date?: Date) => {
   return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
 };
 
+// Medications that carry a dose/detail suffix after the drug name, used both
+// for identity-matching (numbering repeats) and for splitting the med from
+// its dose in the treatment log display.
+const KNOWN_MEDS = [
+  'Adrenaline infusion', 'Adrenaline push', 'Amiodarone', 'Atropine',
+  'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine infusion', 'Ketamine push',
+  'Levetiracetam (Kepra)', 'Lignocaine', 'Magnesium', 'Midazolam push',
+  'Morph/midaz infusion', 'Normal saline', 'Suxamethonium'
+];
+
+// Identifies the 'type' of a treatment for numbering purposes, ignoring any
+// numbering already present (so re-checking an already-numbered entry like
+// "Shock #2 - VF" still correctly identifies as "Shock").
+const getTreatmentIdentity = (rawName: string): string => {
+  const name = rawName.replace(/#\d+\s*/, '').replace(/\s+/g, ' ').trim();
+  if (name.startsWith('Oxygen ')) return 'Oxygen';
+  if (name.startsWith('Sodium bicarbonate')) return 'Sodium bicarbonate';
+  if (name.startsWith('Shock')) return 'Shock';
+  if (name.startsWith('Disarm')) return 'Disarm';
+  for (const med of KNOWN_MEDS) {
+    if (name === med || name.startsWith(med + ' ')) return med;
+  }
+  return name;
+};
+
+// Inserts '#N' immediately after the identity portion of a (never-yet-numbered)
+// treatment name, e.g. ('Shock - VF', 'Shock', 2) -> 'Shock #2 - VF',
+// ('Adrenaline push 1mg', 'Adrenaline push', 2) -> 'Adrenaline push #2 1mg',
+// ('BVM', 'BVM', 2) -> 'BVM #2'.
+const insertTreatmentNumber = (name: string, identity: string, num: number): string => {
+  if (name.startsWith(identity)) {
+    return `${identity} #${num}${name.slice(identity.length)}`;
+  }
+  return `${name} #${num}`;
+};
+
 const calculateDose = (doseStr: string, weight: number | null): string => {
   if (!weight || !doseStr.includes('/kg')) return doseStr;
   
@@ -772,8 +808,17 @@ export default function App() {
 
   const addTreatment = (name: string) => {
     const now = new Date();
+
+    // First time a given treatment type is logged, leave it unnumbered.
+    // Every subsequent log of that same type gets numbered (#2, #3, ...).
+    // Counts across catchup-added and live-added entries together, and
+    // Shock/Disarm are counted independently of one another.
+    const identity = getTreatmentIdentity(name);
+    const priorCount = state.treatments.filter(t => getTreatmentIdentity(t.name) === identity).length;
+    const displayName = priorCount > 0 ? insertTreatmentNumber(name, identity, priorCount + 1) : name;
+
     const treatment: Treatment = {
-      name,
+      name: displayName,
       elapsed: state.elapsedSeconds,
       round: state.cprRound,
       clock: getLocalTime(now),
@@ -1157,18 +1202,20 @@ export default function App() {
     }
 
     for (let i = 0; i < priorCounts.shock; i++) {
-      initialTxs.push({ name: `Shock #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      initialTxs.push({ name: i === 0 ? 'Shock' : `Shock #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
     }
     for (let i = 0; i < priorCounts.disarm; i++) {
-      initialTxs.push({ name: `Disarm #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      initialTxs.push({ name: i === 0 ? 'Disarm' : `Disarm #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
     }
     for (let i = 0; i < priorCounts.adrenaline; i++) {
       const adrenalineDose = getAdrenalinePushDose(weightType, parsedWeight);
-      initialTxs.push({ name: `Adrenaline push ${adrenalineDose}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      const baseName = `Adrenaline push ${adrenalineDose}`;
+      initialTxs.push({ name: i === 0 ? baseName : insertTreatmentNumber(baseName, 'Adrenaline push', i + 1), elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
     }
     for (let i = 0; i < priorCounts.amiodarone; i++) {
       const amiodaroneDose = getAmiodaroneDose(weightType, parsedWeight, i === 0 ? 1 : 2);
-      initialTxs.push({ name: `Amiodarone ${amiodaroneDose}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      const baseName = `Amiodarone ${amiodaroneDose}`;
+      initialTxs.push({ name: i === 0 ? baseName : insertTreatmentNumber(baseName, 'Amiodarone', i + 1), elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
     }
     
     // Include any treatments added via the Full Tx list button
@@ -3283,28 +3330,31 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
       const rest = name.slice('Sodium bicarbonate'.length).trim();
       return { med: 'Sodium bic.', dose: rest || null };
     }
-    // Shock/Disarm: split on ' - '
-    if (name.startsWith('Shock - ')) {
-      return { med: 'Shock', dose: name.slice(8) };
+    // Shock/Disarm: split on first ' - ' (handles both plain 'Shock - VF' and
+    // numbered 'Shock #3 - VF' forms)
+    if (/^Shock( #\d+)? - /.test(name)) {
+      const dashIdx = name.indexOf(' - ');
+      return { med: name.slice(0, dashIdx), dose: name.slice(dashIdx + 3) };
     }
-    if (name.startsWith('Disarm - ')) {
-      return { med: 'Disarm', dose: name.slice(9) };
+    if (/^Disarm( #\d+)? - /.test(name)) {
+      const dashIdx = name.indexOf(' - ');
+      return { med: name.slice(0, dashIdx), dose: name.slice(dashIdx + 3) };
     }
     // Match known medication names first, then treat remainder as dose
-    const knownMeds = [
-      'Adrenaline infusion', 'Adrenaline push', 'Amiodarone', 'Atropine',
-      'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine infusion', 'Ketamine push',
-      'Levetiracetam (Kepra)', 'Lignocaine',
-      'Levetiracetam (Kepra)', 'Lignocaine', 'Magnesium', 'Midazolam push', 'Morph/midaz infusion', 'Normal saline',
-      'Suxamethonium', 'Morph/midaz infusion'
-    ];
-    for (const med of knownMeds) {
+    for (const med of KNOWN_MEDS) {
       if (name.startsWith(med + ' ')) {
         let dose = name.slice(med.length).trim();
+        let displayMed = med;
+        // Pull a '#N' prefix (from repeat logging) into the med line, not the dose line
+        const numMatch = dose.match(/^#(\d+)\s*/);
+        if (numMatch) {
+          displayMed = `${med} #${numMatch[1]}`;
+          dose = dose.slice(numMatch[0].length);
+        }
         // For weight-based doses "0.01mg/kg (0.13mg)", show only the calculated value
         const calcMatch = dose.match(/\(([\d.]+(?:mg|mL|mMol|mcg|g))\)/i);
         if (calcMatch) dose = calcMatch[1];
-        return { med, dose: dose || null };
+        return { med: displayMed, dose: dose || null };
       }
     }
     return { med: name, dose: null };
