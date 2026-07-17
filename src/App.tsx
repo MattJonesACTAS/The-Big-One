@@ -1293,7 +1293,7 @@ export default function App() {
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} isSummary={true} timingMode={timingMode} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} isSummary={true} timingMode={timingMode} />
 
         {showDeleteWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6">
@@ -1491,7 +1491,7 @@ export default function App() {
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))} />
               </div>
             </div>
             <AnimatePresence>
@@ -3270,7 +3270,7 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = false, timingMode, onDelete }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void }) {
+function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
 
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
@@ -3317,7 +3317,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
 
   const gridCols = isSummary
     ? (showElapsed ? 'grid-cols-[2fr_1fr_1fr]' : 'grid-cols-[2fr_1fr]')
-    : (showElapsed ? 'grid-cols-[2.1fr_1fr_1.4fr_0.9fr]' : 'grid-cols-[2.1fr_1fr_0.9fr]');
+    : (showElapsed ? 'grid-cols-[2.1fr_0.8fr_1.3fr_1.1fr]' : 'grid-cols-[2.1fr_0.8fr_1.1fr]');
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
@@ -3338,7 +3338,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, isSummary = 
             const timeDisplay = tx.prior ? `< ${timeVal}` : timeVal;
             const elapsedDisplay = tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed));
             const agoVal = tx.prior
-              ? elapsedSeconds
+              ? (caseOpenedAt != null ? Math.max(0, Math.floor((Date.now() - caseOpenedAt) / 1000)) : elapsedSeconds)
               : (tx.loggedAt != null ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000)) : (elapsedSeconds - tx.elapsed));
             const ago = tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal);
             const { med, dose } = splitTreatmentName(tx.name);
@@ -3551,7 +3551,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateIn
       <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} timingMode={timingMode} onDelete={onDelete} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} />
       </div>
     </div>
   );
