@@ -3527,13 +3527,13 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
         <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-center justify-between gap-3">
           {patientLabel && (
             <div>
-              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Patient settings</div>
+              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">Patient settings</div>
               <div className="text-[15px] font-bold text-neutral-900">{patientLabel}</div>
             </div>
           )}
           {showRecordingDuration && (
             <div className="text-right">
-              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">App recording for</div>
+              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">App recording for</div>
               <div className="text-[15px] font-bold text-neutral-800 tabular-nums">
                 {state.caseOpenedAt ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
               </div>
