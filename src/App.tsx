@@ -3525,7 +3525,12 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
     <div className="space-y-6">
       {(patientLabel || showRecordingDuration) && (
         <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-center justify-between gap-3">
-          {patientLabel && <span className="text-[17px] font-bold text-neutral-900">{patientLabel}</span>}
+          {patientLabel && (
+            <div>
+              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">Patient settings</div>
+              <div className="text-[15px] font-bold text-neutral-900">{patientLabel}</div>
+            </div>
+          )}
           {showRecordingDuration && (
             <div className="text-right">
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">App recording for</div>
