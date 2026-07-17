@@ -3514,21 +3514,31 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
 
 function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
+  const isPaedWithAge = state.patientType === 'paed' && !!state.patientAge;
   const patientTypeLabel = state.patientType === 'adult' ? 'Adult' : state.patientType === 'paed' ? 'Paediatric' : null;
-  const patientDetailLabel = state.patientType === 'adult'
-    ? `${state.patientWeight}kg`
-    : state.patientType === 'paed'
-    ? state.patientAge ? `${state.patientAge} · ${state.patientWeight}kg` : `${state.patientWeight}kg`
+  // Single-line label for adult, or paediatric with a custom (non-age-based) weight
+  const patientOneLineLabel = state.patientType === 'adult'
+    ? `Adult · ${state.patientWeight}kg`
+    : state.patientType === 'paed' && !isPaedWithAge
+    ? `Paediatric · ${state.patientWeight}kg`
     : null;
+  // Two-line detail (age · weight) only for paediatric estimated by age
+  const patientDetailLabel = isPaedWithAge ? `${state.patientAge} · ${state.patientWeight}kg` : null;
   return (
     <div className="space-y-6">
       {(patientTypeLabel || showRecordingDuration) && (
-        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-center justify-between gap-3">
+        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-start justify-between gap-3">
           {patientTypeLabel && (
             <div>
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">Patient settings</div>
-              <div className="text-[15px] font-bold text-neutral-900">{patientTypeLabel}</div>
-              <div className="text-[15px] font-bold text-neutral-900">{patientDetailLabel}</div>
+              {isPaedWithAge ? (
+                <>
+                  <div className="text-[15px] font-bold text-neutral-900">{patientTypeLabel}</div>
+                  <div className="text-[15px] font-bold text-neutral-900">{patientDetailLabel}</div>
+                </>
+              ) : (
+                <div className="text-[15px] font-bold text-neutral-900">{patientOneLineLabel}</div>
+              )}
             </div>
           )}
           {showRecordingDuration && (
