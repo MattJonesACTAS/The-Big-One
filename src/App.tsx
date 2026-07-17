@@ -277,6 +277,29 @@ const insertTreatmentNumber = (name: string, identity: string, num: number): str
   return `${name} #${num}`;
 };
 
+// Removes an existing '#N' from a name that's already been numbered, so it
+// can be correctly renumbered (or left bare) after treatments are re-ordered
+// by a deletion, e.g. ('Shock #3 - VF', 'Shock') -> 'Shock - VF'.
+const stripTreatmentNumber = (name: string, identity: string): string => {
+  if (!name.startsWith(identity)) return name;
+  const rest = name.slice(identity.length).replace(/^ #\d+/, '');
+  return identity + rest;
+};
+
+// Re-derives correct sequential numbering for every treatment, in chronological
+// (stored) order, per identity group. Call this any time the treatment list is
+// reordered or an entry removed, so e.g. deleting 'Tx #2' out of '#1, #2, #3'
+// correctly leaves '#1, #2' rather than a gap at '#1, #3'.
+const renumberTreatments = (treatments: Treatment[]): Treatment[] => {
+  const seenCounts: Record<string, number> = {};
+  return treatments.map(t => {
+    const identity = getTreatmentIdentity(t.name);
+    const baseName = stripTreatmentNumber(t.name, identity);
+    const count = (seenCounts[identity] = (seenCounts[identity] || 0) + 1);
+    return { ...t, name: count > 1 ? insertTreatmentNumber(baseName, identity, count) : baseName };
+  });
+};
+
 const calculateDose = (doseStr: string, weight: number | null): string => {
   if (!weight || !doseStr.includes('/kg')) return doseStr;
   
@@ -933,6 +956,13 @@ export default function App() {
     }
   };
 
+  const deleteTreatment = (idx: number) => {
+    setState(prev => {
+      const remaining = prev.treatments.filter((_, i) => i !== idx);
+      return { ...prev, treatments: renumberTreatments(remaining) };
+    });
+  };
+
   const toggleChecklistItem = (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => {
     setState(prev => {
       const key = `${checklist}Checked` as 'reversiblesChecked' | 'roscChecked' | 'pheaChecked';
@@ -1538,7 +1568,7 @@ export default function App() {
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} />
               </div>
             </div>
             <AnimatePresence>
@@ -1554,7 +1584,7 @@ export default function App() {
                   toggleChecklistItem={toggleChecklistItem}
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                   timingMode={timingMode}
-                  onDeleteTreatment={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))}
+                  onDeleteTreatment={deleteTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
                 />
               )}
@@ -1722,7 +1752,7 @@ export default function App() {
                 toggleChecklistItem={toggleChecklistItem}
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                 timingMode={timingMode}
-                onDeleteTreatment={(idx) => setState(prev => ({ ...prev, treatments: prev.treatments.filter((_, i) => i !== idx) }))}
+                onDeleteTreatment={deleteTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
               />
             )}
@@ -3354,6 +3384,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         // For weight-based doses "0.01mg/kg (0.13mg)", show only the calculated value
         const calcMatch = dose.match(/\(([\d.]+(?:mg|mL|mMol|mcg|g))\)/i);
         if (calcMatch) dose = calcMatch[1];
+        displayMed = displayMed.replace('Adrenaline', 'Adren.').replace(/infusion/i, 'Infus.');
         return { med: displayMed, dose: dose || null };
       }
     }
