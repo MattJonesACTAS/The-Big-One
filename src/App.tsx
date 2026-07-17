@@ -3527,7 +3527,7 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
   return (
     <div className="space-y-6">
       {(patientTypeLabel || showRecordingDuration) && (
-        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-start justify-between gap-3">
+        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-start justify-between gap-3 shadow-sm">
           {patientTypeLabel && (
             <div>
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">Patient settings</div>
@@ -3630,7 +3630,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateIn
   return (
     <div className="space-y-6 pb-20">
       <ArrestSummarySection state={state} showRecordingDuration />
-      <div className="rounded-xl overflow-hidden border border-neutral-100">
+      <div className="rounded-xl overflow-hidden border border-neutral-100 shadow-sm">
         <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
         {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
           <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
