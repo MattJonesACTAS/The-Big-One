@@ -3514,19 +3514,21 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
 
 function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
-  const patientLabel = state.patientType === 'adult'
-    ? `Adult · ${state.patientWeight}kg`
+  const patientTypeLabel = state.patientType === 'adult' ? 'Adult' : state.patientType === 'paed' ? 'Paediatric' : null;
+  const patientDetailLabel = state.patientType === 'adult'
+    ? `${state.patientWeight}kg`
     : state.patientType === 'paed'
-    ? state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`
+    ? state.patientAge ? `${state.patientAge} · ${state.patientWeight}kg` : `${state.patientWeight}kg`
     : null;
   return (
     <div className="space-y-6">
-      {(patientLabel || showRecordingDuration) && (
+      {(patientTypeLabel || showRecordingDuration) && (
         <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-center justify-between gap-3">
-          {patientLabel && (
+          {patientTypeLabel && (
             <div>
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">Patient settings</div>
-              <div className="text-[15px] font-bold text-neutral-900">{patientLabel}</div>
+              <div className="text-[15px] font-bold text-neutral-900">{patientTypeLabel}</div>
+              <div className="text-[15px] font-bold text-neutral-900">{patientDetailLabel}</div>
             </div>
           )}
           {showRecordingDuration && (
