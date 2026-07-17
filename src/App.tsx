@@ -34,6 +34,7 @@ import TutorialOverlay from './TutorialOverlay';
 // --- Constants ---
 const INITIAL_STATE: AppState = {
   running: false,
+  caseOpenedAt: null,
   startTime: null,
   pausedTime: 0,
   elapsedSeconds: 0,
@@ -1177,6 +1178,7 @@ export default function App() {
       ...INITIAL_STATE,
       running: true,
       startTime: now,
+      caseOpenedAt: now,
       pausedTime: adjustedElapsed * 1000,
       elapsedSeconds: adjustedElapsed,
       rhythmCheckTarget: rhythmCheckTarget,
@@ -3411,6 +3413,10 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
           <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+          <StatRow
+            label="App recording for"
+            value={state.caseOpenedAt ? formatTimeHMM(Math.floor((Date.now() - state.caseOpenedAt) / 1000)) : '—'}
+          />
         </div>
       </div>
 
