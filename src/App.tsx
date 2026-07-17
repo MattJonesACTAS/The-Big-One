@@ -3523,23 +3523,22 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
     : null;
   return (
     <div className="space-y-6">
-      {patientLabel && (
-        <div className="rounded-xl overflow-hidden border border-neutral-100">
-          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider text-center">PATIENT</div>
-          <div className="bg-white px-4 py-3">
-            <span className="text-[17px] font-bold text-neutral-900 text-center block">{patientLabel}</span>
-          </div>
+      {(patientLabel || showRecordingDuration) && (
+        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-center justify-between gap-3">
+          {patientLabel && <span className="text-[17px] font-bold text-neutral-900">{patientLabel}</span>}
+          {showRecordingDuration && (
+            <div className="text-right">
+              <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide">App recording for</div>
+              <div className="text-[15px] font-bold text-neutral-800 tabular-nums">
+                {state.caseOpenedAt ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
+              </div>
+            </div>
+          )}
         </div>
       )}
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
-          {showRecordingDuration && (
-            <StatRow
-              label="App recording for"
-              value={state.caseOpenedAt ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
-            />
-          )}
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
           <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
