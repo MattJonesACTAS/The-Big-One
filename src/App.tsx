@@ -1304,7 +1304,7 @@ export default function App() {
     // Force hard reload with cache bypass
     window.location.href = window.location.pathname + '?nocache=' + Date.now();
     setTimeout(() => {
-      window.location.reload(true);
+      window.location.reload();
     }, 100);
   };
 
@@ -3474,7 +3474,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
 function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const patientLabel = state.patientType === 'adult'
-    ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
+    ? `Adult · ${state.patientWeight}kg`
     : state.patientType === 'paed'
     ? state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`
     : null;
@@ -3517,7 +3517,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
 function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const patientLabel = state.patientType === 'adult'
-    ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
+    ? `Adult · ${state.patientWeight}kg`
     : state.patientType === 'paed'
     ? state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`
     : null;
@@ -3900,7 +3900,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           <h2 className="text-2xl font-bold text-neutral-900 mb-2">{selectedMed}</h2>
           {state.patientWeight && (
             <p className="text-neutral-500 text-sm mb-2">
-              Patient weight: {state.patientWeight === '>100' ? '>100' : state.patientWeight}kg
+              Patient weight: {state.patientWeight}kg
             </p>
           )}
           {state.patientType && (
