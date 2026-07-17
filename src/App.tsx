@@ -224,11 +224,9 @@ const formatTimeWithSeconds = (seconds: number) => {
 };
 
 const formatTimeHMM = (seconds: number) => {
-  const hours = Math.floor(seconds / 3600);
-  const mins = Math.floor((seconds % 3600) / 60);
+  const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  if (hours > 0) return `${hours}h, ${mins}m`;
-  return `${mins}m, ${secs}s`;
+  return `${mins.toString().padStart(2, '0')}m, ${secs.toString().padStart(2, '0')}s`;
 };
 
 const getLocalTime = (date?: Date) => {
