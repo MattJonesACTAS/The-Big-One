@@ -3325,7 +3325,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Time</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
-        {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</div>}
+        {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Ago</div>}
       </div>
 
       <div className="divide-y divide-neutral-100">
