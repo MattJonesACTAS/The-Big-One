@@ -1458,7 +1458,7 @@ export default function App() {
           /* Log mode: scrollable running summary is the home screen */
           <div className="h-full flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <ArrestSummarySection state={state} />
+              <ArrestSummarySection state={state} showRecordingDuration />
               {(() => {
                 const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
                 const vitalRows = [
@@ -3413,10 +3413,6 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
           <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
-          <StatRow
-            label="App recording for"
-            value={state.caseOpenedAt ? formatTimeHMM(Math.floor((Date.now() - state.caseOpenedAt) / 1000)) : '—'}
-          />
         </div>
       </div>
 
@@ -3436,7 +3432,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   );
 }
 
-function ArrestSummarySection({ state }: { state: AppState }) {
+function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const patientLabel = state.patientType === 'adult'
     ? `Adult · ${state.patientWeight === '>100' ? '>100' : state.patientWeight}kg`
@@ -3459,6 +3455,12 @@ function ArrestSummarySection({ state }: { state: AppState }) {
           <StatRow label="CPR Rounds" value={state.cprRound} />
           <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
           <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+          {showRecordingDuration && (
+            <StatRow
+              label="App recording for"
+              value={state.caseOpenedAt ? formatTimeHMM(Math.floor((Date.now() - state.caseOpenedAt) / 1000)) : '—'}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -3531,7 +3533,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateIn
 
   return (
     <div className="space-y-6 pb-20">
-      <ArrestSummarySection state={state} />
+      <ArrestSummarySection state={state} showRecordingDuration />
       <div className="rounded-xl overflow-hidden border border-neutral-100">
         <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
         {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
