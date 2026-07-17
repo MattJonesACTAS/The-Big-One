@@ -3452,15 +3452,15 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
-          <StatRow label="CPR Rounds" value={state.cprRound} />
-          <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
-          <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
           {showRecordingDuration && (
             <StatRow
               label="App recording for"
               value={state.caseOpenedAt ? formatTimeHMM(Math.floor((Date.now() - state.caseOpenedAt) / 1000)) : '—'}
             />
           )}
+          <StatRow label="CPR Rounds" value={state.cprRound} />
+          <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
+          <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
         </div>
       </div>
     </div>
