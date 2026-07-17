@@ -224,7 +224,7 @@ const formatTimeWithSeconds = (seconds: number) => {
 const formatTimeHMM = (seconds: number) => {
   const hours = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
-  return `${hours}:${mins.toString().padStart(2, '0')}`;
+  return hours > 0 ? `${hours}h, ${mins}m` : `${mins}m`;
 };
 
 const getLocalTime = (date?: Date) => {
@@ -2753,12 +2753,15 @@ export default function App() {
 
             <div>
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest mb-3 text-center">Elapsed Time</p>
-              <TimePicker
-                value={{ mins: Math.floor(stagedElapsedSeconds / 60), secs: stagedElapsedSeconds % 60 }}
-                onChange={(v) => {
-                  setStagedElapsedSeconds(v.mins * 60 + v.secs);
+              <ElapsedTimePicker
+                value={{
+                  hrs: Math.floor(stagedElapsedSeconds / 3600),
+                  mins: Math.floor((stagedElapsedSeconds % 3600) / 60),
+                  secs: stagedElapsedSeconds % 60,
                 }}
-                maxSeconds={5999}
+                onChange={(v) => {
+                  setStagedElapsedSeconds(v.hrs * 3600 + v.mins * 60 + v.secs);
+                }}
               />
             </div>
 
