@@ -232,12 +232,14 @@ const formatTimeHMM = (seconds: number) => {
 
 const getLocalTime = (date?: Date) => {
   const d = date || new Date();
-  return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const time = d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
+  return `${time}${d.getHours() < 12 ? 'am' : 'pm'}`;
 };
 
 const getLocalTimeWithSeconds = (date?: Date) => {
   const d = date || new Date();
-  return d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+  const time = d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+  return `${time}${d.getHours() < 12 ? 'am' : 'pm'}`;
 };
 
 // Medications that carry a dose/detail suffix after the drug name, used both
