@@ -25,7 +25,8 @@ import {
   Sliders,
   RefreshCw,
   Hand,
-  User
+  User,
+  ClipboardList
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
@@ -428,6 +429,8 @@ export default function App() {
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
   const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showHandover, setShowHandover] = useState(false);
+  const [handoverCopied, setHandoverCopied] = useState(false);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [showTimerAdjust, setShowTimerAdjust] = useState(false);
@@ -962,6 +965,88 @@ export default function App() {
     });
   };
 
+  const generateHandoverText = (): string => {
+    const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
+
+    // Patient line
+    const patientLine = state.patientType === 'adult'
+      ? `Adult · ${state.patientWeight}kg`
+      : state.patientType === 'paed'
+      ? (state.patientAge ? `Paediatric · ${state.patientAge} · ${state.patientWeight}kg` : `Paediatric · ${state.patientWeight}kg`)
+      : 'Not recorded';
+
+    // Initial rhythm: rhythm detail on the first logged Shock/Disarm, if any was recorded
+    const firstShockDisarm = state.treatments.find(t => {
+      const id = getTreatmentIdentity(t.name);
+      return id === 'Shock' || id === 'Disarm';
+    });
+    let initialRhythm = 'Not recorded';
+    if (firstShockDisarm) {
+      const dashIdx = firstShockDisarm.name.indexOf(' - ');
+      if (dashIdx !== -1) initialRhythm = firstShockDisarm.name.slice(dashIdx + 3);
+    }
+
+    const reversiblesAddressed = state.reversiblesChecked.length > 0
+      ? state.reversiblesChecked.join(', ')
+      : 'None recorded';
+
+    const roscLine = state.isROSCMode ? 'ROSC achieved' : 'No ROSC achieved — case closed without ROSC';
+
+    // Signs
+    const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
+    const vitalLines = [
+      v.hr ? `HR ${v.hr} bpm` : null,
+      v.rr ? `RR ${v.rr} br/min` : null,
+      v.spo2 ? `SpO2 ${v.spo2}%` : null,
+      v.etco2 ? `EtCO2 ${v.etco2} mmHg` : null,
+      (v.bpSys && v.bpDia) ? `BP ${v.bpSys}/${v.bpDia} mmHg` : null,
+      v.gcs ? `GCS ${v.gcs}/15` : null,
+      v.bgl ? `BGL ${v.bgl} mmol/L` : null,
+      v.temp ? `Temp ${v.temp}°C` : null,
+    ].filter((l): l is string => l !== null);
+
+    // Treatment
+    const medLines = Object.entries(pharmaSummary as Record<string, { totalDose: number, unit: string, count: number, display: string }>).map(([med, info]) => `${med} ${info.display}`);
+    const duration = state.caseOpenedAt
+      ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000))
+      : 'Not recorded';
+
+    const lines: string[] = [];
+    lines.push('IMIST HANDOVER');
+    lines.push('');
+    lines.push('I — IDENTIFICATION');
+    lines.push(`• ${patientLine}`);
+    lines.push('');
+    lines.push('M — MECHANISM');
+    lines.push('• _______________________________ (fill in)');
+    lines.push('');
+    lines.push('I — INFORMATION');
+    lines.push(`• Initial rhythm: ${initialRhythm}`);
+    lines.push(`• Reversible causes addressed: ${reversiblesAddressed}`);
+    lines.push(`• ${roscLine}`);
+    lines.push('');
+    lines.push('S — SIGNS');
+    if (vitalLines.length > 0) {
+      vitalLines.forEach(l => lines.push(`• ${l}`));
+    } else {
+      lines.push('• No vital signs recorded');
+    }
+    lines.push('');
+    lines.push('T — TREATMENT / TRENDS');
+    lines.push(`• CPR rounds: ${state.cprRound}`);
+    lines.push(`• Shocks given: ${state.shocks}`);
+    lines.push(`• Disarms: ${disarmCount}`);
+    if (medLines.length > 0) {
+      medLines.forEach(l => lines.push(`• ${l}`));
+    } else {
+      lines.push('• No medications given');
+    }
+    lines.push(`• Case duration: ${duration}`);
+    lines.push(`• Status: ${state.isROSCMode ? 'ROSC, case closed' : 'Case closed'}`);
+
+    return lines.join('\n');
+  };
+
   const toggleChecklistItem = (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => {
     setState(prev => {
       const key = `${checklist}Checked` as 'reversiblesChecked' | 'roscChecked' | 'pheaChecked';
@@ -1322,7 +1407,14 @@ export default function App() {
     return (
       <div className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 overflow-y-auto pb-24">
         <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
-        
+
+        <button
+          onClick={() => { setHandoverCopied(false); setShowHandover(true); }}
+          className="w-full flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-3 px-4 rounded-xl font-bold btn-base border border-blue-100"
+        >
+          <ClipboardList size={20} /> Generate Handover
+        </button>
+
         <div className="grid grid-cols-2 gap-4">
           <button 
             onClick={() => window.print()}
@@ -1387,6 +1479,31 @@ export default function App() {
              </div>
            </div>
          </div>
+        )}
+
+        {showHandover && (
+          <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6">
+            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl max-h-[85vh] flex flex-col">
+              <h2 className="text-xl font-bold text-neutral-900 text-center mb-4 flex-shrink-0">IMIST Handover</h2>
+              <pre className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 text-[13px] leading-relaxed text-neutral-800 whitespace-pre-wrap overflow-y-auto flex-1 font-sans">
+                {generateHandoverText()}
+              </pre>
+              <div className="grid grid-cols-2 gap-3 mt-4 flex-shrink-0">
+                <button onClick={() => setShowHandover(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Close</button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(generateHandoverText()).then(() => {
+                      setHandoverCopied(true);
+                      setTimeout(() => setHandoverCopied(false), 2000);
+                    });
+                  }}
+                  className="bg-blue-600 p-4 rounded-xl font-bold text-white btn-base"
+                >
+                  {handoverCopied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {tutorialMode && (
