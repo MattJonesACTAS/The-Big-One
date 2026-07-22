@@ -4126,7 +4126,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           <TxSection 
             title="Other Tx" 
             color="neutral" 
-            items={['Corpuls', 'Extrication', 'IO', 'IV access', 'Pacing', 'Reassurance provided']} 
+            items={['Corpuls', 'Extrication', 'IO access', 'IV access', 'Pacing', 'Reassurance provided']} 
             onSelect={addTreatment}
             sectionId="otherTx"
             expandedSection={expandedSection}
