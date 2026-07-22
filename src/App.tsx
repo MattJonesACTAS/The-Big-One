@@ -1207,9 +1207,13 @@ export default function App() {
           prior: true
         });
       }
-      
+
+      // Buttons are labelled 'IO'/'IV' for brevity, but should read as
+      // 'IO access'/'IV access' once logged in the Tx summary
+      const displayName = name === 'IO' ? 'IO access' : name === 'IV' ? 'IV access' : name;
+
       initialTxs.push({
-        name,
+        name: displayName,
         elapsed: 0,
         round: 0,
         clock: getLocalTime(baseClock),
