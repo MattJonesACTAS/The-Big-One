@@ -15,6 +15,7 @@ export interface Treatment {
 
 export interface AppState {
   running: boolean;
+  reversiblesChecklistOpened: boolean;
   caseOpenedAt: number | null;
   caseClosedAt: number | null;
   startTime: number | null;

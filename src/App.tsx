@@ -34,6 +34,7 @@ import TutorialOverlay from './TutorialOverlay';
 // --- Constants ---
 const INITIAL_STATE: AppState = {
   running: false,
+  reversiblesChecklistOpened: false,
   caseOpenedAt: null,
   caseClosedAt: null,
   startTime: null,
@@ -1479,10 +1480,18 @@ export default function App() {
         <button 
           onClick={() => {
             if (isShockForced) return;
-            setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'reversibles' ? null : 'reversibles' }))
+            setState(p => ({
+              ...p,
+              reversiblesChecklistOpened: true,
+              currentOverlay: p.currentOverlay === 'reversibles' ? null : 'reversibles'
+            }));
           }}
           disabled={isShockForced}
-          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+          className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${
+            state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' :
+            !state.reversiblesChecklistOpened ? 'bg-red-600 text-white animate-pulse' :
+            'bg-blue-100 text-blue-700'
+          } ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'reversibles' ? 'Close' : '4H 4T'}
         </button>
