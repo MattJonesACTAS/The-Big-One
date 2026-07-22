@@ -2387,7 +2387,7 @@ export default function App() {
                           <div className="bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-800 tracking-widest uppercase">Treatment Log</div>
                           <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1 border-b border-neutral-100">
                             <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest">Treatment</span>
-                            <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-center">Clock</span>
+                            <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</span>
                             <span className="text-[10px] font-black text-neutral-800 uppercase tracking-widest text-right">Ago</span>
                           </div>
                           <div className="px-3 py-2 grid grid-cols-[2fr_1fr_1fr] gap-1">
@@ -3415,7 +3415,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
       <div className={`grid ${gridCols} gap-1 bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
-        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Clock</div>
+        <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-4">Ago</div>}
       </div>
