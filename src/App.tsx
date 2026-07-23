@@ -1194,69 +1194,49 @@ export default function App() {
 
     const initialTxs: Treatment[] = [];
     const baseClock = new Date(startClockTime);
-    
-    priorTxs.forEach(name => {
-      // Auto-add OPA before BVM
-      if (name === 'BVM') {
-        initialTxs.push({
-          name: 'OPA',
-          elapsed: 0,
-          round: 0,
-          clock: getLocalTime(baseClock),
-          clockSeconds: getLocalTimeWithSeconds(baseClock),
-          prior: true
-        });
-      }
 
-      // Buttons are labelled 'IO'/'IV' for brevity, but should read as
-      // 'IO access'/'IV access' once logged in the Tx summary
-      const displayName = name === 'IO' ? 'IO access' : name === 'IV' ? 'IV access' : name;
-
+    const pushPrior = (name: string) => {
       initialTxs.push({
-        name: displayName,
+        name,
         elapsed: 0,
         round: 0,
         clock: getLocalTime(baseClock),
         clockSeconds: getLocalTimeWithSeconds(baseClock),
         prior: true
       });
-    });
+    };
 
     // Auto-add "CPR" and "Pads on" before shocks/disarms in catchup
     if (priorCounts.shock > 0 || priorCounts.disarm > 0) {
-      initialTxs.push({ 
-        name: 'CPR', 
-        elapsed: 0, 
-        round: 0, 
-        clock: getLocalTime(baseClock), 
-        clockSeconds: getLocalTimeWithSeconds(baseClock), 
-        prior: true 
-      });
-      initialTxs.push({ 
-        name: 'Pads on', 
-        elapsed: 0, 
-        round: 0, 
-        clock: getLocalTime(baseClock), 
-        clockSeconds: getLocalTimeWithSeconds(baseClock), 
-        prior: true 
-      });
+      pushPrior('CPR');
+      pushPrior('Pads on');
     }
 
     for (let i = 0; i < priorCounts.shock; i++) {
-      initialTxs.push({ name: i === 0 ? 'Shock' : `Shock #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      pushPrior(i === 0 ? 'Shock' : `Shock #${i+1}`);
     }
     for (let i = 0; i < priorCounts.disarm; i++) {
-      initialTxs.push({ name: i === 0 ? 'Disarm' : `Disarm #${i+1}`, elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      pushPrior(i === 0 ? 'Disarm' : `Disarm #${i+1}`);
     }
+
+    // Airway/access buttons, always presented in a fixed chronological order
+    // (earliest to latest) regardless of the order they were tapped in:
+    // OPA, BVM, LMA, IV access, IO access
+    if (priorTxs.includes('BVM')) pushPrior('OPA');
+    if (priorTxs.includes('BVM')) pushPrior('BVM');
+    if (priorTxs.includes('LMA')) pushPrior('LMA');
+    if (priorTxs.includes('IV')) pushPrior('IV access');
+    if (priorTxs.includes('IO')) pushPrior('IO access');
+
     for (let i = 0; i < priorCounts.adrenaline; i++) {
       const adrenalineDose = getAdrenalinePushDose(weightType, parsedWeight);
       const baseName = `Adrenaline push ${adrenalineDose}`;
-      initialTxs.push({ name: i === 0 ? baseName : insertTreatmentNumber(baseName, 'Adrenaline push', i + 1), elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      pushPrior(i === 0 ? baseName : insertTreatmentNumber(baseName, 'Adrenaline push', i + 1));
     }
     for (let i = 0; i < priorCounts.amiodarone; i++) {
       const amiodaroneDose = getAmiodaroneDose(weightType, parsedWeight, i === 0 ? 1 : 2);
       const baseName = `Amiodarone ${amiodaroneDose}`;
-      initialTxs.push({ name: i === 0 ? baseName : insertTreatmentNumber(baseName, 'Amiodarone', i + 1), elapsed: 0, round: 0, clock: getLocalTime(baseClock), clockSeconds: getLocalTimeWithSeconds(baseClock), prior: true });
+      pushPrior(i === 0 ? baseName : insertTreatmentNumber(baseName, 'Amiodarone', i + 1));
     }
     
     // Include any treatments added via the Full Tx list button
