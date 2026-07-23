@@ -1222,8 +1222,16 @@ export default function App() {
       });
     });
 
-    // Auto-add "Pads on" before shocks/disarms in catchup
+    // Auto-add "CPR" and "Pads on" before shocks/disarms in catchup
     if (priorCounts.shock > 0 || priorCounts.disarm > 0) {
+      initialTxs.push({ 
+        name: 'CPR', 
+        elapsed: 0, 
+        round: 0, 
+        clock: getLocalTime(baseClock), 
+        clockSeconds: getLocalTimeWithSeconds(baseClock), 
+        prior: true 
+      });
       initialTxs.push({ 
         name: 'Pads on', 
         elapsed: 0, 
@@ -4129,7 +4137,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           <TxSection 
             title="Airway" 
             color="blue" 
-            items={['ETT', 'FONA', 'IGT', 'LMA', 'OPA', 'NPA', 'Suction']} 
+            items={['ETT', 'FONA', 'IGT', 'LMA', 'NPA', 'OPA', 'Suction']} 
             onSelect={addTreatment}
             sectionId="airway"
             expandedSection={expandedSection}
