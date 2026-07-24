@@ -50,13 +50,8 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'pause', type: 'positioned', x: 19.0, y: 4.2,
-    pages: [{ title: 'Pause Button', description: 'Pause and resume the rhythm check timer.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
-  },
-  {
-    id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2,
-    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Update the elapsed timer if it has become desynchronised with the monitor\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
+    id: 'recalibrate', type: 'positioned', x: 19.0, y: 4.2,
+    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
