@@ -141,7 +141,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   {
     id: 'delete', type: 'positioned', x: 73, y: 14,
-    pages: [{ title: 'Close Case', description: "Once you've finished with the case and exported to PDF if needed, you can close the case, which deletes all its data.\n\nThe most recent 3 closed cases are automatically kept as a backup, so you can still retrieve one from the start screen even after closing it here.\n\nClose the case to finish the tutorial, and we'll see you at The Big One!" }],
+    pages: [{ title: 'Close Case', description: "Once you've finished with this case, you can close the case which resets the app.\n\nThe three most recent closed cases are accessible on the opening screen if you want to look back on them later.\n\nClose the case to finish the tutorial and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }
 ];
