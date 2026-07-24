@@ -35,20 +35,16 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     id: 'timer', type: 'positioned', x: 50, y: 52,
     pages: [
       {
-        title: 'Rhythm Check Timer',
-        description: "The countdown to the next rhythm check.\n\nEarlier we chose 'CPR timer' as our method of keeping track of rhythm checks.\n\nWe then entered the imaginary live CPR timer from our imaginary monitor.\n\nThe app now shows you the same CPR timer here for you to reference during the case, rather than needing to look at the monitor.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
+        title: 'Elapsed Timer',
+        description: "The running elapsed time, matching the monitor's.\n\nEarlier we chose 'Elapsed time' as our method of keeping track of rhythm checks.\n\nWe then entered the imaginary live elapsed time from our imaginary monitor.\n\nThe app now shows you the same elapsed time here for you to reference during the case, rather than needing to look at the monitor.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
       },
       {
         title: 'Timer Behaviour',
-        description: "When the timer reaches 00:10 you will be forced back to the home screen so that you don't miss the rhythm check.\n\nWhen the timer reaches 0:00, it allows six seconds for the rhythm check, then restarts from 2:00.\n\nYou will then be forced to record whether you shocked or disarmed."
-      },
-      {
-        title: 'Elapsed Time Option',
-        description: "If you had selected to use the monitor's elapsed time to keep track of rhythm checks, the elapsed time would appear here instead."
+        description: "The elapsed time counts up continuously and never resets.\n\nWhen it reaches your chosen rhythm check interval (e.g. every even minute), you will immediately be prompted to record whether you shocked or disarmed."
       },
       {
         title: 'Tx Log Only Option',
-        description: "If you had selected the 'Tx log only' option, then the app will only help you keep a log of interventions you apply during the case.\n\nIt will not assist you to keep track of rhythm checks."
+        description: "If you had selected the 'Tx log only' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
@@ -60,7 +56,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   {
     id: 'recalibrate', type: 'positioned', x: 51.0, y: 4.2,
-    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Update the CPR timer if it has become desynchronised with the monitor\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
+    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Update the elapsed timer if it has become desynchronised with the monitor\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
@@ -156,9 +152,9 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
 // silently produce a duplicate or skipped number again. Only 'positioned'
 // nodes get a visible number (popups like homeIntro don't).
 // BASE_TUTORIAL_NUMBER is the last number used by InteractiveTutorial.tsx's
-// catchup-flow nodes (Patient Type=1 ... Enter Current CPR Timer=6) — this
+// catchup-flow nodes (Patient Type=1 ... Enter Current Elapsed Time=5) — this
 // picks up right after that.
-const BASE_TUTORIAL_NUMBER = 6;
+const BASE_TUTORIAL_NUMBER = 5;
 let positionedCount = 0;
 const ALL_NODES: GlobalNode[] = RAW_NODES.map(node => {
   if (node.type !== 'positioned') return node;

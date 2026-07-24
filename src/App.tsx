@@ -533,7 +533,6 @@ export default function App() {
   const [catchupStep, setCatchupStep] = useState(1);
   const [catchupTxMode, setCatchupTxMode] = useState(false);
   const [catchupElapsed, setCatchupElapsed] = useState({ hrs: 0, mins: 0, secs: 0 });
-  const [catchupRhythm, setCatchupRhythm] = useState({ mins: 2, secs: 0 });
   const [weightType, setWeightType] = useState<'adult' | 'paed' | null>(null);
   const [paedWeightMethod, setPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
   const [paedAgeLabel, setPaedAgeLabel] = useState<string>('');
@@ -542,8 +541,7 @@ export default function App() {
   const [priorTxs, setPriorTxs] = useState<string[]>([]);
   const [useManualEntry, setUseManualEntry] = useState(false);
   const [elapsedTimestamp, setElapsedTimestamp] = useState<number | null>(null);
-  const [cprTimestamp, setCprTimestamp] = useState<number | null>(null);
-  const [timingMode, setTimingMode] = useState<'cpr' | 'elapsed' | 'log' | null>(() => state.timingMode);
+  const [timingMode, setTimingMode] = useState<'elapsed' | 'log' | null>(() => state.timingMode);
   const [rhythmInterval, setRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds' | null>(() => state.rhythmInterval);
   const [demoTick, setDemoTick] = useState(0); // drives animated timers on mode selection screen
   const [isCaseClosed, setIsCaseClosed] = useState(() => {
@@ -565,12 +563,10 @@ export default function App() {
   const [viewingPreviousCase, setViewingPreviousCase] = useState<AppState | null>(null);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
-  const [showTimerAdjust, setShowTimerAdjust] = useState(false);
-  const [timerAdjustValue, setTimerAdjustValue] = useState({ mins: 2, secs: 0 });
   const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
   const [showRecalibrateMenu, setShowRecalibrateMenu] = useState(false);
   const [showModeChange, setShowModeChange] = useState(false);
-  const [pendingModeChangeFrom, setPendingModeChangeFrom] = useState<'cpr' | 'elapsed' | 'log' | null>(null);
+  const [pendingModeChangeFrom, setPendingModeChangeFrom] = useState<'elapsed' | 'log' | null>(null);
   const [stagedElapsedSeconds, setStagedElapsedSeconds] = useState(0);
   const [stagedRhythmInterval, setStagedRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds'>('evens');
   const [showWeightChange, setShowWeightChange] = useState(false);
@@ -636,32 +632,32 @@ export default function App() {
     }
   }, [tutorialMode, state.patientWeight]);
 
-  // Inject tutorial CPR button flash CSS
+  // Inject tutorial Elapsed Time button flash CSS
   useEffect(() => {
     const style = document.createElement('style');
-    style.id = 'tutorial-cpr-flash-style';
+    style.id = 'tutorial-elapsed-flash-style';
     style.textContent = `
-      @keyframes tutorialCprFade {
+      @keyframes tutorialElapsedFade {
         0%, 100% { opacity: 1; }
         50% { opacity: 0.45; }
       }
-      body.tutorial-flash-cpr-btn [data-tutorial="cpr-btn"] {
-        animation: tutorialCprFade 2s ease-in-out infinite;
+      body.tutorial-flash-elapsed-btn [data-tutorial="elapsed-btn"] {
+        animation: tutorialElapsedFade 2s ease-in-out infinite;
       }
     `;
     document.head.appendChild(style);
-    return () => { document.getElementById('tutorial-cpr-flash-style')?.remove(); };
+    return () => { document.getElementById('tutorial-elapsed-flash-style')?.remove(); };
   }, []);
   useEffect(() => {
     console.log('Tutorial screen tracking:', tutorialScreen);
     console.log('Current overlay:', state.currentOverlay);
     console.log('Treatments length:', state.treatments.length);
 
-    // Tutorial: flash CPR button when all timing nodes explored
+    // Tutorial: flash Elapsed Time button when all timing nodes explored
     if (showInteractiveTutorial && timingNodesComplete) {
-      document.body.classList.add('tutorial-flash-cpr-btn');
+      document.body.classList.add('tutorial-flash-elapsed-btn');
     } else {
-      document.body.classList.remove('tutorial-flash-cpr-btn');
+      document.body.classList.remove('tutorial-flash-elapsed-btn');
     }
     
     // Node 3 (recalibrate) complete - flash Recalibrate button (index 5 = waiting for weight change)
@@ -724,7 +720,7 @@ export default function App() {
     }
     
     return () => {
-      document.body.classList.remove('tutorial-flash-cpr-btn');
+      document.body.classList.remove('tutorial-flash-elapsed-btn');
       document.body.classList.remove('tutorial-flash-recalibrate');
       document.body.classList.remove('tutorial-flash-weight');
       document.body.classList.remove('tutorial-flash-add-tx');
@@ -872,7 +868,8 @@ export default function App() {
                   setHasShownForcedShock(false);
                 }
               } else {
-                // CPR mode: 6-second overtime phase before forcing overlay
+                // Fallback fixed 2-minute cycle with a 6-second overtime phase
+                // (used if timingMode/rhythmInterval aren't set yet)
                 nextOvertime = newElapsed - prev.rhythmCheckTarget;
                 
                 if (nextOvertime >= 6) {
@@ -949,20 +946,6 @@ export default function App() {
     setShowResetWarning(false);
   };
 
-  const applyTimerAdjustment = () => {
-    const totalSeconds = timerAdjustValue.mins * 60 + timerAdjustValue.secs;
-    
-    if (totalSeconds > 0) {
-      setState(prev => ({
-        ...prev,
-        rhythmCheckTarget: prev.elapsedSeconds + totalSeconds,
-        rhythmCheckOvertime: 0
-      }));
-    }
-    
-    setShowTimerAdjust(false);
-  };
-
   const addTreatment = (name: string) => {
     const now = new Date();
 
@@ -998,9 +981,7 @@ export default function App() {
       // Increment round if shock/disarm logged out of turn (before timer hit 0)
       // Do NOT increment if responding to a forced rhythm check overlay (already incremented by timer)
       const isOutOfTurn = isShockOrDisarm && !isROSC && !isShockForced && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
-      // In CPR timer mode, an out-of-turn shock/disarm restarts the 2:00 countdown
-      // (the crew has effectively just done a rhythm check, on or off the clock).
-      const shouldResetTimer = isROSC || (isShockOrDisarm && wasRhythmCheckPaused) || (isOutOfTurn && timingMode === 'cpr');
+      const shouldResetTimer = isROSC || (isShockOrDisarm && wasRhythmCheckPaused);
       
       // Auto-add OPA before BVM
       const newTreatments = [...prev.treatments];
@@ -1023,8 +1004,7 @@ export default function App() {
         shocks: (name.includes('Shock') && !name.includes('Disarm')) ? prev.shocks + 1 : prev.shocks,
         cprRound: isOutOfTurn ? prev.cprRound + 1 : prev.cprRound,
         currentOverlay: isRearrest ? 'treatment' : null,
-        // Reset rhythm check to 2:00 for ROSC, when unpausing via other shock/disarm,
-        // or when an out-of-turn shock/disarm is logged in CPR mode
+        // Reset rhythm check to 2:00 for ROSC, or when unpausing via other shock/disarm
         rhythmCheckTarget: shouldResetTimer 
           ? prev.elapsedSeconds + 120 
           : prev.rhythmCheckTarget,
@@ -1055,7 +1035,7 @@ export default function App() {
     
     setIsShockForced(false);
 
-    // If this treatment was logged from a rearrest, show interval picker (elapsed) or timer adjust (CPR); log mode needs nothing
+    // If this treatment was logged from a rearrest, show interval picker (elapsed mode); log mode needs nothing
     if (rearrested && (name.includes('Shock') || name.includes('Disarm'))) {
       setRearrested(false);
       if (name === 'Disarm - ROSC') {
@@ -1063,8 +1043,6 @@ export default function App() {
       } else if (timingMode === 'elapsed') {
         setRearrestElapsed(state.elapsedSeconds);
         setShowRearrestIntervalPicker(true);
-      } else if (timingMode !== 'log') {
-        setShowTimerAdjust(true);
       }
     }
     
@@ -1224,12 +1202,6 @@ export default function App() {
     }
     
     let adjustedElapsed = catchupElapsed.hrs * 3600 + catchupElapsed.mins * 60 + catchupElapsed.secs;
-    let adjustedRhythm = catchupRhythm.mins * 60 + catchupRhythm.secs;
-    
-    // If rhythm check is too short (<= 6 seconds), start with full 2:00 instead
-    if (adjustedRhythm <= 6) {
-      adjustedRhythm = 120;
-    }
     
     // Use override weight if provided, otherwise use weightInput state
     const finalWeight = overrideWeight || weightInput;
@@ -1252,12 +1224,6 @@ export default function App() {
       adjustedElapsed += timeSinceElapsed;
     }
     
-    // Only apply CPR timestamp adjustment in CPR timer mode
-    if (timingMode === 'cpr' && cprTimestamp) {
-      const timeSinceCpr = Math.floor((Date.now() - cprTimestamp) / 1000);
-      adjustedRhythm = Math.max(0, adjustedRhythm - timeSinceCpr);
-    }
-    
     const now = Date.now();
     const startClockTime = now - (adjustedElapsed * 1000);
     
@@ -1266,7 +1232,9 @@ export default function App() {
     if (timingMode === 'elapsed' && rhythmInterval) {
       rhythmCheckTarget = calcNextIntervalTarget(adjustedElapsed, rhythmInterval);
     } else {
-      rhythmCheckTarget = adjustedElapsed + adjustedRhythm;
+      // Log mode doesn't act on this value at all (rhythm-check tracking is
+      // disabled entirely in log mode), so a simple default is fine here.
+      rhythmCheckTarget = adjustedElapsed + 120;
     }
 
     const initialTxs: Treatment[] = [];
@@ -1354,8 +1322,7 @@ export default function App() {
     setPriorTxs([]);
     // setPhotoTimestamp(null); // Removed - not defined
     setElapsedTimestamp(null);
-    setCprTimestamp(null);
-    previousCountdown.current = adjustedRhythm;
+    previousCountdown.current = rhythmCheckTarget - adjustedElapsed;
   };
 
   const deleteCase = () => {
@@ -1691,7 +1658,7 @@ export default function App() {
         <div className="h-full flex flex-col items-center px-2 sm:px-3 pt-4 pb-2 sm:pb-3 relative">
           {/* Corner Cards */}
           <div className="absolute top-3 sm:top-4 left-3 sm:left-4 right-3 sm:right-4 flex justify-between gap-3 sm:gap-4">
-            {timingMode !== 'cpr' && timingMode !== 'elapsed' && (
+            {timingMode !== 'elapsed' && (
               <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
                 <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Total time</span>
                 <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{formatTime(state.elapsedSeconds)}</span>
@@ -2070,7 +2037,6 @@ export default function App() {
                       onClick={() => {
                         setCatchupStep(2);
                         setUseManualEntry(true);
-                        setCatchupRhythm({ mins: 0, secs: 0 });
                       }} 
                       className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white p-5 rounded-2xl text-lg font-bold shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
                     >
@@ -2372,7 +2338,7 @@ export default function App() {
                   <div className="grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => {
-                        setCatchupStep(timingMode === 'elapsed' ? 7 : 6);
+                        setCatchupStep(7);
                         setUseManualEntry(false);
                       }} 
                       className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base"
@@ -2382,41 +2348,12 @@ export default function App() {
                     <button 
                       onClick={() => { 
                         setElapsedTimestamp(Date.now());
-                        if (timingMode === 'elapsed') {
-                          handleCatchupStart();
-                        } else {
-                          setCatchupRhythm({ mins: 0, secs: 0 });
-                          setCatchupStep(5);
-                        }
-                      }} 
-                      className={'p-3 rounded-xl font-bold btn-base text-white bg-emerald-600'}
-                    >
-                      {timingMode === 'elapsed' ? 'Start Case' : 'Next'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {!catchupTxMode && catchupStep === 5 && (
-                <div className="text-center space-y-6">
-                  <h2 className="text-xl font-bold text-neutral-900 px-4">Enter Current CPR Timer</h2>
-                  <p className="text-neutral-600 text-sm px-4">This is the countdown above the diamond on the monitor</p>
-                  <TimePicker 
-                    value={catchupRhythm} 
-                    onChange={setCatchupRhythm} 
-                    maxSeconds={120}
-                  />
-                  <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => { setCatchupStep(6); setTimingMode(null); }} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
-                    <button 
-                      onClick={() => {
-                        setCprTimestamp(Date.now());
                         if (showInteractiveTutorial) {
                           setShowInteractiveTutorial(false);
                           setTutorialMode(true);
                         }
                         handleCatchupStart();
-                      }}
+                      }} 
                       disabled={showInteractiveTutorial && !catchupNodeCleared}
                       className={`p-3 rounded-xl font-bold btn-base ${showInteractiveTutorial && !catchupNodeCleared ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed' : 'bg-emerald-600 text-white'}`}
                     >
@@ -2558,42 +2495,11 @@ export default function App() {
                       </div>
                     </button>
 
-                    {/* CPR timer */}
-                    <button
-                      onClick={() => {
-                        setTimingMode('cpr');
-                      }}
-                      disabled={showInteractiveTutorial && !timingNodesComplete}
-                      data-tutorial="cpr-btn"
-                      className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'cpr' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
-                    >
-                      <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
-                        <div className="relative w-[100px] h-[100px] flex items-center justify-center">
-                          <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="44" fill="none" stroke="#f3f4f6" strokeWidth="5"/>
-                            <circle cx="50" cy="50" r="44" fill="none" stroke="#10b981" strokeWidth="5"
-                              strokeLinecap="round"
-                              strokeDasharray="276.5"
-                              strokeDashoffset={276.5 * (1 - ((120 - (demoTick % 120)) / 120))}
-                            />
-                          </svg>
-                          <div className="flex flex-col items-center z-10">
-                            <span className="text-[22px] font-bold tabular-nums leading-none text-neutral-900">
-                              {`${Math.floor((120 - (demoTick % 120)) / 60)}:${String((120 - (demoTick % 120)) % 60).padStart(2,'0')}`}
-                            </span>
-                            <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Rhythm Check</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'cpr' ? 'bg-emerald-500 text-white' : 'bg-white text-neutral-700'}`}>
-                        Monitor's inbuilt CPR timer
-                      </div>
-                    </button>
-
                     {/* Elapsed time */}
                     <button
                       onClick={() => setTimingMode('elapsed')}
-                      disabled={showInteractiveTutorial}
+                      disabled={showInteractiveTutorial && !timingNodesComplete}
+                      data-tutorial="elapsed-btn"
                       className={`w-full rounded-2xl overflow-hidden border-2 transition-all duration-200 ${timingMode === 'elapsed' ? 'border-emerald-500' : 'border-neutral-200 hover:border-neutral-300'}`}
                     >
                       <div className="bg-neutral-50 px-5 pt-5 pb-3 flex flex-col items-center">
@@ -2632,8 +2538,7 @@ export default function App() {
                     <button disabled={showInteractiveTutorial} onClick={() => setCatchupStep(3)} className={`bg-neutral-100 py-4 rounded-xl font-bold transition-colors ${showInteractiveTutorial ? 'text-neutral-300 cursor-default' : 'text-neutral-700 hover:bg-neutral-200'}`}>Back</button>
                     <button
                       onClick={() => {
-                        if (timingMode === 'cpr') { setCatchupRhythm({ mins: 0, secs: 0 }); setCatchupStep(5); }
-                        else if (timingMode === 'elapsed') setCatchupStep(7);
+                        if (timingMode === 'elapsed') setCatchupStep(7);
                         else if (timingMode === 'log') handleCatchupStart();
                       }}
                       disabled={!timingMode}
@@ -2737,26 +2642,18 @@ export default function App() {
         <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-4">
             <h2 className="text-2xl font-bold text-neutral-900 text-center">Recalibrate</h2>
-            {timingMode !== 'log' && (
+            {timingMode === 'elapsed' && (
             <button
               onClick={() => {
                 setShowRecalibrateMenu(false);
-                if (timingMode === 'elapsed') {
-                  setStagedElapsedSeconds(state.elapsedSeconds);
-                  setStagedRhythmInterval(rhythmInterval || 'evens');
-                  setShowElapsedRecalibrate(true);
-                } else {
-                  const currentCountdown = Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds);
-                  const mins = Math.floor(currentCountdown / 60);
-                  const secs = currentCountdown % 60;
-                  setTimerAdjustValue({ mins, secs });
-                  setShowTimerAdjust(true);
-                }
+                setStagedElapsedSeconds(state.elapsedSeconds);
+                setStagedRhythmInterval(rhythmInterval || 'evens');
+                setShowElapsedRecalibrate(true);
               }}
               className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
             >
               <div className="text-base">Recalibrate timer</div>
-              <div className="text-xs text-neutral-500 font-medium mt-0.5">{timingMode === 'elapsed' ? 'Adjust the current elapsed time or rhythm check' : 'Adjust the current rhythm check countdown'}</div>
+              <div className="text-xs text-neutral-500 font-medium mt-0.5">Adjust the current elapsed time or rhythm check</div>
             </button>
             )}
             <button
@@ -2787,7 +2684,7 @@ export default function App() {
               className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
             >
               <div className="text-base">Change timing mode</div>
-              <div className="text-xs text-neutral-500 font-medium mt-0.5">Currently {timingMode === 'cpr' ? 'CPR Timer' : timingMode === 'elapsed' ? 'Elapsed Time' : 'Tx Log Only'}</div>
+              <div className="text-xs text-neutral-500 font-medium mt-0.5">Currently {timingMode === 'elapsed' ? 'Elapsed Time' : 'Tx Log Only'}</div>
             </button>
             <button onClick={() => setShowRecalibrateMenu(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
               Cancel
@@ -2974,19 +2871,6 @@ export default function App() {
               >
                 Elapsed Time
               </button>
-              <button
-                disabled={timingMode === 'cpr'}
-                onClick={() => {
-                  setPendingModeChangeFrom(timingMode);
-                  setTimingMode('cpr');
-                  setTimerAdjustValue({ mins: 2, secs: 0 });
-                  setShowModeChange(false);
-                  setShowTimerAdjust(true);
-                }}
-                className={`w-full p-4 rounded-2xl font-bold text-center ${timingMode === 'cpr' ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-neutral-100 text-neutral-800 hover:bg-neutral-200'}`}
-              >
-                CPR Timer
-              </button>
             </div>
             <button onClick={() => setShowModeChange(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
               Cancel
@@ -3075,48 +2959,6 @@ export default function App() {
                 className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
               >
                 Done
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showTimerAdjust && (
-        <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Adjust Rhythm Check Timer</h2>
-            <p className="text-neutral-500 mb-6">Match the app's rhythm check timer to the monitor's CPR timer</p>
-            
-            <div className="mb-8">
-              <TimePicker 
-                value={timerAdjustValue}
-                onChange={setTimerAdjustValue}
-                maxSeconds={120}
-              />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3">
-              <button 
-                onClick={() => {
-                  setShowTimerAdjust(false);
-                  setTimerAdjustValue({ mins: 2, secs: 0 });
-                  if (pendingModeChangeFrom !== null) {
-                    setTimingMode(pendingModeChangeFrom);
-                    setPendingModeChangeFrom(null);
-                  }
-                }} 
-                className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => {
-                  applyTimerAdjustment();
-                  setPendingModeChangeFrom(null);
-                }} 
-                className="bg-emerald-600 p-4 rounded-xl font-bold text-white btn-base"
-              >
-                Set Timer
               </button>
             </div>
           </div>
@@ -3599,9 +3441,8 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
     return { med: name, dose: null };
   };
 
-  const isCpr = timingMode === 'cpr';
   const isElapsedMode = timingMode === 'elapsed';
-  const showElapsed = !isCpr && !isElapsedMode && timingMode !== 'log';
+  const showElapsed = !isElapsedMode && timingMode !== 'log';
   const showAgo = !isSummary;
 
   const gridCols = isSummary
