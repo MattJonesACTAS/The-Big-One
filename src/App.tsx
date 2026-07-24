@@ -402,7 +402,9 @@ export default function App() {
     if (!saved) return true; // No saved state = show catchup
     try {
       const loaded = JSON.parse(saved);
-      return !loaded.running; // Show catchup if timer not running
+      if (loaded.running) return false; // Actively running -> home screen
+      if (loaded.caseClosedAt) return false; // Closed but not deleted -> case summary screen
+      return true; // Never started -> catchup
     } catch (e) {
       return true;
     }
@@ -423,7 +425,16 @@ export default function App() {
   const [timingMode, setTimingMode] = useState<'cpr' | 'elapsed' | 'log' | null>(() => state.timingMode);
   const [rhythmInterval, setRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds' | null>(() => state.rhythmInterval);
   const [demoTick, setDemoTick] = useState(0); // drives animated timers on mode selection screen
-  const [isCaseClosed, setIsCaseClosed] = useState(false);
+  const [isCaseClosed, setIsCaseClosed] = useState(() => {
+    const saved = localStorage.getItem('theBigOneState');
+    if (!saved) return false;
+    try {
+      const loaded = JSON.parse(saved);
+      return !loaded.running && !!loaded.caseClosedAt;
+    } catch (e) {
+      return false;
+    }
+  });
   const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
   const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
