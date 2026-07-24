@@ -3606,8 +3606,8 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
   const gridCols = isSummary
     ? (showElapsed ? 'grid-cols-[1.8fr_1.2fr_1fr]' : 'grid-cols-[1.8fr_1.2fr]')
     : (showElapsed
-        ? (onMove ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]')
-        : (onMove ? 'grid-cols-[1.9fr_1fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]'));
+        ? (reorderingRealIdx !== null ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]')
+        : (reorderingRealIdx !== null ? 'grid-cols-[1.9fr_1fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]'));
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
@@ -3616,7 +3616,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-4">Ago</div>}
-        {onMove && <div />}
+        {reorderingRealIdx !== null && <div />}
       </div>
 
       <div className="divide-y divide-neutral-100">
@@ -3677,7 +3677,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
                 {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
-                {onMove && (
+                {reorderingRealIdx !== null && (
                   <div className="flex items-center justify-end">
                     {reorderingRealIdx === realIndex && (
                       <button
