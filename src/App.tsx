@@ -3616,7 +3616,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
-        {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-4">Ago</div>}
+        {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-[18px]">Ago</div>}
         {reorderingRealIdx !== null && <div />}
       </div>
 
@@ -3667,7 +3667,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                     </button>
                   )}
                   <div>
-                    <div className={`text-[15px] font-bold ${
+                    <div className={`text-[15px] font-bold ml-[1px] ${
                       tx.name.toLowerCase().includes('shock') ? 'text-red-600' :
                       tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' :
                       'text-neutral-900'
@@ -3675,7 +3675,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                     {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
                   </div>
                 </div>
-                <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
+                <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center -ml-[1px]">{timeDisplay}</div>
                 {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
                 {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
                 {reorderingRealIdx !== null && (
