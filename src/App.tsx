@@ -400,6 +400,7 @@ const loadPreviousCases = (): AppState[] => {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
+    console.error('Failed to load previous cases backup:', e);
     return [];
   }
 };
@@ -410,7 +411,9 @@ const savePreviousCase = (caseState: AppState) => {
     const updated = [caseState, ...existing].slice(0, MAX_PREVIOUS_CASES);
     localStorage.setItem(PREVIOUS_CASES_KEY, JSON.stringify(updated));
   } catch (e) {
-    // Storage full or unavailable - don't let backup failure block closing the case
+    // Storage full or unavailable - don't let backup failure block closing the case,
+    // but do log it rather than fail completely silently.
+    console.error('Failed to save previous case backup:', e);
   }
 };
 
@@ -1342,18 +1345,21 @@ export default function App() {
       localStorage.setItem(PREVIOUS_CASES_KEY, previousCasesBackup);
     }
     
-    // Unregister service worker and force true hard reload
+    // Unregister service worker (removes stale cached content) then do a single
+    // clean reload of the current URL. Previously this also navigated to a
+    // modified '?nocache=' URL before reloading again 100ms later - a redundant
+    // double-navigation that's a plausible source of timing issues on some
+    // platforms (e.g. installed/home-screen apps), removed here in favour of
+    // the simplest reliable approach.
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then(registrations => {
         registrations.forEach(registration => registration.unregister());
+      }).finally(() => {
+        window.location.reload();
       });
-    }
-    
-    // Force hard reload with cache bypass
-    window.location.href = window.location.pathname + '?nocache=' + Date.now();
-    setTimeout(() => {
+    } else {
       window.location.reload();
-    }, 100);
+    }
   };
 
   const closeCase = () => {
