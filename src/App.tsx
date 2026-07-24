@@ -299,6 +299,121 @@ const renumberTreatments = (treatments: Treatment[]): Treatment[] => {
   });
 };
 
+// Pure pharma summary calculation, usable for both live case state and
+// archived previous-case snapshots (neither depends on component state).
+const computePharmaSummary = (treatments: Treatment[]): Record<string, { totalDose: number, unit: string, count: number, display: string }> => {
+  const summary: Record<string, { totalDose: number, unit: string, count: number, display: string }> = {};
+
+  treatments.forEach(tx => {
+    // Special handling for morph/midaz infusion
+    if (tx.name.startsWith('Morph/midaz infusion')) {
+      const medName = 'Morph/midaz infusion';
+      if (!summary[medName]) {
+        summary[medName] = { totalDose: 0, unit: '', count: 0, display: '' };
+      }
+
+      const doseStr = tx.name.substring(medName.length).trim();
+      if (doseStr) {
+        const directMatch = doseStr.match(/([\d.]+)(mg\/h|mg|mL|mMol|mcg|g|u|%)/i);
+        if (directMatch) {
+          const [_, amount, unit] = directMatch;
+          if (!summary[medName].unit) summary[medName].unit = unit;
+          if (summary[medName].unit === unit) {
+            summary[medName].totalDose += parseFloat(amount);
+          }
+        }
+      }
+      summary[medName].count++;
+      return; // Skip regular medication processing for this treatment
+    }
+
+    for (const med of MEDICATIONS) {
+      // Skip Oxygen in pharma summary
+      if (med === 'Oxygen') continue;
+
+      if (tx.name.startsWith(med)) {
+        if (!summary[med]) {
+          summary[med] = { totalDose: 0, unit: '', count: 0, display: '' };
+        }
+
+        // Extract dose from treatment name (everything after medication name)
+        const doseStr = tx.name.substring(med.length).trim();
+
+        if (doseStr) {
+          // For weight-based doses with calculated value: "0.01mg/kg (3.5mg)"
+          // Extract the calculated value in parentheses
+          const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|mL|mMol|mcg|g|u|%)\)/i);
+          if (calculatedMatch) {
+            const [_, amount, unit] = calculatedMatch;
+            if (!summary[med].unit) summary[med].unit = unit;
+            if (summary[med].unit === unit) {
+              summary[med].totalDose += parseFloat(amount);
+            }
+          } else {
+            // Direct dose: "1mg", "300mg", "100mL", etc.
+            const directMatch = doseStr.match(/([\d.]+)(mg|mL|mMol|mcg|g|u|%)/i);
+            if (directMatch) {
+              const [_, amount, unit] = directMatch;
+              if (!summary[med].unit) summary[med].unit = unit;
+              if (summary[med].unit === unit) {
+                summary[med].totalDose += parseFloat(amount);
+              }
+            }
+          }
+        }
+        summary[med].count++;
+        break;
+      }
+    }
+  });
+
+  // Format display strings
+  Object.keys(summary).forEach(med => {
+    const { totalDose, unit, count } = summary[med];
+    if (totalDose > 0 && unit) {
+      const roundedDose = parseFloat(totalDose.toFixed(2));
+      if (med === 'Glucose 10%' && unit === 'mL') {
+        const grams = Math.round(roundedDose * 0.1 * 10) / 10;
+        summary[med].display = `${roundedDose}mL/${grams}g (${count})`;
+      } else {
+        summary[med].display = `${roundedDose}${unit} (${count})`;
+      }
+    } else {
+      summary[med].display = `${count}`;
+    }
+  });
+
+  return summary;
+};
+
+// --- Previous case backup ---
+// Keeps a rolling backup of the last N closed cases in a separate localStorage
+// key, so a case survives even if something (crash, tab discard, reload)
+// wipes the in-memory "closed case" view before the user exports/deletes it.
+const PREVIOUS_CASES_KEY = 'theBigOnePreviousCases';
+const MAX_PREVIOUS_CASES = 3;
+
+const loadPreviousCases = (): AppState[] => {
+  try {
+    const raw = localStorage.getItem(PREVIOUS_CASES_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+};
+
+const savePreviousCase = (caseState: AppState) => {
+  try {
+    const existing = loadPreviousCases();
+    const updated = [caseState, ...existing].slice(0, MAX_PREVIOUS_CASES);
+    localStorage.setItem(PREVIOUS_CASES_KEY, JSON.stringify(updated));
+  } catch (e) {
+    // Storage full or unavailable - don't let backup failure block closing the case
+  }
+};
+
 const calculateDose = (doseStr: string, weight: number | null): string => {
   if (!weight || !doseStr.includes('/kg')) return doseStr;
   
@@ -439,6 +554,9 @@ export default function App() {
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
   const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [previousCases, setPreviousCases] = useState<AppState[]>(() => loadPreviousCases());
+  const [showPreviousCasesList, setShowPreviousCasesList] = useState(false);
+  const [viewingPreviousCase, setViewingPreviousCase] = useState<AppState | null>(null);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [showTimerAdjust, setShowTimerAdjust] = useState(false);
@@ -1051,90 +1169,7 @@ export default function App() {
   }, [state.treatments, state.elapsedSeconds, tutorialMode]);
 
 
-  const pharmaSummary = useMemo(() => {
-    const summary: Record<string, { totalDose: number, unit: string, count: number, display: string }> = {};
-    
-    state.treatments.forEach(tx => {
-      // Special handling for morph/midaz infusion
-      if (tx.name.startsWith('Morph/midaz infusion')) {
-        const medName = 'Morph/midaz infusion';
-        if (!summary[medName]) {
-          summary[medName] = { totalDose: 0, unit: '', count: 0, display: '' };
-        }
-        
-        const doseStr = tx.name.substring(medName.length).trim();
-        if (doseStr) {
-          const directMatch = doseStr.match(/([\d.]+)(mg\/h|mg|mL|mMol|mcg|g|u|%)/i);
-          if (directMatch) {
-            const [_, amount, unit] = directMatch;
-            if (!summary[medName].unit) summary[medName].unit = unit;
-            if (summary[medName].unit === unit) {
-              summary[medName].totalDose += parseFloat(amount);
-            }
-          }
-        }
-        summary[medName].count++;
-        return; // Skip regular medication processing for this treatment
-      }
-      
-      for (const med of MEDICATIONS) {
-        // Skip Oxygen in pharma summary
-        if (med === 'Oxygen') continue;
-        
-        if (tx.name.startsWith(med)) {
-          if (!summary[med]) {
-            summary[med] = { totalDose: 0, unit: '', count: 0, display: '' };
-          }
-          
-          // Extract dose from treatment name (everything after medication name)
-          const doseStr = tx.name.substring(med.length).trim();
-          
-          if (doseStr) {
-            // For weight-based doses with calculated value: "0.01mg/kg (3.5mg)"
-            // Extract the calculated value in parentheses
-            const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|mL|mMol|mcg|g|u|%)\)/i);
-            if (calculatedMatch) {
-              const [_, amount, unit] = calculatedMatch;
-              if (!summary[med].unit) summary[med].unit = unit;
-              if (summary[med].unit === unit) {
-                summary[med].totalDose += parseFloat(amount);
-              }
-            } else {
-              // Direct dose: "1mg", "300mg", "100mL", etc.
-              const directMatch = doseStr.match(/([\d.]+)(mg|mL|mMol|mcg|g|u|%)/i);
-              if (directMatch) {
-                const [_, amount, unit] = directMatch;
-                if (!summary[med].unit) summary[med].unit = unit;
-                if (summary[med].unit === unit) {
-                  summary[med].totalDose += parseFloat(amount);
-                }
-              }
-            }
-          }
-          summary[med].count++;
-          break;
-        }
-      }
-    });
-    
-    // Format display strings
-    Object.keys(summary).forEach(med => {
-      const { totalDose, unit, count } = summary[med];
-      if (totalDose > 0 && unit) {
-        const roundedDose = parseFloat(totalDose.toFixed(2));
-        if (med === 'Glucose 10%' && unit === 'mL') {
-          const grams = Math.round(roundedDose * 0.1 * 10) / 10;
-          summary[med].display = `${roundedDose}mL/${grams}g (${count})`;
-        } else {
-          summary[med].display = `${roundedDose}${unit} (${count})`;
-        }
-      } else {
-        summary[med].display = `${count}`;
-      }
-    });
-    
-    return summary;
-  }, [state.treatments]);
+  const pharmaSummary = useMemo(() => computePharmaSummary(state.treatments), [state.treatments]);
 
   // --- Elapsed time interval calculator ---
   const calcNextIntervalTarget = (elapsedSecs: number, interval: 'evens' | 'odds' | 'half-evens' | 'half-odds'): number => {
@@ -1153,9 +1188,14 @@ export default function App() {
   // --- Catchup Handlers ---
   const handleCatchupStart = (overrideWeight?: string) => {
     
-    // Clear localStorage for a completely fresh start
+    // Clear localStorage for a completely fresh start, but keep the previous-cases
+    // backup archive - it must survive across cases, not just within one.
+    const previousCasesBackupOnStart = localStorage.getItem(PREVIOUS_CASES_KEY);
     localStorage.clear();
     sessionStorage.clear();
+    if (previousCasesBackupOnStart) {
+      localStorage.setItem(PREVIOUS_CASES_KEY, previousCasesBackupOnStart);
+    }
     
     let adjustedElapsed = catchupElapsed.hrs * 3600 + catchupElapsed.mins * 60 + catchupElapsed.secs;
     let adjustedRhythm = catchupRhythm.mins * 60 + catchupRhythm.secs;
@@ -1293,8 +1333,14 @@ export default function App() {
   };
 
   const deleteCase = () => {
+    // Preserve the previous-cases backup archive - it's meant to survive
+    // independent of whatever happens to the current case's own data.
+    const previousCasesBackup = localStorage.getItem(PREVIOUS_CASES_KEY);
     localStorage.clear();
     sessionStorage.clear();
+    if (previousCasesBackup) {
+      localStorage.setItem(PREVIOUS_CASES_KEY, previousCasesBackup);
+    }
     
     // Unregister service worker and force true hard reload
     if ('serviceWorker' in navigator) {
@@ -1312,7 +1358,12 @@ export default function App() {
 
   const closeCase = () => {
     addTreatment('Close case');
-    setState(prev => ({ ...prev, running: false, caseClosedAt: Date.now() }));
+    setState(prev => {
+      const closed = { ...prev, running: false, caseClosedAt: Date.now() };
+      savePreviousCase(closed);
+      setPreviousCases(loadPreviousCases());
+      return closed;
+    });
     setIsCaseClosed(true);
     setShowCloseWarning(false);
   };
@@ -2000,12 +2051,82 @@ export default function App() {
                     >
                       Tutorial
                     </button>
+                    {previousCases.length > 0 && (
+                      <button
+                        onClick={() => setShowPreviousCasesList(true)}
+                        className="w-full bg-neutral-100 hover:bg-neutral-200 text-neutral-700 p-4 rounded-2xl text-base font-semibold transition-all duration-200"
+                      >
+                        View Previous Cases
+                      </button>
+                    )}
                   </div>
 
                   <div className="text-[11px] text-neutral-400 text-center pt-2 space-y-0.5">
                     <p>The Big One v1.1</p>
                     <p>ACTAS CMG v1.0.5.4</p>
                     <p>Last reviewed May 2026</p>
+                  </div>
+                </div>
+              )}
+
+              {showPreviousCasesList && (
+                <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">
+                  <div className="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl max-h-[85vh] flex flex-col">
+                    <h2 className="text-xl font-bold text-neutral-900 text-center mb-4 flex-shrink-0">Previous Cases</h2>
+                    <p className="text-xs text-neutral-500 text-center mb-4 flex-shrink-0">The last {MAX_PREVIOUS_CASES} closed cases are kept here as a backup, in case a case is closed but never exported.</p>
+                    <div className="space-y-3 overflow-y-auto flex-1">
+                      {previousCases.length === 0 && (
+                        <p className="text-neutral-400 text-center text-sm py-6">No previous cases saved yet.</p>
+                      )}
+                      {previousCases.map((pc, i) => {
+                        const pcPatientLabel = pc.patientType === 'adult'
+                          ? `Adult · ${pc.patientWeight}kg`
+                          : pc.patientType === 'paed'
+                          ? (pc.patientAge ? `Paediatric · ${pc.patientAge} · ${pc.patientWeight}kg` : `Paediatric · ${pc.patientWeight}kg`)
+                          : 'Patient details not recorded';
+                        const closedDate = pc.caseClosedAt ? new Date(pc.caseClosedAt) : null;
+                        const closedLabel = closedDate
+                          ? `${closedDate.toLocaleDateString('en-AU')} · ${getLocalTime(closedDate)}`
+                          : 'Closure time not recorded';
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { setViewingPreviousCase(pc); setShowPreviousCasesList(false); }}
+                            className="w-full text-left bg-neutral-50 hover:bg-neutral-100 rounded-2xl p-4 border border-neutral-200 transition-colors"
+                          >
+                            <div className="font-bold text-neutral-900">{pcPatientLabel}</div>
+                            <div className="text-sm text-neutral-500 mt-0.5">Closed {closedLabel}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button onClick={() => setShowPreviousCasesList(false)} className="w-full mt-4 p-3 rounded-xl bg-neutral-100 font-bold text-neutral-700 btn-base flex-shrink-0">Close</button>
+                  </div>
+                </div>
+              )}
+
+              {viewingPreviousCase && (
+                <div className="fixed inset-0 bg-white z-[2000] overflow-y-auto">
+                  <div className="max-w-2xl mx-auto p-6 space-y-6 pb-24">
+                    <div className="flex items-center justify-between">
+                      <button onClick={() => setViewingPreviousCase(null)} className="text-blue-600 font-semibold btn-base">← Back</button>
+                      <button onClick={() => window.print()} className="text-blue-600 font-semibold btn-base">Export PDF</button>
+                    </div>
+                    <h1 className="text-2xl font-bold text-center text-neutral-900">Previous Case</h1>
+                    <ArrestSummarySection state={viewingPreviousCase} showRecordingDuration />
+                    <PharmaSummarySection
+                      pharmaSummary={computePharmaSummary(viewingPreviousCase.treatments)}
+                      infusionDoses={viewingPreviousCase.infusionDoses}
+                      activeInfusions={INFUSION_DRUGS.filter(d => viewingPreviousCase.treatments.some(t => t.name.startsWith(d)))}
+                    />
+                    <TreatmentLog
+                      treatments={viewingPreviousCase.treatments}
+                      elapsedSeconds={viewingPreviousCase.elapsedSeconds}
+                      catchupElapsed={viewingPreviousCase.catchupElapsed}
+                      caseOpenedAt={viewingPreviousCase.caseOpenedAt}
+                      isSummary={true}
+                      timingMode={viewingPreviousCase.timingMode}
+                    />
                   </div>
                 </div>
               )}
