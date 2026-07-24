@@ -27,36 +27,27 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'cprRound', type: 'positioned', x: 80.2, y: 22,
-    pages: [{ title: 'CPR Round', description: "The current round of CPR.\n\nThe CPR round counter will update every time the rhythm check counter reaches 0:00." }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
-  },
-  {
     id: 'timer', type: 'positioned', x: 50, y: 52,
     pages: [
       {
         title: 'Elapsed Timer',
-        description: "The running elapsed time, matching the monitor's.\n\nEarlier we chose 'Elapsed time' as our method of keeping track of rhythm checks.\n\nWe then entered the imaginary live elapsed time from our imaginary monitor.\n\nThe app now shows you the same elapsed time here for you to reference during the case, rather than needing to look at the monitor.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
+        description: "Earlier we chose 'Time keeping assistance' as our app mode.\n\nNow we have the elapsed case time available right in front of us, mirroring the monitor's.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
       },
       {
-        title: 'Timer Behaviour',
-        description: "The elapsed time counts up continuously and never resets.\n\nWhen it reaches your chosen rhythm check interval (e.g. every even minute), you will immediately be prompted to record whether you shocked or disarmed."
-      },
-      {
-        title: 'Tx Log Only Option',
-        description: "If you had selected the 'Tx log only' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
+        title: 'Record Keeping Only Option',
+        description: "If you had selected the 'No timer' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'recalibrate', type: 'positioned', x: 21.3, y: 4.2,
+    id: 'recalibrate', type: 'positioned', x: 24.8, y: 4.2,
     pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
     id: 'tabs', type: 'positioned', x: 50, y: 10.75,
-    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey' }],
+    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey\n\nYou will notice the reversibles checklist is already flashing red. That is a visual cue to encourage purposeful addressing of these early.' }],
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
@@ -124,7 +115,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home after summary ---
   {
-    id: 'endCase', type: 'positioned', x: 79.9, y: 4.2,
+    id: 'endCase', type: 'positioned', x: 76.4, y: 4.2,
     pages: [{ title: 'End Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can end the case.\n\nLet's end the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },

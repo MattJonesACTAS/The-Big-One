@@ -26,7 +26,6 @@ import {
   RefreshCw,
   Hand,
   User,
-  GripVertical,
   Check,
   MoreVertical
 } from 'lucide-react';
@@ -568,6 +567,7 @@ export default function App() {
   const [showModeChange, setShowModeChange] = useState(false);
   const [pendingModeChangeFrom, setPendingModeChangeFrom] = useState<'elapsed' | 'log' | null>(null);
   const [stagedElapsedSeconds, setStagedElapsedSeconds] = useState(0);
+  const [elapsedManuallyEdited, setElapsedManuallyEdited] = useState(false);
   const [stagedRhythmInterval, setStagedRhythmInterval] = useState<'evens' | 'odds' | 'half-evens' | 'half-odds'>('evens');
   const [showWeightChange, setShowWeightChange] = useState(false);
   const [newWeightInput, setNewWeightInput] = useState('');
@@ -660,30 +660,30 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-elapsed-btn');
     }
     
-    // Node 9 (recalibrate) complete - flash Recalibrate button (index 4 = waiting for weight change)
+    // Node 8 (recalibrate) complete - flash Recalibrate button (index 3 = waiting for weight change)
     // then, once the Recalibrate menu is open, flash the Change Patient Weight button instead.
     // Both stop as soon as the weight actually changes, even before the node is dismissed.
     const weightUnchanged = state.patientWeight === tutorialInitialWeightRef.current;
-    if (tutorialMode && tutorialScreen.index === 4 && !showRecalibrateMenu && !showWeightChange && weightUnchanged) {
+    if (tutorialMode && tutorialScreen.index === 3 && !showRecalibrateMenu && !showWeightChange && weightUnchanged) {
       document.body.classList.add('tutorial-flash-recalibrate');
     } else {
       document.body.classList.remove('tutorial-flash-recalibrate');
     }
-    if (tutorialMode && tutorialScreen.index === 4 && showRecalibrateMenu && weightUnchanged) {
+    if (tutorialMode && tutorialScreen.index === 3 && showRecalibrateMenu && weightUnchanged) {
       document.body.classList.add('tutorial-flash-weight');
     } else {
       document.body.classList.remove('tutorial-flash-weight');
     }
 
-    // Node 11 (addTxBtn) complete - flash Add Tx button (index 6 = waiting for treatment screen)
-    if (tutorialMode && tutorialScreen.index === 6 && state.currentOverlay === null) {
+    // Node 10 (addTxBtn) complete - flash Add Tx button (index 5 = waiting for treatment screen)
+    if (tutorialMode && tutorialScreen.index === 5 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-add-tx');
     } else {
       document.body.classList.remove('tutorial-flash-add-tx');
     }
 
-    // Node 12 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 7)
-    if (tutorialMode && tutorialScreen.index === 7) {
+    // Node 11 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 6)
+    if (tutorialMode && tutorialScreen.index === 6) {
       document.body.classList.add('tutorial-flash-adrenaline');
       document.body.classList.add('tutorial-flash-dose');
     } else {
@@ -691,22 +691,22 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-dose');
     }
 
-    // Node 14 (summaryBtn) complete - flash Summary button (index 9 = waiting for summary overlay)
-    if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === null) {
+    // Node 13 (summaryBtn) complete - flash Summary button (index 8 = waiting for summary overlay)
+    if (tutorialMode && tutorialScreen.index === 8 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-summary');
     } else {
       document.body.classList.remove('tutorial-flash-summary');
     }
 
-    // Node 16 (closeOverlay) complete - flash summary close button (index 11 = waiting on summary)
-    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === 'summary') {
+    // Node 15 (closeOverlay) complete - flash summary close button (index 10 = waiting on summary)
+    if (tutorialMode && tutorialScreen.index === 10 && state.currentOverlay === 'summary') {
       document.body.classList.add('tutorial-flash-summary-close');
     } else {
       document.body.classList.remove('tutorial-flash-summary-close');
     }
 
-    // Node 17 (endCase) complete - flash End Case button (index 12 = waiting on home)
-    if (tutorialMode && tutorialScreen.index === 12 && state.currentOverlay === null) {
+    // Node 16 (endCase) complete - flash End Case button (index 11 = waiting on home)
+    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-end');
     } else {
       document.body.classList.remove('tutorial-flash-end');
@@ -819,6 +819,19 @@ export default function App() {
     const interval = window.setInterval(() => setDemoTick(t => t + 1), 1000);
     return () => clearInterval(interval);
   }, [catchupStep]);
+
+  // While the Recalibrate Elapsed Time modal is open, keep the staged elapsed
+  // time ticking up live (matching the real running case) unless the user has
+  // actually started editing it by hand - that way, someone who only wants to
+  // change the rhythm check interval doesn't need to touch the timer at all,
+  // and won't accidentally commit a stale snapshot from when the modal opened.
+  useEffect(() => {
+    if (!showElapsedRecalibrate || elapsedManuallyEdited) return;
+    const interval = window.setInterval(() => {
+      setStagedElapsedSeconds(s => s + 1);
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [showElapsedRecalibrate, elapsedManuallyEdited]);
 
   useEffect(() => {
     let interval: number;
@@ -1106,29 +1119,37 @@ export default function App() {
     });
   };
 
-  const adrenalineRoundStatus = useMemo(() => {
+  const adrenalineStatus = useMemo(() => {
     const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push'));
-    const lastAdr = adrTreatments.pop();
-    
+    const lastAdr = adrTreatments[adrTreatments.length - 1];
+
     if (!lastAdr) {
-      return { text: "", show: false, isDue: false };
-    }
-    
-    if (lastAdr.prior) {
-      if (tutorialMode) return { text: "", show: false, isDue: false };
-      return { text: "Next adrenaline: unknown", show: true, isDue: false };
+      return { text: "", show: false, isDue: false, countdown: 0, flashRed: false };
     }
 
-    const roundGiven = lastAdr.round || (Math.floor(lastAdr.elapsed / 120) + 1);
-    const nextDueRound = roundGiven + 2;
-    const isDue = state.cprRound >= nextDueRound;
-    
-    if (isDue) {
-      return { text: "Next adrenaline: THIS ROUND", show: true, isDue: true };
-    } else {
-      return { text: `Next adrenaline: Round ${nextDueRound}`, show: true, isDue: false };
+    if (lastAdr.prior) {
+      if (tutorialMode) return { text: '', show: false, isDue: false, countdown: 0, flashRed: false };
+      return { text: "Next adrenaline: unknown", show: true, isDue: false, countdown: 0, flashRed: false };
     }
-  }, [state.treatments, state.cprRound, tutorialMode]);
+
+    const timeSinceLastDose = state.elapsedSeconds - lastAdr.elapsed;
+    const timeUntilNext = 240 - timeSinceLastDose; // 4 minutes = 240 seconds
+
+    if (timeUntilNext <= 0) {
+      // Show negative countdown when overdue
+      const overdueTime = Math.abs(timeUntilNext);
+      const mins = Math.floor(overdueTime / 60);
+      const secs = overdueTime % 60;
+      const timeStr = `-${mins}:${secs.toString().padStart(2, '0')}`;
+      return { text: `Next adrenaline: ${timeStr}`, show: true, isDue: true, countdown: timeUntilNext, flashRed: true };
+    } else {
+      const mins = Math.floor(timeUntilNext / 60);
+      const secs = timeUntilNext % 60;
+      const timeStr = `${mins}:${secs.toString().padStart(2, '0')}`;
+      const flashRed = timeUntilNext <= 30; // Flash red when 30s or less
+      return { text: `Next adrenaline: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext, flashRed };
+    }
+  }, [state.treatments, state.elapsedSeconds, tutorialMode]);
 
   const amiodaroneStatus = useMemo(() => {
     const allAmioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
@@ -1672,12 +1693,6 @@ export default function App() {
                 </span>
               </div>
             )}
-            {!state.isROSCMode && (
-            <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px] ml-auto">
-              <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">CPR round</span>
-              <span className="text-[22px] sm:text-[43px] font-bold text-neutral-400 tabular-nums leading-none">{state.cprRound}</span>
-            </div>
-            )}
           </div>
 
           {/* Rhythm Check - Centered vertically and responsive size */}
@@ -1848,7 +1863,7 @@ export default function App() {
             {/* Adrenaline Warning */}
             <div 
               onClick={() => {
-                if (!adrenalineRoundStatus.show || disregardAdrenaline === 'confirmed') return;
+                if (!adrenalineStatus.show || disregardAdrenaline === 'confirmed') return;
                 if (disregardAdrenaline === 'pending') {
                   setDisregardAdrenaline('confirmed');
                 } else if (disregardAdrenaline !== 'confirmed') {
@@ -1856,13 +1871,13 @@ export default function App() {
                 }
               }}
               className={`flex-1 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center border-2 transition-all duration-300 min-h-[90px] sm:min-h-[120px] ${
-                !adrenalineRoundStatus.show || disregardAdrenaline === 'confirmed' 
+                !adrenalineStatus.show || disregardAdrenaline === 'confirmed' 
                   ? 'opacity-0 pointer-events-none' 
                   : 'opacity-100 cursor-pointer'
               } ${
                 disregardAdrenaline === 'pending'
                   ? 'bg-red-200 text-red-900 border-neutral-100'
-                  : adrenalineRoundStatus.isDue 
+                  : adrenalineStatus.flashRed 
                   ? 'bg-red-200 text-red-900 border-neutral-100 animate-pulse' 
                   : 'bg-neutral-100 text-neutral-900 border-neutral-100'
               }`}
@@ -1872,19 +1887,21 @@ export default function App() {
               ) : (
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
-                    adrenalineRoundStatus.isDue 
+                    adrenalineStatus.flashRed 
                       ? 'text-[10px] sm:text-[12px] text-red-900'
                       : 'text-[10px] sm:text-[12px] text-neutral-900'
                   }`}>
-                    {adrenalineRoundStatus.text.split(':')[0] + ':'}
+                    {adrenalineStatus.text.includes(':') ? adrenalineStatus.text.split(':')[0] + ':' : adrenalineStatus.text}
                   </span>
-                  <span className={`font-bold text-center leading-none tabular-nums ${
-                    adrenalineRoundStatus.isDue
-                      ? 'text-[22px] sm:text-[43px] text-red-900'
-                      : 'text-[22px] sm:text-[43px] text-neutral-400'
-                  }`}>
-                    {adrenalineRoundStatus.text.split(':').slice(1).join(':').trim()}
-                  </span>
+                  {adrenalineStatus.text.includes(':') && (
+                    <span className={`font-bold text-center leading-none tabular-nums ${
+                      adrenalineStatus.flashRed
+                        ? 'text-[22px] sm:text-[43px] text-red-900'
+                        : 'text-[22px] sm:text-[43px] text-neutral-400'
+                    }`}>
+                      {adrenalineStatus.text.split(':').slice(1).join(':').trim()}
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -2527,7 +2544,7 @@ export default function App() {
                         </div>
                       </div>
                       <div className={`py-2.5 text-sm font-bold text-center border-t border-neutral-200 ${timingMode === 'elapsed' ? 'bg-emerald-500 text-white' : 'bg-white text-neutral-700'}`}>
-                        <div>Monitor's elapsed case time</div>
+                        <div>Time keeping assistance</div>
                         <div className="font-medium">(odds/evens method)</div>
                       </div>
                     </button>
@@ -2648,6 +2665,7 @@ export default function App() {
                 setShowRecalibrateMenu(false);
                 setStagedElapsedSeconds(state.elapsedSeconds);
                 setStagedRhythmInterval(rhythmInterval || 'evens');
+                setElapsedManuallyEdited(false);
                 setShowElapsedRecalibrate(true);
               }}
               className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
@@ -2864,6 +2882,7 @@ export default function App() {
                   if (!rhythmInterval) setRhythmInterval(startingInterval);
                   setStagedElapsedSeconds(state.elapsedSeconds);
                   setStagedRhythmInterval(startingInterval);
+                  setElapsedManuallyEdited(false);
                   setShowModeChange(false);
                   setShowElapsedRecalibrate(true);
                 }}
@@ -2896,6 +2915,7 @@ export default function App() {
                   secs: stagedElapsedSeconds % 60,
                 }}
                 onChange={(v) => {
+                  setElapsedManuallyEdited(true);
                   setStagedElapsedSeconds(v.hrs * 3600 + v.mins * 60 + v.secs);
                 }}
               />
@@ -3362,42 +3382,45 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
   const [reorderingRealIdx, setReorderingRealIdx] = React.useState<number | null>(null);
   const [draggingRealIdx, setDraggingRealIdx] = React.useState<number | null>(null);
-  const [dragOverRealIdx, setDragOverRealIdx] = React.useState<number | null>(null);
+  // Gap index in VISUAL (top-to-bottom, newest-first) order: 0 = above the
+  // topmost row, treatments.length = below the bottommost row.
+  const [dragOverGapIdx, setDragOverGapIdx] = React.useState<number | null>(null);
   const rowRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
 
   const handleDragPointerDown = (realIdx: number) => (e: React.PointerEvent) => {
     setDraggingRealIdx(realIdx);
-    setDragOverRealIdx(realIdx);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const handleDragPointerMove = (e: React.PointerEvent) => {
     if (draggingRealIdx === null) return;
     const y = e.clientY;
-    let closestRealIdx = draggingRealIdx;
-    let closestDist = Infinity;
-    (Object.entries(rowRefs.current) as [string, HTMLDivElement | null][]).forEach(([key, el]) => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const mid = rect.top + rect.height / 2;
-      const dist = Math.abs(y - mid);
-      if (dist < closestDist) {
-        closestDist = dist;
-        closestRealIdx = parseInt(key, 10);
-      }
-    });
-    setDragOverRealIdx(closestRealIdx);
+    const rowsByVisualPosition = (Object.entries(rowRefs.current) as [string, HTMLDivElement | null][])
+      .filter((entry): entry is [string, HTMLDivElement] => entry[1] !== null)
+      .map(([key, el]) => ({ realIdx: parseInt(key, 10), mid: el.getBoundingClientRect().top + el.getBoundingClientRect().height / 2 }))
+      .sort((a, b) => a.mid - b.mid); // ascending Y = visual top-to-bottom = newest-first
+    let gapIdx = 0;
+    rowsByVisualPosition.forEach(r => { if (y > r.mid) gapIdx++; });
+    setDragOverGapIdx(gapIdx);
   };
 
   const handleDragPointerUp = () => {
-    if (draggingRealIdx !== null && dragOverRealIdx !== null && draggingRealIdx !== dragOverRealIdx) {
-      onMove?.(draggingRealIdx, dragOverRealIdx);
-      // The item moved to a new array position - follow it, so the checkmark
-      // and handle stay attached to the same treatment, not the same slot.
-      setReorderingRealIdx(dragOverRealIdx);
+    if (draggingRealIdx !== null && dragOverGapIdx !== null) {
+      const n = treatments.length;
+      // Convert a visual gap index (0=top/newest, n=bottom/oldest) into a real
+      // chronological-array index: gapIdx rows are visually above the gap, so
+      // (n - gapIdx) real-array items (the oldest ones) sit before it.
+      const targetIdxInFullArray = n - dragOverGapIdx;
+      const toIdx = targetIdxInFullArray <= draggingRealIdx ? targetIdxInFullArray : targetIdxInFullArray - 1;
+      if (toIdx !== draggingRealIdx) {
+        onMove?.(draggingRealIdx, toIdx);
+        // The item moved to a new array position - follow it, so the checkmark
+        // stays attached to the same treatment, not the same slot.
+        setReorderingRealIdx(toIdx);
+      }
     }
     setDraggingRealIdx(null);
-    setDragOverRealIdx(null);
+    setDragOverGapIdx(null);
   };
 
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
@@ -3447,9 +3470,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
 
   const gridCols = isSummary
     ? (showElapsed ? 'grid-cols-[1.8fr_1.2fr_1fr]' : 'grid-cols-[1.8fr_1.2fr]')
-    : (showElapsed
-        ? (reorderingRealIdx !== null ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]')
-        : (reorderingRealIdx !== null ? 'grid-cols-[1.9fr_1fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]'));
+    : (showElapsed ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]');
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
@@ -3458,7 +3479,6 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-[20px]">Ago</div>}
-        {reorderingRealIdx !== null && <div />}
       </div>
 
       <div className="divide-y divide-neutral-100">
@@ -3475,69 +3495,63 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
               : (tx.loggedAt != null ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000)) : (elapsedSeconds - tx.elapsed));
             const ago = tx.timeUnknown ? '—' : (tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal));
             const { med, dose } = splitTreatmentName(tx.name);
+            const isReorderingThis = reorderingRealIdx === realIndex;
 
             return (
-              <div
-                key={i}
-                ref={(el) => { rowRefs.current[realIndex] = el; }}
-                className={`grid ${gridCols} px-4 py-4 items-center gap-1 transition-opacity ${
-                  draggingRealIdx === realIndex ? 'opacity-40' : ''
-                } ${
-                  dragOverRealIdx === realIndex && draggingRealIdx !== null && draggingRealIdx !== realIndex
-                    ? 'bg-blue-50 border-y-2 border-blue-400'
-                    : ''
-                }`}
-              >
-                <div className="pr-1 flex items-center gap-2">
-                  {onDelete && (
-                    <button
-                      onClick={() => {
-                        if (reorderingRealIdx === realIndex) {
-                          setReorderingRealIdx(null);
-                        } else {
-                          setPendingDelete(realIndex);
-                        }
-                      }}
-                      className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
-                        reorderingRealIdx === realIndex
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600'
-                      }`}
-                    >
-                      {reorderingRealIdx === realIndex ? <Check size={8} /> : <MoreVertical size={8} />}
-                    </button>
-                  )}
-                  <div>
-                    <div className={`text-[15px] font-bold ${isSummary ? '' : 'ml-[2px]'} ${
-                      tx.name.toLowerCase().includes('shock') ? 'text-red-600' :
-                      tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' :
-                      'text-neutral-900'
-                    }`}>{med}</div>
-                    {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
-                  </div>
-                </div>
-                <div className={`text-[16px] text-neutral-800 font-medium tabular-nums text-center ${isSummary ? '' : '-ml-[2px]'}`}>{timeDisplay}</div>
-                {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
-                {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
-                {reorderingRealIdx !== null && (
-                  <div className="flex items-center justify-end">
-                    {reorderingRealIdx === realIndex && (
+              <React.Fragment key={i}>
+                {dragOverGapIdx === i && (
+                  <div className="h-[3px] bg-blue-500 rounded-full mx-4 -my-[1.5px] relative z-10" />
+                )}
+                <div
+                  ref={(el) => { rowRefs.current[realIndex] = el; }}
+                  onPointerDown={isReorderingThis ? handleDragPointerDown(realIndex) : undefined}
+                  onPointerMove={isReorderingThis ? handleDragPointerMove : undefined}
+                  onPointerUp={isReorderingThis ? handleDragPointerUp : undefined}
+                  onPointerCancel={isReorderingThis ? handleDragPointerUp : undefined}
+                  style={isReorderingThis ? { touchAction: 'none' } : undefined}
+                  className={`grid ${gridCols} px-4 py-4 items-center gap-1 transition-colors ${
+                    isReorderingThis ? 'bg-blue-50 cursor-grab active:cursor-grabbing' : ''
+                  }`}
+                >
+                  <div className="pr-1 flex items-center gap-2">
+                    {onDelete && (
                       <button
-                        onPointerDown={handleDragPointerDown(realIndex)}
-                        onPointerMove={handleDragPointerMove}
-                        onPointerUp={handleDragPointerUp}
-                        onPointerCancel={handleDragPointerUp}
-                        style={{ touchAction: 'none' }}
-                        className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-blue-500 active:text-blue-700 cursor-grab active:cursor-grabbing"
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={() => {
+                          if (isReorderingThis) {
+                            setReorderingRealIdx(null);
+                          } else {
+                            setPendingDelete(realIndex);
+                          }
+                        }}
+                        className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
+                          isReorderingThis
+                            ? 'bg-emerald-500 text-white'
+                            : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600'
+                        }`}
                       >
-                        <GripVertical size={14} />
+                        {isReorderingThis ? <Check size={8} /> : <MoreVertical size={8} />}
                       </button>
                     )}
+                    <div>
+                      <div className={`text-[15px] font-bold ${isSummary ? '' : 'ml-[2px]'} ${
+                        tx.name.toLowerCase().includes('shock') ? 'text-red-600' :
+                        tx.name.toLowerCase().includes('disarm') ? 'text-blue-600' :
+                        'text-neutral-900'
+                      }`}>{med}</div>
+                      {dose && <div className="text-[13px] text-neutral-500 font-medium mt-0.5">{dose}</div>}
+                    </div>
                   </div>
-                )}
-              </div>
+                  <div className={`text-[16px] text-neutral-800 font-medium tabular-nums text-center ${isSummary ? '' : '-ml-[2px]'}`}>{timeDisplay}</div>
+                  {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
+                  {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
+                </div>
+              </React.Fragment>
             );
           })
+        )}
+        {dragOverGapIdx === treatments.length && (
+          <div className="h-[3px] bg-blue-500 rounded-full mx-4 -my-[1.5px] relative z-10" />
         )}
       </div>
 

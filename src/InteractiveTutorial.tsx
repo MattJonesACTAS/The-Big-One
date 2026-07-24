@@ -654,8 +654,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'rhythmCheckTiming',
       elements: [
-        { id: 'timingLog',     x: 50, y: 40.3, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
-        { id: 'timingElapsed', x: 50, y: 65.3, number: 4, title: 'Elapsed Time',  description: "In the elapsed time mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
+        { id: 'timingLog',     x: 50, y: 38.6, number: 3, title: 'No Timer Mode',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
+        { id: 'timingElapsed', x: 50, y: 63.6, number: 4, title: 'Time Keeping Assistance Mode',  description: "In the time keeping assistance mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
       ],
     },
     rhythmCheckTiming: {
@@ -663,7 +663,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'enterElapsedTime',
       elements: [
-        { id: 'rhythmCheckTiming', x: 50, y: 50, number: 5, title: 'Rhythm Check Timing', description: "You will need to choose which minute intervals you want your rhythm checks to occur on.\n\nChoose an option to progress." },
+        { id: 'rhythmCheckTiming', x: 50, y: 50, number: 5, title: 'Rhythm Check Timing', description: "You will need to enter which minute intervals the rhythm checks are occurring.\n\nChoose an option to continue." },
       ],
     },
     enterElapsedTime: {
@@ -924,7 +924,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               Time Keeping
             </h2>
-            {renderIntroDescription("Next you will need to choose whether you want the app to help you keep track of rhythm checks and medication repeat dose times, or whether you want to do that on your own.\n\nLet's look at the two options.")}
+            {renderIntroDescription("Next you can choose whether the app provides you with a rhythm check count down or not.")}
             <button
               onClick={() => setTimingIntroDismissed(true)}
               style={{
