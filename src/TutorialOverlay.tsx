@@ -34,7 +34,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
         description: "Earlier we chose 'Time keeping assistance' as our app mode.\n\nNow we have the elapsed case time available right in front of us, mirroring the monitor's.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
       },
       {
-        title: 'Record Keeping Only Option',
+        title: 'No Timer Option',
         description: "If you had selected the 'No timer' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
       }
     ],

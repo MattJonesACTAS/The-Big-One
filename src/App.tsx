@@ -1451,7 +1451,7 @@ export default function App() {
              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Close this case?</h2>
              <p className="text-neutral-500 mb-8">
                {tutorialMode
-                 ? 'All data will be lost and you will return to the start screen.'
+                 ? "This is just the tutorial, so nothing will be saved. You'll return to the start screen."
                  : `You will return to the start screen. Only your most recent ${MAX_PREVIOUS_CASES} cases are saved as a backup under 'View Previous Cases'.`}
              </p>
              <div className="grid grid-cols-2 gap-3">
@@ -1543,11 +1543,11 @@ export default function App() {
         <button 
           onClick={() => setShowRecalibrateMenu(true)} 
           data-button="recalibrate"
-          className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
+          className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base"
         >
           <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
         </button>
-        <button onClick={() => setShowEndWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="end-case">
+        <button onClick={() => setShowEndWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-sm sm:text-base font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="end-case">
           <XCircle size={14} className="sm:w-4 sm:h-4" /> End Case
         </button>
       </div>
@@ -1687,8 +1687,8 @@ export default function App() {
             )}
             {timingMode === 'elapsed' && !state.isROSCMode && (
               <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-                <span className="text-[10px] sm:text-[12px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Next check</span>
-                <span className={`text-[22px] sm:text-[43px] font-bold tabular-nums leading-none ${(state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-500' : 'text-neutral-400'}`}>
+                <span className="text-[12px] sm:text-[14px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Next check</span>
+                <span className={`text-[25px] sm:text-[47px] font-bold tabular-nums leading-none ${(state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-500' : 'text-neutral-400'}`}>
                   {formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))}
                 </span>
               </div>
@@ -1888,16 +1888,16 @@ export default function App() {
                 <>
                   <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                     adrenalineStatus.flashRed 
-                      ? 'text-[10px] sm:text-[12px] text-red-900'
-                      : 'text-[10px] sm:text-[12px] text-neutral-900'
+                      ? 'text-[12px] sm:text-[14px] text-red-900'
+                      : 'text-[12px] sm:text-[14px] text-neutral-900'
                   }`}>
                     {adrenalineStatus.text.includes(':') ? adrenalineStatus.text.split(':')[0] + ':' : adrenalineStatus.text}
                   </span>
                   {adrenalineStatus.text.includes(':') && (
                     <span className={`font-bold text-center leading-none tabular-nums ${
                       adrenalineStatus.flashRed
-                        ? 'text-[22px] sm:text-[43px] text-red-900'
-                        : 'text-[22px] sm:text-[43px] text-neutral-400'
+                        ? 'text-[25px] sm:text-[47px] text-red-900'
+                        : 'text-[25px] sm:text-[47px] text-neutral-400'
                     }`}>
                       {adrenalineStatus.text.split(':').slice(1).join(':').trim()}
                     </span>
@@ -1934,16 +1934,16 @@ export default function App() {
                   <>
                     <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
                       amiodaroneStatus.flashRed
-                        ? 'text-[10px] sm:text-[12px] text-red-900'
-                        : 'text-[10px] sm:text-[12px] text-neutral-900'
+                        ? 'text-[12px] sm:text-[14px] text-red-900'
+                        : 'text-[12px] sm:text-[14px] text-neutral-900'
                     }`}>
                       {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
                     </span>
                     {amiodaroneStatus.text.includes(':') && (
                       <span className={`font-bold text-center leading-none tabular-nums ${
                         amiodaroneStatus.flashRed
-                          ? 'text-[22px] sm:text-[43px] text-red-900'
-                          : 'text-[22px] sm:text-[43px] text-neutral-400'
+                          ? 'text-[25px] sm:text-[47px] text-red-900'
+                          : 'text-[25px] sm:text-[47px] text-neutral-400'
                       }`}>
                         {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
                       </span>
