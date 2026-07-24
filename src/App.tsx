@@ -698,6 +698,16 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-summary');
     }
 
+    // Node 14 (summaryInfo) complete - flash the Adrenaline push row's menu
+    // button (index 9), until the entry is actually moved or deleted
+    const adrenalineHandled = !state.treatments.some(t => t.name.startsWith('Adrenaline push'))
+      || state.treatments.some(t => t.name.startsWith('Adrenaline push') && t.timeUnknown);
+    if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === 'summary' && !adrenalineHandled) {
+      document.body.classList.add('tutorial-flash-adrenaline-tx');
+    } else {
+      document.body.classList.remove('tutorial-flash-adrenaline-tx');
+    }
+
     // Node 15 (closeOverlay) complete - flash summary close button (index 10 = waiting on summary)
     if (tutorialMode && tutorialScreen.index === 10 && state.currentOverlay === 'summary') {
       document.body.classList.add('tutorial-flash-summary-close');
@@ -727,6 +737,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-adrenaline');
       document.body.classList.remove('tutorial-flash-dose');
       document.body.classList.remove('tutorial-flash-summary');
+      document.body.classList.remove('tutorial-flash-adrenaline-tx');
       document.body.classList.remove('tutorial-flash-summary-close');
       document.body.classList.remove('tutorial-flash-end');
       document.body.classList.remove('tutorial-flash-close');
@@ -3522,6 +3533,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                             setPendingDelete(realIndex);
                           }
                         }}
+                        data-tx={tx.name.startsWith('Adrenaline push') ? 'adrenaline-push' : undefined}
                         className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
                           isReorderingThis
                             ? 'bg-emerald-500 text-white'

@@ -141,6 +141,10 @@ body.tutorial-flash-close [data-button="close-case"] {
   animation: adrenalineFlash 1.5s infinite;
 }
 
+body.tutorial-flash-adrenaline-tx [data-tx="adrenaline-push"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
 @keyframes flashRed {
   0%, 49% { opacity: 1; }
   50%, 100% { opacity: 0.15; }
