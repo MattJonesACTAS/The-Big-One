@@ -558,6 +558,21 @@ export default function App() {
   const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
   const [showDeleteWarning, setShowDeleteWarning] = useState(false);
   const [previousCases, setPreviousCases] = useState<AppState[]>(() => loadPreviousCases());
+  const [editingTimeForTxIndex, setEditingTimeForTxIndex] = useState<number | null>(null);
+  const [timeEditValue, setTimeEditValue] = useState({ mins: 0, secs: 0 });
+
+  // Pre-fill the retroactive time-edit picker with the treatment's current
+  // ago-time, so the user can nudge an existing value rather than starting
+  // from scratch.
+  useEffect(() => {
+    if (editingTimeForTxIndex === null) return;
+    const tx = state.treatments[editingTimeForTxIndex];
+    if (!tx) return;
+    const agoSeconds = tx.loggedAt != null
+      ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000))
+      : Math.max(0, state.elapsedSeconds - tx.elapsed);
+    setTimeEditValue({ mins: Math.floor(agoSeconds / 60), secs: agoSeconds % 60 });
+  }, [editingTimeForTxIndex]);
   const [showPreviousCasesList, setShowPreviousCasesList] = useState(false);
   const [viewingPreviousCase, setViewingPreviousCase] = useState<AppState | null>(null);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
@@ -1091,6 +1106,30 @@ export default function App() {
     setState(prev => {
       const remaining = prev.treatments.filter((_, i) => i !== idx);
       return { ...prev, treatments: renumberTreatments(remaining) };
+    });
+  };
+
+  // Retroactively correct when a treatment actually happened, e.g. logging
+  // something that was actually given a few minutes earlier but wasn't
+  // recorded at the time. Updates the displayed clock time, elapsed time,
+  // and the wall-clock timestamp used for the 'ago' calculation. Does not
+  // change the entry's position in the log - it's corrected in place, not
+  // re-sorted.
+  const applyTimeEdit = (idx: number, secondsAgo: number) => {
+    setState(prev => {
+      const tx = prev.treatments[idx];
+      if (!tx) return prev;
+      const newLoggedAt = Date.now() - secondsAgo * 1000;
+      const newDate = new Date(newLoggedAt);
+      const newElapsed = Math.max(0, prev.elapsedSeconds - secondsAgo);
+      const updatedTreatments = prev.treatments.map((t, i) => i === idx ? {
+        ...t,
+        loggedAt: newLoggedAt,
+        clock: getLocalTime(newDate),
+        clockSeconds: getLocalTimeWithSeconds(newDate),
+        elapsed: newElapsed,
+      } : t);
+      return { ...prev, treatments: updatedTreatments };
     });
   };
 
@@ -1641,7 +1680,7 @@ export default function App() {
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} onEditTime={(idx) => setEditingTimeForTxIndex(idx)} />
               </div>
             </div>
             <AnimatePresence>
@@ -1658,6 +1697,7 @@ export default function App() {
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                   timingMode={timingMode}
                   onDeleteTreatment={deleteTreatment}
+                  onEditTreatmentTime={(idx) => setEditingTimeForTxIndex(idx)}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
                 />
               )}
@@ -1826,6 +1866,7 @@ export default function App() {
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                 timingMode={timingMode}
                 onDeleteTreatment={deleteTreatment}
+                onEditTreatmentTime={(idx) => setEditingTimeForTxIndex(idx)}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
               />
             )}
@@ -3098,6 +3139,43 @@ export default function App() {
         </div>
       )}
 
+      {editingTimeForTxIndex !== null && (
+        <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Change Time</h2>
+            <p className="text-neutral-500 mb-6">
+              How long ago was '{state.treatments[editingTimeForTxIndex]?.name}' actually given?
+            </p>
+
+            <div className="mb-8">
+              <TimePicker
+                value={timeEditValue}
+                onChange={setTimeEditValue}
+                maxSeconds={5999}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => setEditingTimeForTxIndex(null)}
+                className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  applyTimeEdit(editingTimeForTxIndex, timeEditValue.mins * 60 + timeEditValue.secs);
+                  setEditingTimeForTxIndex(null);
+                }}
+                className="bg-emerald-600 p-4 rounded-xl font-bold text-white btn-base"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showResetWarning && (
         <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
@@ -3240,7 +3318,7 @@ function CounterItem({ label, value, onChange, activeBorderClass }: { label: str
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onUpdateInfusionDose }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onEditTreatmentTime, onUpdateInfusionDose }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -3252,6 +3330,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onVitalsChange: (v: AppState['vitals']) => void,
   timingMode?: string | null,
   onDeleteTreatment?: (idx: number) => void,
+  onEditTreatmentTime?: (idx: number) => void,
   onUpdateInfusionDose?: (drug: string, dose: string) => void
 }) {
   const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
@@ -3269,7 +3348,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onEditTime={onEditTreatmentTime} onUpdateInfusionDose={onUpdateInfusionDose} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
@@ -3490,7 +3569,7 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void }) {
+function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete, onEditTime }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void, onEditTime?: (index: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
 
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
@@ -3600,12 +3679,14 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className="fixed inset-0 bg-black/60 z-[3000] flex items-center justify-center p-6">
           <div className="bg-white rounded-2xl p-6 max-w-xs w-full shadow-2xl space-y-4">
             <div className="text-center space-y-1">
-              <p className="font-bold text-neutral-900 text-lg">Delete treatment?</p>
-              <p className="text-neutral-500 text-sm">{treatments[pendingDelete]?.name}</p>
+              <p className="font-bold text-neutral-900 text-lg">{treatments[pendingDelete]?.name}</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setPendingDelete(null)} className="py-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
-              <button onClick={() => { onDelete?.(pendingDelete); setPendingDelete(null); }} className="py-3 rounded-xl bg-red-500 font-bold text-white">Delete</button>
+            <div className="space-y-2">
+              {onEditTime && (
+                <button onClick={() => { onEditTime(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-blue-50 font-bold text-blue-700">Change Time</button>
+              )}
+              <button onClick={() => { onDelete?.(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-red-50 font-bold text-red-600">Delete</button>
+              <button onClick={() => setPendingDelete(null)} className="w-full py-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
             </div>
           </div>
         </div>
@@ -3758,7 +3839,7 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
+function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onEditTime, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onEditTime?: (idx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
@@ -3791,7 +3872,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onUpdateIn
       <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} onEditTime={onEditTime} />
       </div>
     </div>
   );
