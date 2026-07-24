@@ -369,7 +369,7 @@ function renderDescription(text: string) {
   }
 
   return (
-    <div style={{ color: '#666', marginBottom: '24px', lineHeight: '1.5', textAlign: 'left' }}>
+    <div style={{ color: '#666', marginBottom: '24px', lineHeight: '1.5', textAlign: 'left', fontSize: '16px' }}>
       {groups.map((group, gi) => {
         const isLast = gi === groups.length - 1;
         if (group.type === 'bullets') {

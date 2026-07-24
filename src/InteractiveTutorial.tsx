@@ -867,7 +867,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             width: '85%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               {currentScreen === 'intro1' && 'Welcome!'}
               {currentScreen === 'intro2' && 'Navigating the Tutorial'}
               {currentScreen === 'intro3' && 'Getting Started'}
@@ -921,7 +921,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             width: '85%',
             boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
           }}>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
+            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               Time Keeping
             </h2>
             {renderIntroDescription("Next you will need to choose whether you want the app to help you keep track of rhythm checks and medication repeat dose times, or whether you want to do that on your own.\n\nLet's look at the two options.")}
@@ -1352,7 +1352,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
           >
             <h3 style={{
               margin: '0 0 12px 0',
-              fontSize: '20px',
+              fontSize: '24px',
               fontWeight: '700',
               color: '#1a1a1a',
               textAlign: 'center',
@@ -1361,7 +1361,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             </h3>
             <p style={{
               margin: '0 0 20px 0',
-              fontSize: '15px',
+              fontSize: '16px',
               lineHeight: '1.6',
               color: '#444',
               textAlign: 'left',
@@ -1418,7 +1418,7 @@ function renderIntroDescription(text: string) {
     }
   }
   return (
-    <div style={{ color: '#555', marginBottom: '20px', lineHeight: '1.6', textAlign: 'left' }}>
+    <div style={{ color: '#555', marginBottom: '20px', lineHeight: '1.6', textAlign: 'left', fontSize: '16px' }}>
       {groups.map((group, gi) => {
         const isLast = gi === groups.length - 1;
         if (group.type === 'bullets') {
