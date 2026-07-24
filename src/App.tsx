@@ -27,7 +27,8 @@ import {
   Hand,
   User,
   GripVertical,
-  Check
+  Check,
+  MoreVertical
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
@@ -3659,10 +3660,10 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                       className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
                         reorderingRealIdx === realIndex
                           ? 'bg-emerald-500 text-white'
-                          : 'bg-neutral-100 hover:bg-red-100 text-neutral-400 hover:text-red-500'
+                          : 'bg-neutral-100 hover:bg-neutral-200 text-neutral-400 hover:text-neutral-600'
                       }`}
                     >
-                      {reorderingRealIdx === realIndex ? <Check size={8} /> : <X size={8} />}
+                      {reorderingRealIdx === realIndex ? <Check size={8} /> : <MoreVertical size={8} />}
                     </button>
                   )}
                   <div>
