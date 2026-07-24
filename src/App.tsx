@@ -554,10 +554,10 @@ export default function App() {
       return false;
     }
   });
-  const [showCloseWarning, setShowCloseWarning] = useState(false);
+  const [showEndWarning, setShowEndWarning] = useState(false);
   const [disregardAdrenaline, setDisregardAdrenaline] = useState<'pending' | 'confirmed' | null>(null);
   const [disregardAmiodarone, setDisregardAmiodarone] = useState<'pending' | 'confirmed' | null>(null);
-  const [showDeleteWarning, setShowDeleteWarning] = useState(false);
+  const [showCloseWarning, setShowCloseWarning] = useState(false);
   const [previousCases, setPreviousCases] = useState<AppState[]>(() => loadPreviousCases());
   const [showPreviousCasesList, setShowPreviousCasesList] = useState(false);
   const [viewingPreviousCase, setViewingPreviousCase] = useState<AppState | null>(null);
@@ -705,18 +705,18 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-summary-close');
     }
 
-    // Node 17 (closeCase) complete - flash Close Case button (index 12 = waiting on home)
+    // Node 17 (endCase) complete - flash End Case button (index 12 = waiting on home)
     if (tutorialMode && tutorialScreen.index === 12 && state.currentOverlay === null) {
+      document.body.classList.add('tutorial-flash-end');
+    } else {
+      document.body.classList.remove('tutorial-flash-end');
+    }
+
+    // Tutorial done - flash Close Case button
+    if (tutorialMode && tutorialScreen.complete) {
       document.body.classList.add('tutorial-flash-close');
     } else {
       document.body.classList.remove('tutorial-flash-close');
-    }
-
-    // Tutorial done - flash Delete Case button
-    if (tutorialMode && tutorialScreen.complete) {
-      document.body.classList.add('tutorial-flash-delete');
-    } else {
-      document.body.classList.remove('tutorial-flash-delete');
     }
     
     return () => {
@@ -728,8 +728,8 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-dose');
       document.body.classList.remove('tutorial-flash-summary');
       document.body.classList.remove('tutorial-flash-summary-close');
+      document.body.classList.remove('tutorial-flash-end');
       document.body.classList.remove('tutorial-flash-close');
-      document.body.classList.remove('tutorial-flash-delete');
     };
   }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, state.patientWeight, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
 
@@ -1325,7 +1325,7 @@ export default function App() {
     previousCountdown.current = rhythmCheckTarget - adjustedElapsed;
   };
 
-  const deleteCase = () => {
+  const closeCase = () => {
     // Preserve the previous-cases backup archive - it's meant to survive
     // independent of whatever happens to the current case's own data.
     const previousCasesBackup = localStorage.getItem(PREVIOUS_CASES_KEY);
@@ -1352,7 +1352,7 @@ export default function App() {
     }
   };
 
-  const closeCase = () => {
+  const endCase = () => {
     addTreatment('Close case');
     setState(prev => {
       const closed = { ...prev, running: false, caseClosedAt: Date.now() };
@@ -1363,7 +1363,7 @@ export default function App() {
       return closed;
     });
     setIsCaseClosed(true);
-    setShowCloseWarning(false);
+    setShowEndWarning(false);
   };
 
   if (isCaseClosed) {
@@ -1379,11 +1379,11 @@ export default function App() {
             <FileText size={20} /> Export PDF
           </button>
           <button 
-            onClick={() => setShowDeleteWarning(true)}
+            onClick={() => setShowCloseWarning(true)}
             className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold btn-base border border-red-100"
-            data-button="delete-case"
+            data-button="close-case"
           >
-            <Trash2 size={20} /> Delete Case
+            <Trash2 size={20} /> Close Case
           </button>
         </div>
 
@@ -1423,19 +1423,19 @@ export default function App() {
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} isSummary={true} timingMode={timingMode} />
 
-        {showDeleteWarning && (
+        {showCloseWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6">
            <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
              <AlertCircle size={48} className="mx-auto text-red-600 mb-4" />
-             <h2 className="text-2xl font-bold text-neutral-900 mb-2">Delete this case?</h2>
+             <h2 className="text-2xl font-bold text-neutral-900 mb-2">Close this case?</h2>
              <p className="text-neutral-500 mb-8">
                {tutorialMode
                  ? 'All data will be lost and you will return to the start screen.'
                  : `You will return to the start screen. Only your most recent ${MAX_PREVIOUS_CASES} cases are saved as a backup under 'View Previous Cases'.`}
              </p>
              <div className="grid grid-cols-2 gap-3">
-               <button onClick={() => setShowDeleteWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
-               <button onClick={deleteCase} className="bg-red-600 p-4 rounded-xl font-bold text-white btn-base">Delete</button>
+               <button onClick={() => setShowCloseWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
+               <button onClick={closeCase} className="bg-red-600 p-4 rounded-xl font-bold text-white btn-base">Close</button>
              </div>
            </div>
          </div>
@@ -1526,8 +1526,8 @@ export default function App() {
         >
           <RefreshCw size={14} className="sm:w-4 sm:h-4" /> Recalibrate
         </button>
-        <button onClick={() => setShowCloseWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="close-case">
-          <XCircle size={14} className="sm:w-4 sm:h-4" /> Close Case
+        <button onClick={() => setShowEndWarning(true)} className="bg-neutral-200 p-2.5 sm:p-4 rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 btn-base" data-button="end-case">
+          <XCircle size={14} className="sm:w-4 sm:h-4" /> End Case
         </button>
       </div>
 
@@ -2556,14 +2556,14 @@ export default function App() {
 
 
       {/* Warning Modals */}
-      {showCloseWarning && (
+      {showEndWarning && (
         <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
-            <h2 className="text-2xl font-bold text-neutral-900 mb-2">Close this case?</h2>
+            <h2 className="text-2xl font-bold text-neutral-900 mb-2">End this case?</h2>
             <p className="text-neutral-500 mb-8">This will end the timer and show the final summary.</p>
             <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setShowCloseWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
-              <button onClick={closeCase} className="bg-emerald-600 p-4 rounded-xl font-bold text-white btn-base">OK</button>
+              <button onClick={() => setShowEndWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
+              <button onClick={endCase} className="bg-emerald-600 p-4 rounded-xl font-bold text-white btn-base">End</button>
             </div>
           </div>
         </div>

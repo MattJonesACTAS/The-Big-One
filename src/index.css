@@ -133,11 +133,11 @@ body.tutorial-flash-summary-close [data-button="summary"] {
   animation: adrenalineFlash 1.5s infinite;
 }
 
-body.tutorial-flash-close [data-button="close-case"] {
+body.tutorial-flash-end [data-button="end-case"] {
   animation: adrenalineFlash 1.5s infinite;
 }
 
-body.tutorial-flash-delete [data-button="delete-case"] {
+body.tutorial-flash-close [data-button="close-case"] {
   animation: adrenalineFlash 1.5s infinite;
 }
 

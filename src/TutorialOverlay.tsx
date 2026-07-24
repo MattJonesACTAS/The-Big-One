@@ -124,8 +124,8 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home after summary ---
   {
-    id: 'closeCase', type: 'positioned', x: 79.9, y: 4.2,
-    pages: [{ title: 'Close Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can close the case.\n\nLet's close the case and see the final summary page." }],
+    id: 'endCase', type: 'positioned', x: 79.9, y: 4.2,
+    pages: [{ title: 'End Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can end the case.\n\nLet's end the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Case summary ---
@@ -141,7 +141,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   {
     id: 'delete', type: 'positioned', x: 73, y: 14,
-    pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nThe most recent 3 closed cases are automatically kept as a backup, so you can still retrieve one from the start screen even after deleting it here.\n\nDelete the case to finish the tutorial, and we'll see you at The Big One!" }],
+    pages: [{ title: 'Close Case', description: "Once you've finished with the case and exported to PDF if needed, you can close the case, which deletes all its data.\n\nThe most recent 3 closed cases are automatically kept as a backup, so you can still retrieve one from the start screen even after closing it here.\n\nClose the case to finish the tutorial, and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }
 ];
