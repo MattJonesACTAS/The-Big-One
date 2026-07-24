@@ -46,18 +46,18 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'tabs', type: 'positioned', x: 50, y: 10.75,
+    id: 'tabs', type: 'positioned', x: 50, y: 10.97,
     pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey\n\nYou will notice the reversibles checklist is already flashing red. That is a visual cue to encourage purposeful addressing of these early.' }],
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
-    id: 'addTxBtn', type: 'positioned', x: 74.65, y: 95.4,
+    id: 'addTxBtn', type: 'positioned', x: 74.65, y: 95.29,
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.\n\nPress the \u2018+ Add Tx\u2019 button so we can log our first Tx.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Treatment screen ---
   {
-    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 38.3,
+    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 36.08,
     pages: [
       {
         title: 'Add Tx Submenu',
@@ -72,7 +72,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home with medication alerts ---
   {
-    id: 'adrenalineAlert', type: 'positioned', x: 28.05, y: 83.10,
+    id: 'adrenalineAlert', type: 'positioned', x: 28.05, y: 83.32,
     pages: [{ title: 'Medication Alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
@@ -117,7 +117,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home after summary ---
   {
-    id: 'endCase', type: 'positioned', x: 75.8, y: 4.2,
+    id: 'endCase', type: 'positioned', x: 75.22, y: 4.2,
     pages: [{ title: 'End Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can end the case.\n\nLet's end the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
@@ -128,12 +128,12 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s) => !s.running
   },
   {
-    id: 'export', type: 'positioned', x: 27.23, y: 14.17,
+    id: 'export', type: 'positioned', x: 27.23, y: 14.45,
     pages: [{ title: 'Export PDF', description: 'Here you can export the case summary and Tx log to a PDF, which you can then download or email for later review.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'delete', type: 'positioned', x: 73.46, y: 14.17,
+    id: 'delete', type: 'positioned', x: 73.46, y: 14.45,
     pages: [{ title: 'Close Case', description: "Once you've finished with this case, you can close the case which resets the app.\n\nThe three most recent closed cases are accessible on the opening screen if you want to look back on them later.\n\nClose the case to finish the tutorial and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }

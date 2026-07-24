@@ -1450,9 +1450,7 @@ export default function App() {
              <AlertCircle size={48} className="mx-auto text-red-600 mb-4" />
              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Close this case?</h2>
              <p className="text-neutral-500 mb-8">
-               {tutorialMode
-                 ? "This is just the tutorial, so nothing will be saved. You'll return to the start screen."
-                 : "You will return to the welcome page. Only your most recent three cases are saved as a backup, found under 'View previous cases' on the welcome screen."}
+               You will return to the welcome page. Only your most recent three cases are saved as a backup, found under 'View previous cases' on the welcome screen.
              </p>
              <div className="grid grid-cols-2 gap-3">
                <button onClick={() => setShowCloseWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
