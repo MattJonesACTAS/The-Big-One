@@ -25,7 +25,8 @@ import {
   Sliders,
   RefreshCw,
   Hand,
-  User
+  User,
+  GripVertical
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
@@ -1094,23 +1095,24 @@ export default function App() {
     });
   };
 
-  // Retroactively correct WHEN a treatment happened by moving it up or down
-  // relative to its neighbours (e.g. logging something that actually happened
-  // a bit earlier than where it landed in the sequence). Swaps identity (name,
-  // whether catchup-added) between the two adjacent slots, while leaving each
-  // slot's own time fields (clock/elapsed/loggedAt/round) untouched - since
-  // that slot's time was already correctly sequenced, the shifted item just
-  // inherits a valid, consistent time automatically, no manual entry needed.
-  const shiftTreatment = (idx: number, direction: 'up' | 'down') => {
+  // Retroactively correct WHEN a treatment happened by dragging it to a new
+  // position in the log (e.g. logging something that actually happened a bit
+  // earlier/later than where it landed). Moves the identity (name, whether
+  // catchup-added) from fromIdx to toIdx, shifting everything in between
+  // along by one slot - while every slot's own time fields
+  // (clock/elapsed/loggedAt/round) stay exactly where they are. Since those
+  // slots already held a validly time-ordered sequence, the moved item just
+  // inherits whichever slot's time it lands on - no recalculation needed.
+  const moveTreatment = (fromIdx: number, toIdx: number) => {
     setState(prev => {
-      const swapIdx = direction === 'up' ? idx + 1 : idx - 1;
-      if (swapIdx < 0 || swapIdx >= prev.treatments.length) return prev;
-      const treatments = [...prev.treatments];
-      const a = treatments[idx];
-      const b = treatments[swapIdx];
-      treatments[idx] = { ...b, name: a.name, prior: a.prior };
-      treatments[swapIdx] = { ...a, name: b.name, prior: b.prior };
-      return { ...prev, treatments: renumberTreatments(treatments) };
+      if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= prev.treatments.length || toIdx >= prev.treatments.length) {
+        return prev;
+      }
+      const identities = prev.treatments.map(t => ({ name: t.name, prior: t.prior }));
+      const [moved] = identities.splice(fromIdx, 1);
+      identities.splice(toIdx, 0, moved);
+      const updated = prev.treatments.map((t, i) => ({ ...t, name: identities[i].name, prior: identities[i].prior }));
+      return { ...prev, treatments: renumberTreatments(updated) };
     });
   };
 
@@ -1661,7 +1663,7 @@ export default function App() {
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} onShift={shiftTreatment} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} onMove={moveTreatment} />
               </div>
             </div>
             <AnimatePresence>
@@ -1678,7 +1680,7 @@ export default function App() {
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                   timingMode={timingMode}
                   onDeleteTreatment={deleteTreatment}
-                  onShiftTreatment={shiftTreatment}
+                  onMoveTreatment={moveTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
                 />
               )}
@@ -1847,7 +1849,7 @@ export default function App() {
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                 timingMode={timingMode}
                 onDeleteTreatment={deleteTreatment}
-                onShiftTreatment={shiftTreatment}
+                onMoveTreatment={moveTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
               />
             )}
@@ -3262,7 +3264,7 @@ function CounterItem({ label, value, onChange, activeBorderClass }: { label: str
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onShiftTreatment, onUpdateInfusionDose }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onMoveTreatment, onUpdateInfusionDose }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -3274,7 +3276,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onVitalsChange: (v: AppState['vitals']) => void,
   timingMode?: string | null,
   onDeleteTreatment?: (idx: number) => void,
-  onShiftTreatment?: (idx: number, direction: 'up' | 'down') => void,
+  onMoveTreatment?: (fromIdx: number, toIdx: number) => void,
   onUpdateInfusionDose?: (drug: string, dose: string) => void
 }) {
   const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
@@ -3292,7 +3294,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onShift={onShiftTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onMove={onMoveTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
@@ -3513,8 +3515,43 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete, onShift }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void, onShift?: (index: number, direction: 'up' | 'down') => void }) {
+function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete, onMove }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
+  const [draggingRealIdx, setDraggingRealIdx] = React.useState<number | null>(null);
+  const [dragOverRealIdx, setDragOverRealIdx] = React.useState<number | null>(null);
+  const rowRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
+
+  const handleDragPointerDown = (realIdx: number) => (e: React.PointerEvent) => {
+    setDraggingRealIdx(realIdx);
+    setDragOverRealIdx(realIdx);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  const handleDragPointerMove = (e: React.PointerEvent) => {
+    if (draggingRealIdx === null) return;
+    const y = e.clientY;
+    let closestRealIdx = draggingRealIdx;
+    let closestDist = Infinity;
+    (Object.entries(rowRefs.current) as [string, HTMLDivElement | null][]).forEach(([key, el]) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const mid = rect.top + rect.height / 2;
+      const dist = Math.abs(y - mid);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestRealIdx = parseInt(key, 10);
+      }
+    });
+    setDragOverRealIdx(closestRealIdx);
+  };
+
+  const handleDragPointerUp = () => {
+    if (draggingRealIdx !== null && dragOverRealIdx !== null && draggingRealIdx !== dragOverRealIdx) {
+      onMove?.(draggingRealIdx, dragOverRealIdx);
+    }
+    setDraggingRealIdx(null);
+    setDragOverRealIdx(null);
+  };
 
   const splitTreatmentName = (name: string): { med: string, dose: string | null } => {
     // Oxygen: split route onto second line
@@ -3591,8 +3628,30 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
             const { med, dose } = splitTreatmentName(tx.name);
 
             return (
-              <div key={i} className={`grid ${gridCols} px-4 py-4 items-center gap-1`}>
-                <div className="pr-1 flex items-center gap-3">
+              <div
+                key={i}
+                ref={(el) => { rowRefs.current[realIndex] = el; }}
+                className={`grid ${gridCols} px-4 py-4 items-center gap-1 transition-opacity ${
+                  draggingRealIdx === realIndex ? 'opacity-40' : ''
+                } ${
+                  dragOverRealIdx === realIndex && draggingRealIdx !== null && draggingRealIdx !== realIndex
+                    ? 'bg-blue-50 border-y-2 border-blue-400'
+                    : ''
+                }`}
+              >
+                <div className="pr-1 flex items-center gap-2">
+                  {onMove && (
+                    <button
+                      onPointerDown={handleDragPointerDown(realIndex)}
+                      onPointerMove={handleDragPointerMove}
+                      onPointerUp={handleDragPointerUp}
+                      onPointerCancel={handleDragPointerUp}
+                      style={{ touchAction: 'none' }}
+                      className="-ml-1 w-5 h-5 flex-shrink-0 flex items-center justify-center text-neutral-300 active:text-neutral-500 cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical size={14} />
+                    </button>
+                  )}
                   {onDelete && (
                     <button
                       onClick={() => setPendingDelete(realIndex)}
@@ -3626,24 +3685,6 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
               <p className="font-bold text-neutral-900 text-lg">{treatments[pendingDelete]?.name}</p>
             </div>
             <div className="space-y-2">
-              {onShift && (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    disabled={pendingDelete >= treatments.length - 1}
-                    onClick={() => { onShift(pendingDelete, 'up'); setPendingDelete(null); }}
-                    className="w-full py-3 rounded-xl bg-blue-50 font-bold text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ↑ Shift Later
-                  </button>
-                  <button
-                    disabled={pendingDelete <= 0}
-                    onClick={() => { onShift(pendingDelete, 'down'); setPendingDelete(null); }}
-                    className="w-full py-3 rounded-xl bg-blue-50 font-bold text-blue-700 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    ↓ Shift Earlier
-                  </button>
-                </div>
-              )}
               <button onClick={() => { onDelete?.(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-red-50 font-bold text-red-600">Delete</button>
               <button onClick={() => setPendingDelete(null)} className="w-full py-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
             </div>
@@ -3798,7 +3839,7 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onShift, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onShift?: (idx: number, direction: 'up' | 'down') => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
+function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onMove, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
@@ -3831,7 +3872,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onShift, o
       <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} onShift={onShift} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} onMove={onMove} />
       </div>
     </div>
   );
