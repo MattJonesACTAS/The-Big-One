@@ -41,7 +41,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'recalibrate', type: 'positioned', x: 24.8, y: 4.2,
+    id: 'recalibrate', type: 'positioned', x: 25.4, y: 4.2,
     pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
@@ -51,13 +51,13 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
-    id: 'addTxBtn', type: 'positioned', x: 75, y: 95.4,
+    id: 'addTxBtn', type: 'positioned', x: 74.65, y: 95.4,
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.\n\nPress the \u2018+ Add Tx\u2019 button so we can log our first Tx.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   // --- Treatment screen ---
   {
-    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 40,
+    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 38.3,
     pages: [
       {
         title: 'Add Tx Submenu',
@@ -72,7 +72,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home with medication alerts ---
   {
-    id: 'adrenalineAlert', type: 'positioned', x: 28.4, y: 82.82,
+    id: 'adrenalineAlert', type: 'positioned', x: 28.05, y: 83.10,
     pages: [{ title: 'Medication Alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
     condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
   },
@@ -103,7 +103,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
       },
       {
         title: 'Editing Treatments',
-        description: "Treatments in the Tx log can be deleted or reordered by pressing the button with three dots to the left of the treatment name.\n\nTry moving or deleting the Adrenaline push entry you added earlier."
+        description: "Treatments in the Tx log can be deleted or reordered by pressing the button with three dots to the left of the treatment name.\n\nMoving a Tx is useful if you realise partway through a case that something was actually given a bit earlier or later than when you logged it - for example, remembering a dose given a few minutes ago that you hadn't recorded at the time.\n\nMove or delete the Adrenaline push entry you added earlier to continue."
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
@@ -112,10 +112,12 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     id: 'closeOverlay', type: 'positioned', x: 26.6, y: 95.4,
     pages: [{ title: 'Return to Home', description: 'Press the close button to return to the home page.' }],
     condition: (s) => s.currentOverlay === 'summary'
+      && (!s.treatments.some(t => t.name.startsWith('Adrenaline push'))
+          || s.treatments.some(t => t.name.startsWith('Adrenaline push') && t.timeUnknown))
   },
   // --- Home after summary ---
   {
-    id: 'endCase', type: 'positioned', x: 76.4, y: 4.2,
+    id: 'endCase', type: 'positioned', x: 75.8, y: 4.2,
     pages: [{ title: 'End Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can end the case.\n\nLet's end the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
@@ -126,12 +128,12 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s) => !s.running
   },
   {
-    id: 'export', type: 'positioned', x: 27, y: 14,
+    id: 'export', type: 'positioned', x: 27.23, y: 14.17,
     pages: [{ title: 'Export PDF', description: 'Here you can export the case summary and Tx log to a PDF, which you can then download or email for later review.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'delete', type: 'positioned', x: 73, y: 14,
+    id: 'delete', type: 'positioned', x: 73.46, y: 14.17,
     pages: [{ title: 'Close Case', description: "Once you've finished with this case, you can close the case which resets the app.\n\nThe three most recent closed cases are accessible on the opening screen if you want to look back on them later.\n\nClose the case to finish the tutorial and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }

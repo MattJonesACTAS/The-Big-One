@@ -654,8 +654,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'rhythmCheckTiming',
       elements: [
-        { id: 'timingLog',     x: 50, y: 38.6, number: 3, title: 'No Timer Mode',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
-        { id: 'timingElapsed', x: 50, y: 63.6, number: 4, title: 'Time Keeping Assistance Mode',  description: "In the time keeping assistance mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Time keeping assistance' to progress in the tutorial." },
+        { id: 'timingLog',     x: 50, y: 38.0, number: 3, title: 'No Timer Mode',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
+        { id: 'timingElapsed', x: 50, y: 63.0, number: 4, title: 'Time Keeping Assistance Mode',  description: "In the time keeping assistance mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Time keeping assistance' to progress in the tutorial." },
       ],
     },
     rhythmCheckTiming: {
@@ -924,7 +924,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               Time Keeping
             </h2>
-            {renderIntroDescription("Next you can choose whether the app provides you with a rhythm check count down or not.")}
+            {renderIntroDescription("Next you can choose whether the app provides you with a rhythm check countdown or not.")}
             <button
               onClick={() => setTimingIntroDismissed(true)}
               style={{
