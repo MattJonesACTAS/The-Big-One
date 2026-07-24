@@ -828,16 +828,16 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
+      backgroundColor: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'rhythmCheckTiming', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'transparent' : '#1a1a1a',
       display: 'flex',
       flexDirection: 'column',
-      alignItems: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      justifyContent: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
-      padding: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
+      alignItems: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'rhythmCheckTiming', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      justifyContent: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'rhythmCheckTiming', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? 'stretch' : 'center',
+      padding: ['intro1', 'intro2', 'intro3', 'patientDetails', 'previousTreatments', 'timingMethod', 'rhythmCheckTiming', 'enterElapsedTime', 'home1', 'addTxMenu', 'adrenalineDose', 'home2', 'home2_summary', 'home2_close', 'summary', 'caseSummary'].includes(currentScreen) ? '0' : '20px',
       fontFamily: 'system-ui, -apple-system, sans-serif',
       zIndex: 9999,
       overflowY: 'auto',
-      pointerEvents: ['timingMethod', 'patientDetails', 'previousTreatments', 'enterElapsedTime'].includes(currentScreen) ? 'none' : 'auto',
+      pointerEvents: ['timingMethod', 'rhythmCheckTiming', 'patientDetails', 'previousTreatments', 'enterElapsedTime'].includes(currentScreen) ? 'none' : 'auto',
     }}>
       {/* Render static components for non-catchup screens only */}
       {currentScreen === 'home1' && <StaticHomeScreen />}
