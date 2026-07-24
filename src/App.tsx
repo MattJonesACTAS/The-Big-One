@@ -1096,23 +1096,22 @@ export default function App() {
   };
 
   // Retroactively correct WHEN a treatment happened by dragging it to a new
-  // position in the log (e.g. logging something that actually happened a bit
-  // earlier/later than where it landed). Moves the identity (name, whether
-  // catchup-added) from fromIdx to toIdx, shifting everything in between
-  // along by one slot - while every slot's own time fields
-  // (clock/elapsed/loggedAt/round) stay exactly where they are. Since those
-  // slots already held a validly time-ordered sequence, the moved item just
-  // inherits whichever slot's time it lands on - no recalculation needed.
+  // position in the log. The moved item's exact time becomes unknown (shown
+  // as a dash) rather than guessed - if it happened somewhere between two
+  // other treatments, there's no way to know exactly when within that gap,
+  // and displaying a specific inherited time would overstate the precision
+  // of the correction. Every other entry keeps its own original time
+  // unchanged, since dragging something else past them says nothing about
+  // when they themselves happened.
   const moveTreatment = (fromIdx: number, toIdx: number) => {
     setState(prev => {
       if (fromIdx === toIdx || fromIdx < 0 || toIdx < 0 || fromIdx >= prev.treatments.length || toIdx >= prev.treatments.length) {
         return prev;
       }
-      const identities = prev.treatments.map(t => ({ name: t.name, prior: t.prior }));
-      const [moved] = identities.splice(fromIdx, 1);
-      identities.splice(toIdx, 0, moved);
-      const updated = prev.treatments.map((t, i) => ({ ...t, name: identities[i].name, prior: identities[i].prior }));
-      return { ...prev, treatments: renumberTreatments(updated) };
+      const treatments = [...prev.treatments];
+      const [moved] = treatments.splice(fromIdx, 1);
+      treatments.splice(toIdx, 0, { ...moved, timeUnknown: true });
+      return { ...prev, treatments: renumberTreatments(treatments) };
     });
   };
 
@@ -3601,7 +3600,9 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
 
   const gridCols = isSummary
     ? (showElapsed ? 'grid-cols-[1.8fr_1.2fr_1fr]' : 'grid-cols-[1.8fr_1.2fr]')
-    : (showElapsed ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]');
+    : (showElapsed
+        ? (onMove ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]')
+        : (onMove ? 'grid-cols-[1.9fr_1fr_1.1fr_0.4fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]'));
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
@@ -3610,6 +3611,7 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
         {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-4">Ago</div>}
+        {onMove && <div />}
       </div>
 
       <div className="divide-y divide-neutral-100">
@@ -3619,12 +3621,12 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
           [...treatments].reverse().map((tx, i) => {
             const realIndex = treatments.length - 1 - i;
             const timeVal = isSummary ? tx.clockSeconds : tx.clock;
-            const timeDisplay = tx.prior ? `< ${timeVal}` : timeVal;
-            const elapsedDisplay = tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed));
+            const timeDisplay = tx.timeUnknown ? '—' : (tx.prior ? `< ${timeVal}` : timeVal);
+            const elapsedDisplay = tx.timeUnknown ? '—' : (tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed)));
             const agoVal = tx.prior
               ? (caseOpenedAt != null ? Math.max(0, Math.floor((Date.now() - caseOpenedAt) / 1000)) : elapsedSeconds)
               : (tx.loggedAt != null ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000)) : (elapsedSeconds - tx.elapsed));
-            const ago = tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal);
+            const ago = tx.timeUnknown ? '—' : (tx.prior ? `> ${formatTimeHMM(agoVal)}` : formatTimeHMM(agoVal));
             const { med, dose } = splitTreatmentName(tx.name);
 
             return (
@@ -3640,18 +3642,6 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                 }`}
               >
                 <div className="pr-1 flex items-center gap-2">
-                  {onMove && (
-                    <button
-                      onPointerDown={handleDragPointerDown(realIndex)}
-                      onPointerMove={handleDragPointerMove}
-                      onPointerUp={handleDragPointerUp}
-                      onPointerCancel={handleDragPointerUp}
-                      style={{ touchAction: 'none' }}
-                      className="-ml-1 w-5 h-5 flex-shrink-0 flex items-center justify-center text-neutral-300 active:text-neutral-500 cursor-grab active:cursor-grabbing"
-                    >
-                      <GripVertical size={14} />
-                    </button>
-                  )}
                   {onDelete && (
                     <button
                       onClick={() => setPendingDelete(realIndex)}
@@ -3672,6 +3662,20 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                 <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{timeDisplay}</div>
                 {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
                 {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
+                {onMove && (
+                  <div className="flex items-center justify-end">
+                    <button
+                      onPointerDown={handleDragPointerDown(realIndex)}
+                      onPointerMove={handleDragPointerMove}
+                      onPointerUp={handleDragPointerUp}
+                      onPointerCancel={handleDragPointerUp}
+                      style={{ touchAction: 'none' }}
+                      className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-neutral-300 active:text-neutral-500 cursor-grab active:cursor-grabbing"
+                    >
+                      <GripVertical size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             );
           })
