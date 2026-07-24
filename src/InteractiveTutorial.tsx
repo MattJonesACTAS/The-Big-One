@@ -654,8 +654,8 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'enterElapsedTime',
       elements: [
-        { id: 'timingLog',     x: 50, y: 25, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
-        { id: 'timingElapsed', x: 50, y: 47, number: 4, title: 'Elapsed Time',  description: "Choose this option if you are using the elapsed time found at the top right corner of the monitor.\n\nYou can then choose whether you are performing rhythm checks on even or odd minutes.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
+        { id: 'timingLog',     x: 50, y: 42, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
+        { id: 'timingElapsed', x: 50, y: 67, number: 4, title: 'Elapsed Time',  description: "In the elapsed time mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
       ],
     },
     enterElapsedTime: {
@@ -916,7 +916,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               Time Keeping
             </h2>
-            {renderIntroDescription("On this page, you will need to select how you want the app to help you, or not help you, keep track of your next rhythm checks.\n\nLet's look at the three options.")}
+            {renderIntroDescription("On this page, you will need to choose the time keeping 'mode'.\n\nEither you can use the app to help you keep track of rhythm checks and medication repeats, or not.")}
             <button
               onClick={() => setTimingIntroDismissed(true)}
               style={{
