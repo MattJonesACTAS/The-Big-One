@@ -1366,8 +1366,10 @@ export default function App() {
     addTreatment('Close case');
     setState(prev => {
       const closed = { ...prev, running: false, caseClosedAt: Date.now() };
-      savePreviousCase(closed);
-      setPreviousCases(loadPreviousCases());
+      if (!tutorialMode) {
+        savePreviousCase(closed);
+        setPreviousCases(loadPreviousCases());
+      }
       return closed;
     });
     setIsCaseClosed(true);
@@ -1436,7 +1438,11 @@ export default function App() {
            <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
              <AlertCircle size={48} className="mx-auto text-red-600 mb-4" />
              <h2 className="text-2xl font-bold text-neutral-900 mb-2">Delete this case?</h2>
-             <p className="text-neutral-500 mb-8">All data will be lost and you will return to the start screen.</p>
+             <p className="text-neutral-500 mb-8">
+               {tutorialMode
+                 ? 'All data will be lost and you will return to the start screen.'
+                 : `You will return to the start screen. Only your most recent ${MAX_PREVIOUS_CASES} cases are saved as a backup under 'View Previous Cases'.`}
+             </p>
              <div className="grid grid-cols-2 gap-3">
                <button onClick={() => setShowDeleteWarning(false)} className="bg-neutral-100 p-4 rounded-xl font-bold text-neutral-700 btn-base">Cancel</button>
                <button onClick={deleteCase} className="bg-red-600 p-4 rounded-xl font-bold text-white btn-base">Delete</button>
@@ -2115,7 +2121,7 @@ export default function App() {
                 <div className="fixed inset-0 bg-white z-[2000] overflow-y-auto">
                   <div className="max-w-2xl mx-auto p-6 space-y-6 pb-24">
                     <div className="flex items-center justify-between">
-                      <button onClick={() => setViewingPreviousCase(null)} className="text-blue-600 font-semibold btn-base">← Back</button>
+                      <button onClick={() => { setViewingPreviousCase(null); setShowPreviousCasesList(true); }} className="text-blue-600 font-semibold btn-base">← Back</button>
                       <button onClick={() => window.print()} className="text-blue-600 font-semibold btn-base">Export PDF</button>
                     </div>
                     <h1 className="text-2xl font-bold text-center text-neutral-900">Previous Case</h1>
