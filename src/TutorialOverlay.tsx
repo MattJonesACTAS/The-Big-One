@@ -50,7 +50,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'recalibrate', type: 'positioned', x: 19.0, y: 4.2,
+    id: 'recalibrate', type: 'positioned', x: 21.3, y: 4.2,
     pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the patient's weight\n\n• Change time keeping method\n\nChange the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
@@ -108,7 +108,11 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
       },
       {
         title: 'Treatment Log',
-        description: "At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged.\n\nTreatments logged accidentally can be deleted using the 'x' button to the left of each entry in the Tx log."
+        description: "At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged."
+      },
+      {
+        title: 'Editing Treatments',
+        description: "Treatments in the Tx log can be deleted or reordered by pressing the button with three dots to the left of the treatment name.\n\nTry moving or deleting the Adrenaline push entry you added earlier."
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
@@ -120,7 +124,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Home after summary ---
   {
-    id: 'closeCase', type: 'positioned', x: 82.2, y: 4.2,
+    id: 'closeCase', type: 'positioned', x: 79.9, y: 4.2,
     pages: [{ title: 'Close Case Button', description: "When you've either stopped resuscitative efforts or handed your patient over at hospital, you can close the case.\n\nLet's close the case and see the final summary page." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
@@ -137,7 +141,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   {
     id: 'delete', type: 'positioned', x: 73, y: 14,
-    pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nDelete the case to finish the tutorial, and we'll see you at The Big One!" }],
+    pages: [{ title: 'Delete Case', description: "Once you've finished with the case and exported to PDF if needed, you can delete all case data.\n\nThe most recent 3 closed cases are automatically kept as a backup, so you can still retrieve one from the start screen even after deleting it here.\n\nDelete the case to finish the tutorial, and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }
 ];
@@ -147,9 +151,9 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
 // silently produce a duplicate or skipped number again. Only 'positioned'
 // nodes get a visible number (popups like homeIntro don't).
 // BASE_TUTORIAL_NUMBER is the last number used by InteractiveTutorial.tsx's
-// catchup-flow nodes (Patient Type=1 ... Enter Current Elapsed Time=5) — this
+// catchup-flow nodes (Patient Type=1 ... Enter Current Elapsed Time=6) — this
 // picks up right after that.
-const BASE_TUTORIAL_NUMBER = 5;
+const BASE_TUTORIAL_NUMBER = 6;
 let positionedCount = 0;
 const ALL_NODES: GlobalNode[] = RAW_NODES.map(node => {
   if (node.type !== 'positioned') return node;

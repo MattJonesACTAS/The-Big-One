@@ -652,10 +652,18 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
     timingMethod: {
       title: 'Time Keeping',
       image: '',
+      nextScreen: 'rhythmCheckTiming',
+      elements: [
+        { id: 'timingLog',     x: 50, y: 40.3, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
+        { id: 'timingElapsed', x: 50, y: 65.3, number: 4, title: 'Elapsed Time',  description: "In the elapsed time mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
+      ],
+    },
+    rhythmCheckTiming: {
+      title: 'Rhythm Check Timing',
+      image: '',
       nextScreen: 'enterElapsedTime',
       elements: [
-        { id: 'timingLog',     x: 50, y: 42, number: 3, title: 'Tx Log Only',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
-        { id: 'timingElapsed', x: 50, y: 67, number: 4, title: 'Elapsed Time',  description: "In the elapsed time mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Elapsed Time' to progress in the tutorial." },
+        { id: 'rhythmCheckTiming', x: 50, y: 50, number: 5, title: 'Rhythm Check Timing', description: "You will need to choose which minute intervals you want your rhythm checks to occur on.\n\nChoose an option to progress." },
       ],
     },
     enterElapsedTime: {
@@ -663,7 +671,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'home1', // progression driven by real catchupStep, not by Next click
       elements: [
-        { id: 'enterElapsedTime', x: 50, y: 50, number: 5, title: 'Enter Current Elapsed Time', description: "You will need to make the app's elapsed timer match the monitor's.\n\nEnter any time you like to move forward." },
+        { id: 'enterElapsedTime', x: 50, y: 50, number: 6, title: 'Enter Current Elapsed Time', description: "You will need to make the app's elapsed timer match the monitor's.\n\nEnter any time you like to move forward." },
       ],
     },
     home1: {
@@ -769,9 +777,9 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
   // not by an internal 'Next' click.
   useEffect(() => {
     if (catchupStep === undefined) return;
-    const stepToScreen: Record<number, string> = { 2: 'patientDetails', 3: 'previousTreatments', 6: 'timingMethod', 4: 'enterElapsedTime' };
+    const stepToScreen: Record<number, string> = { 2: 'patientDetails', 3: 'previousTreatments', 6: 'timingMethod', 7: 'rhythmCheckTiming', 4: 'enterElapsedTime' };
     const targetScreen = stepToScreen[catchupStep];
-    const catchupLinkedScreens = ['patientDetails', 'previousTreatments', 'timingMethod', 'enterElapsedTime'];
+    const catchupLinkedScreens = ['patientDetails', 'previousTreatments', 'timingMethod', 'rhythmCheckTiming', 'enterElapsedTime'];
     if (targetScreen && catchupLinkedScreens.includes(currentScreen) && currentScreen !== targetScreen) {
       setCurrentScreen(targetScreen);
       setExploredElements(new Set());
@@ -916,7 +924,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a1a', textAlign: 'center', marginBottom: '16px' }}>
               Time Keeping
             </h2>
-            {renderIntroDescription("On this page, you will need to choose the time keeping 'mode'.\n\nEither you can use the app to help you keep track of rhythm checks and medication repeats, or not.")}
+            {renderIntroDescription("Next you will need to choose whether you want the app to help you keep track of rhythm checks and medication repeat dose times, or whether you want to do that on your own.\n\nLet's look at the two options.")}
             <button
               onClick={() => setTimingIntroDismissed(true)}
               style={{
