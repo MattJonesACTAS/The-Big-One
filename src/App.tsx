@@ -26,7 +26,8 @@ import {
   RefreshCw,
   Hand,
   User,
-  GripVertical
+  GripVertical,
+  Check
 } from 'lucide-react';
 import { AppState, Treatment, OverlayType } from './types';
 import InteractiveTutorial from './InteractiveTutorial';
@@ -3516,6 +3517,7 @@ function SectionGroup({
 // --- TREATMENT LOG (EVEN COLUMNS) ---
 function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete, onMove }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
+  const [reorderingRealIdx, setReorderingRealIdx] = React.useState<number | null>(null);
   const [draggingRealIdx, setDraggingRealIdx] = React.useState<number | null>(null);
   const [dragOverRealIdx, setDragOverRealIdx] = React.useState<number | null>(null);
   const rowRefs = React.useRef<Record<number, HTMLDivElement | null>>({});
@@ -3547,6 +3549,9 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
   const handleDragPointerUp = () => {
     if (draggingRealIdx !== null && dragOverRealIdx !== null && draggingRealIdx !== dragOverRealIdx) {
       onMove?.(draggingRealIdx, dragOverRealIdx);
+      // The item moved to a new array position - follow it, so the checkmark
+      // and handle stay attached to the same treatment, not the same slot.
+      setReorderingRealIdx(dragOverRealIdx);
     }
     setDraggingRealIdx(null);
     setDragOverRealIdx(null);
@@ -3644,10 +3649,20 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                 <div className="pr-1 flex items-center gap-2">
                   {onDelete && (
                     <button
-                      onClick={() => setPendingDelete(realIndex)}
-                      className="-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-neutral-100 hover:bg-red-100 text-neutral-400 hover:text-red-500 transition-colors"
+                      onClick={() => {
+                        if (reorderingRealIdx === realIndex) {
+                          setReorderingRealIdx(null);
+                        } else {
+                          setPendingDelete(realIndex);
+                        }
+                      }}
+                      className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
+                        reorderingRealIdx === realIndex
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-neutral-100 hover:bg-red-100 text-neutral-400 hover:text-red-500'
+                      }`}
                     >
-                      <X size={8} />
+                      {reorderingRealIdx === realIndex ? <Check size={8} /> : <X size={8} />}
                     </button>
                   )}
                   <div>
@@ -3664,16 +3679,18 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                 {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
                 {onMove && (
                   <div className="flex items-center justify-end">
-                    <button
-                      onPointerDown={handleDragPointerDown(realIndex)}
-                      onPointerMove={handleDragPointerMove}
-                      onPointerUp={handleDragPointerUp}
-                      onPointerCancel={handleDragPointerUp}
-                      style={{ touchAction: 'none' }}
-                      className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-neutral-300 active:text-neutral-500 cursor-grab active:cursor-grabbing"
-                    >
-                      <GripVertical size={14} />
-                    </button>
+                    {reorderingRealIdx === realIndex && (
+                      <button
+                        onPointerDown={handleDragPointerDown(realIndex)}
+                        onPointerMove={handleDragPointerMove}
+                        onPointerUp={handleDragPointerUp}
+                        onPointerCancel={handleDragPointerUp}
+                        style={{ touchAction: 'none' }}
+                        className="w-6 h-6 flex-shrink-0 flex items-center justify-center text-blue-500 active:text-blue-700 cursor-grab active:cursor-grabbing"
+                      >
+                        <GripVertical size={14} />
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -3689,6 +3706,9 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
               <p className="font-bold text-neutral-900 text-lg">{treatments[pendingDelete]?.name}</p>
             </div>
             <div className="space-y-2">
+              {onMove && (
+                <button onClick={() => { setReorderingRealIdx(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-blue-50 font-bold text-blue-700">Reorder</button>
+              )}
               <button onClick={() => { onDelete?.(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-red-50 font-bold text-red-600">Delete</button>
               <button onClick={() => setPendingDelete(null)} className="w-full py-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
             </div>
