@@ -1424,8 +1424,10 @@ export default function App() {
 
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} isSummary={true} />
+        <div>
+          <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+          <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} isSummary={true} />
+        </div>
 
         {showCloseWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" style={{ height: '100dvh' }}>
@@ -2134,13 +2136,15 @@ export default function App() {
                       activeInfusions={INFUSION_DRUGS.filter(d => viewingPreviousCase.treatments.some(t => t.name.startsWith(d)))}
                     />
 
-                    <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                    <TreatmentLog
-                      treatments={viewingPreviousCase.treatments}
-                      elapsedSeconds={viewingPreviousCase.elapsedSeconds}
-                      caseOpenedAt={viewingPreviousCase.caseOpenedAt}
-                      isSummary={true}
-                    />
+                    <div>
+                      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+                      <TreatmentLog
+                        treatments={viewingPreviousCase.treatments}
+                        elapsedSeconds={viewingPreviousCase.elapsedSeconds}
+                        caseOpenedAt={viewingPreviousCase.caseOpenedAt}
+                        isSummary={true}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
