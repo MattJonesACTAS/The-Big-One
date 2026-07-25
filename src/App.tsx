@@ -1426,7 +1426,7 @@ export default function App() {
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} isSummary={true} timingMode={timingMode} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} isSummary={true} />
 
         {showCloseWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" style={{ height: '100dvh' }}>
@@ -1634,7 +1634,7 @@ export default function App() {
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={deleteTreatment} onMove={moveTreatment} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={deleteTreatment} onMove={moveTreatment} />
               </div>
             </div>
             <AnimatePresence>
@@ -1649,7 +1649,6 @@ export default function App() {
                   isShockForced={isShockForced}
                   toggleChecklistItem={toggleChecklistItem}
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
-                  timingMode={timingMode}
                   onDeleteTreatment={deleteTreatment}
                   onMoveTreatment={moveTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
@@ -1812,7 +1811,6 @@ export default function App() {
                 isShockForced={isShockForced}
                 toggleChecklistItem={toggleChecklistItem}
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
-                timingMode={timingMode}
                 onDeleteTreatment={deleteTreatment}
                 onMoveTreatment={moveTreatment}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
@@ -2141,10 +2139,8 @@ export default function App() {
                     <TreatmentLog
                       treatments={viewingPreviousCase.treatments}
                       elapsedSeconds={viewingPreviousCase.elapsedSeconds}
-                      catchupElapsed={viewingPreviousCase.catchupElapsed}
                       caseOpenedAt={viewingPreviousCase.caseOpenedAt}
                       isSummary={true}
-                      timingMode={viewingPreviousCase.timingMode}
                     />
                   </div>
                 </div>
@@ -3126,7 +3122,7 @@ function CounterItem({ label, value, onChange, activeBorderClass }: { label: str
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, timingMode, onDeleteTreatment, onMoveTreatment, onUpdateInfusionDose }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, onDeleteTreatment, onMoveTreatment, onUpdateInfusionDose }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
@@ -3136,7 +3132,6 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   isShockForced: boolean,
   toggleChecklistItem: (checklist: 'reversibles' | 'rosc' | 'phea', label: string) => void,
   onVitalsChange: (v: AppState['vitals']) => void,
-  timingMode?: string | null,
   onDeleteTreatment?: (idx: number) => void,
   onMoveTreatment?: (fromIdx: number, toIdx: number) => void,
   onUpdateInfusionDose?: (drug: string, dose: string) => void
@@ -3156,7 +3151,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} timingMode={timingMode} onDelete={onDeleteTreatment} onMove={onMoveTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} onDelete={onDeleteTreatment} onMove={onMoveTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
         {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
       </div>
     </motion.div>
@@ -3377,7 +3372,7 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt, isSummary = false, timingMode, onDelete, onMove }: { treatments: Treatment[], elapsedSeconds: number, catchupElapsed: number, caseOpenedAt?: number | null, isSummary?: boolean, timingMode?: string | null, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void }) {
+function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = false, onDelete, onMove }: { treatments: Treatment[], elapsedSeconds: number, caseOpenedAt?: number | null, isSummary?: boolean, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
   const [reorderingRealIdx, setReorderingRealIdx] = React.useState<number | null>(null);
   const [draggingRealIdx, setDraggingRealIdx] = React.useState<number | null>(null);
@@ -3463,20 +3458,17 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
     return { med: name, dose: null };
   };
 
-  const isElapsedMode = timingMode === 'elapsed';
-  const showElapsed = !isElapsedMode && timingMode !== 'log';
   const showAgo = !isSummary;
 
   const gridCols = isSummary
-    ? (showElapsed ? 'grid-cols-[1.8fr_1.2fr_1fr]' : 'grid-cols-[1.8fr_1.2fr]')
-    : (showElapsed ? 'grid-cols-[1.9fr_1fr_1.3fr_1.1fr]' : 'grid-cols-[1.9fr_1fr_1.1fr]');
+    ? 'grid-cols-[1.8fr_1.2fr]'
+    : 'grid-cols-[1.9fr_1fr_1.1fr]';
 
   return (
     <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
       <div className={`grid ${gridCols} gap-1 bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
-        {showElapsed && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Elapsed</div>}
         {showAgo && <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-right pr-[20px]">Ago</div>}
       </div>
 
@@ -3488,7 +3480,6 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
             const realIndex = treatments.length - 1 - i;
             const timeVal = isSummary ? tx.clockSeconds : tx.clock;
             const timeDisplay = tx.timeUnknown ? '—' : (tx.prior ? `< ${timeVal}` : timeVal);
-            const elapsedDisplay = tx.timeUnknown ? '—' : (tx.prior ? `< ${isSummary ? formatTimeWithSeconds(catchupElapsed) : formatTime(catchupElapsed)}` : (isSummary ? formatTimeWithSeconds(tx.elapsed) : formatTime(tx.elapsed)));
             const agoVal = tx.prior
               ? (caseOpenedAt != null ? Math.max(0, Math.floor((Date.now() - caseOpenedAt) / 1000)) : elapsedSeconds)
               : (tx.loggedAt != null ? Math.max(0, Math.floor((Date.now() - tx.loggedAt) / 1000)) : (elapsedSeconds - tx.elapsed));
@@ -3543,7 +3534,6 @@ function TreatmentLog({ treatments, elapsedSeconds, catchupElapsed, caseOpenedAt
                     </div>
                   </div>
                   <div className={`text-[16px] text-neutral-800 font-medium tabular-nums text-center ${isSummary ? '' : '-ml-[2px]'}`}>{timeDisplay}</div>
-                  {showElapsed && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-center">{elapsedDisplay}</div>}
                   {showAgo && <div className="text-[16px] text-neutral-800 font-medium tabular-nums text-right">{ago}</div>}
                 </div>
               </React.Fragment>
@@ -3748,7 +3738,7 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onMove, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, timingMode?: string | null, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
+function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
   const hasVitals = Object.values(v).some(val => val !== '');
   const vitalRows = [
@@ -3781,7 +3771,7 @@ function SummaryOverlay({ state, pharmaSummary, timingMode, onDelete, onMove, on
       <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} catchupElapsed={state.catchupElapsed} caseOpenedAt={state.caseOpenedAt} timingMode={timingMode} onDelete={onDelete} onMove={onMove} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={onDelete} onMove={onMove} />
       </div>
     </div>
   );
