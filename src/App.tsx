@@ -1421,34 +1421,7 @@ export default function App() {
 
         <ArrestSummarySection state={state} showRecordingDuration />
 
-        {(() => {
-          const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
-          const vitalRows = [
-            { label: 'HR',     value: v.hr,   unit: 'bpm'    },
-            { label: 'RR',      value: v.rr,   unit: 'br/min' },
-            { label: 'SpO₂',           value: v.spo2, unit: '%'      },
-            { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
-            { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
-            { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
-            { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
-            { label: 'Temp',    value: v.temp, unit: '°C'     },
-          ].filter(r => r.value !== '');
-          return (
-            <div className="rounded-xl overflow-hidden border border-neutral-100">
-              <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
-              {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
-                <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
-                  <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
-                  <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
-                    {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
-                  </span>
-                </div>
-              )) : (
-                <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded.</div>
-              )}
-            </div>
-          );
-        })()}
+        <VitalSignsSection vitals={state.vitals} />
 
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
@@ -2136,18 +2109,35 @@ export default function App() {
 
               {viewingPreviousCase && (
                 <div className="fixed inset-0 bg-white z-[2000] overflow-y-auto">
-                  <div className="max-w-2xl mx-auto p-6 space-y-6 pb-24">
-                    <div className="flex items-center justify-between">
-                      <button onClick={() => { setViewingPreviousCase(null); setShowPreviousCasesList(true); }} className="text-blue-600 font-semibold btn-base">← Back</button>
-                      <button onClick={() => window.print()} className="text-blue-600 font-semibold btn-base">Export PDF</button>
+                  <div className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 pb-24">
+                    <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <button
+                        onClick={() => window.print()}
+                        className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold btn-base border border-emerald-100"
+                      >
+                        <FileText size={20} /> Export PDF
+                      </button>
+                      <button
+                        onClick={() => { setViewingPreviousCase(null); setShowPreviousCasesList(true); }}
+                        className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-3 px-4 rounded-xl font-bold btn-base border border-blue-100"
+                      >
+                        <ArrowRight size={20} className="rotate-180" /> Back
+                      </button>
                     </div>
-                    <h1 className="text-2xl font-bold text-center text-neutral-900">Previous Case</h1>
+
                     <ArrestSummarySection state={viewingPreviousCase} showRecordingDuration />
+
+                    <VitalSignsSection vitals={viewingPreviousCase.vitals} />
+
                     <PharmaSummarySection
                       pharmaSummary={computePharmaSummary(viewingPreviousCase.treatments)}
                       infusionDoses={viewingPreviousCase.infusionDoses}
                       activeInfusions={INFUSION_DRUGS.filter(d => viewingPreviousCase.treatments.some(t => t.name.startsWith(d)))}
                     />
+
+                    <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
                     <TreatmentLog
                       treatments={viewingPreviousCase.treatments}
                       elapsedSeconds={viewingPreviousCase.elapsedSeconds}
@@ -3624,6 +3614,35 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function VitalSignsSection({ vitals }: { vitals: AppState['vitals'] }) {
+  const v = vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
+  const vitalRows = [
+    { label: 'HR',     value: v.hr,   unit: 'bpm'    },
+    { label: 'RR',      value: v.rr,   unit: 'br/min' },
+    { label: 'SpO₂',           value: v.spo2, unit: '%'      },
+    { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
+    { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
+    { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
+    { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
+    { label: 'Temp',    value: v.temp, unit: '°C'     },
+  ].filter(r => r.value !== '');
+  return (
+    <div className="rounded-xl overflow-hidden border border-neutral-100">
+      <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
+      {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
+        <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
+          <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
+          <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
+            {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
+          </span>
+        </div>
+      )) : (
+        <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded.</div>
+      )}
     </div>
   );
 }
