@@ -21,7 +21,6 @@ import {
   Zap,
   ShieldCheck,
   Stethoscope,
-  ArrowRight,
   Sliders,
   RefreshCw,
   Hand,
@@ -2119,9 +2118,9 @@ export default function App() {
                       </button>
                       <button
                         onClick={() => { setViewingPreviousCase(null); setShowPreviousCasesList(true); }}
-                        className="flex items-center justify-center gap-2 bg-blue-50 text-blue-700 py-3 px-4 rounded-xl font-bold btn-base border border-blue-100"
+                        className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold btn-base border border-red-100"
                       >
-                        <ArrowRight size={20} className="rotate-180" /> Back
+                        Back
                       </button>
                     </div>
 
