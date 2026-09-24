@@ -27,7 +27,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'timer', type: 'positioned', x: 50, y: 52,
+    id: 'elapsedCorner', type: 'positioned', x: 24, y: 24.5,
     pages: [
       {
         title: 'Elapsed Timer',
@@ -36,6 +36,16 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
       {
         title: 'No Timer Option',
         description: "If you had selected the 'No timer' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
+      }
+    ],
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf
+  },
+  {
+    id: 'timer', type: 'positioned', x: 50, y: 52,
+    pages: [
+      {
+        title: 'Rhythm Check Countdown',
+        description: "This shows the countdown to your next rhythm check, calculated from your chosen odds/evens interval.\n\nThe ring fills as you approach the next check, and both the ring and the number will turn red once it's due - the app will prompt you automatically at that point."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf

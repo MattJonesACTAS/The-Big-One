@@ -663,26 +663,26 @@ export default function App() {
     // then, once the Recalibrate menu is open, flash the Change Patient Weight button instead.
     // Both stop as soon as the weight actually changes, even before the node is dismissed.
     const weightUnchanged = state.patientWeight === tutorialInitialWeightRef.current;
-    if (tutorialMode && tutorialScreen.index === 3 && !showRecalibrateMenu && !showWeightChange && weightUnchanged) {
+    if (tutorialMode && tutorialScreen.index === 4 && !showRecalibrateMenu && !showWeightChange && weightUnchanged) {
       document.body.classList.add('tutorial-flash-recalibrate');
     } else {
       document.body.classList.remove('tutorial-flash-recalibrate');
     }
-    if (tutorialMode && tutorialScreen.index === 3 && showRecalibrateMenu && weightUnchanged) {
+    if (tutorialMode && tutorialScreen.index === 4 && showRecalibrateMenu && weightUnchanged) {
       document.body.classList.add('tutorial-flash-weight');
     } else {
       document.body.classList.remove('tutorial-flash-weight');
     }
 
-    // Node 10 (addTxBtn) complete - flash Add Tx button (index 5 = waiting for treatment screen)
-    if (tutorialMode && tutorialScreen.index === 5 && state.currentOverlay === null) {
+    // Node 11 (addTxBtn) complete - flash Add Tx button (index 6 = waiting for treatment screen)
+    if (tutorialMode && tutorialScreen.index === 6 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-add-tx');
     } else {
       document.body.classList.remove('tutorial-flash-add-tx');
     }
 
-    // Node 11 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 6)
-    if (tutorialMode && tutorialScreen.index === 6) {
+    // Node 12 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 7)
+    if (tutorialMode && tutorialScreen.index === 7) {
       document.body.classList.add('tutorial-flash-adrenaline');
       document.body.classList.add('tutorial-flash-dose');
     } else {
@@ -690,32 +690,32 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-dose');
     }
 
-    // Node 13 (summaryBtn) complete - flash Summary button (index 8 = waiting for summary overlay)
-    if (tutorialMode && tutorialScreen.index === 8 && state.currentOverlay === null) {
+    // Node 14 (summaryBtn) complete - flash Summary button (index 9 = waiting for summary overlay)
+    if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-summary');
     } else {
       document.body.classList.remove('tutorial-flash-summary');
     }
 
-    // Node 14 (summaryInfo) complete - flash the Adrenaline push row's menu
-    // button (index 9), until the entry is actually moved or deleted
+    // Node 15 (summaryInfo) complete - flash the Adrenaline push row's menu
+    // button (index 10), until the entry is actually moved or deleted
     const adrenalineHandled = !state.treatments.some(t => t.name.startsWith('Adrenaline push'))
       || state.treatments.some(t => t.name.startsWith('Adrenaline push') && t.timeUnknown);
-    if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === 'summary' && !adrenalineHandled) {
+    if (tutorialMode && tutorialScreen.index === 10 && state.currentOverlay === 'summary' && !adrenalineHandled) {
       document.body.classList.add('tutorial-flash-adrenaline-tx');
     } else {
       document.body.classList.remove('tutorial-flash-adrenaline-tx');
     }
 
-    // Node 15 (closeOverlay) complete - flash summary close button (index 10 = waiting on summary)
-    if (tutorialMode && tutorialScreen.index === 10 && state.currentOverlay === 'summary') {
+    // Node 16 (closeOverlay) complete - flash summary close button (index 11 = waiting on summary)
+    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === 'summary') {
       document.body.classList.add('tutorial-flash-summary-close');
     } else {
       document.body.classList.remove('tutorial-flash-summary-close');
     }
 
-    // Node 16 (endCase) complete - flash End Case button (index 11 = waiting on home)
-    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === null) {
+    // Node 17 (endCase) complete - flash End Case button (index 12 = waiting on home)
+    if (tutorialMode && tutorialScreen.index === 12 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-end');
     } else {
       document.body.classList.remove('tutorial-flash-end');
@@ -928,7 +928,7 @@ export default function App() {
       }, 500);
     }
     return () => clearInterval(interval);
-  }, [state.running]);
+  }, [state.running, timingMode, rhythmInterval, tutorialMode, showCatchup]);
 
   const togglePause = () => {
     setState(prev => {
@@ -1480,7 +1480,7 @@ export default function App() {
             setTutorialMode(true);
           }}
           onTimingNodesComplete={() => setTimingNodesComplete(true)}
-          onCatchupNodeStatusChange={(_screen, cleared) => setCatchupNodeCleared(cleared)}
+          onCatchupNodeStatusChange={(_screen, cleared) => { console.log('[TUTORIAL DEBUG] App.tsx received:', _screen, cleared); setCatchupNodeCleared(cleared); }}
         />
       )}
 
@@ -1669,9 +1669,9 @@ export default function App() {
             )}
             {timingMode === 'elapsed' && !state.isROSCMode && (
               <div className="bg-neutral-100 border border-neutral-100 shadow-sm rounded-xl sm:rounded-2xl py-4 px-4 sm:py-7 sm:px-8 flex flex-col items-center min-w-[100px] sm:min-w-[140px]">
-                <span className="text-[12px] sm:text-[14px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Next check</span>
-                <span className={`text-[25px] sm:text-[47px] font-bold tabular-nums leading-none ${(state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-500' : 'text-neutral-400'}`}>
-                  {formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))}
+                <span className="text-[12px] sm:text-[14px] font-bold text-neutral-900 tracking-widest mb-1.5 sm:mb-3">Elapsed Time</span>
+                <span className="text-[25px] sm:text-[47px] font-bold tabular-nums leading-none text-neutral-400">
+                  {formatTimeWithSeconds(state.elapsedSeconds)}
                 </span>
               </div>
             )}
@@ -1768,31 +1768,25 @@ export default function App() {
               
               <div className="flex flex-col items-center z-10 translate-y-3 sm:translate-y-4">
                 <div 
-                  className={`font-bold tabular-nums tracking-tighter leading-none ${
-                    timingMode === 'elapsed' ? 'text-[40px] sm:text-[62px]' : 'text-7xl sm:text-[120px]'
-                  } ${
+                  className={`font-bold tabular-nums tracking-tighter leading-none text-7xl sm:text-[120px] ${
                     state.rhythmCheckPaused ? 'text-neutral-900' :
                     state.rhythmCheckOvertime > 0 ? 'text-red-600' :
                     (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 ? 'text-red-600' : 'text-neutral-900'
                   }`}
                 >
-                  {timingMode === 'elapsed'
-                    ? formatTimeWithSeconds(state.elapsedSeconds)
-                    : state.rhythmCheckPaused 
-                      ? formatTime(state.frozenCountdown || 0)
-                      : state.rhythmCheckOvertime > 0 
-                        ? formatTime(6 - state.rhythmCheckOvertime)
-                        : formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))
+                  {state.rhythmCheckPaused 
+                    ? formatTime(state.frozenCountdown || 0)
+                    : state.rhythmCheckOvertime > 0 
+                      ? formatTime(6 - state.rhythmCheckOvertime)
+                      : formatTime(Math.max(0, state.rhythmCheckTarget - state.elapsedSeconds))
                   }
                 </div>
-                <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 ${timingMode === 'elapsed' ? 'translate-y-0.5' : ''} ${
-                  timingMode === 'elapsed' ? 'text-[11px] sm:text-[14px]' : 'text-[14px] sm:text-[18px]'
-                } ${
+                <div className={`uppercase tracking-widest font-bold mt-4 sm:mt-8 text-[14px] sm:text-[18px] ${
                   state.rhythmCheckOvertime > 0 ? 'text-red-600 flash-red' :
                   (state.rhythmCheckTarget - state.elapsedSeconds) <= 10 && !state.rhythmCheckPaused ? 'text-red-600' :
                   'text-neutral-400'
                 }`}>
-                  {timingMode === 'elapsed' ? 'Elapsed Time' : 'Rhythm Check'}
+                  Next Check
                 </div>
               </div>
               </>
@@ -2529,15 +2523,9 @@ export default function App() {
                           </svg>
                           <div className="flex flex-col items-center z-10">
                             <span className="text-[16px] font-bold tabular-nums leading-none text-neutral-900">
-                              {(() => {
-                                const total = 120 + (demoTick % 3600);
-                                const h = Math.floor(total / 3600);
-                                const m = Math.floor((total % 3600) / 60);
-                                const s = total % 60;
-                                return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-                              })()}
+                              {`${Math.floor((120 - (demoTick % 120)) / 60)}:${String((120 - (demoTick % 120)) % 60).padStart(2,'0')}`}
                             </span>
-                            <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Elapsed Time</span>
+                            <span className="text-[7px] font-bold tracking-widest uppercase text-neutral-400 mt-1">Next Check</span>
                           </div>
                         </div>
                       </div>

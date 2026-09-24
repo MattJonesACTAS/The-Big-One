@@ -767,6 +767,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
   useEffect(() => {
     const gatedScreens = ['patientDetails', 'previousTreatments', 'enterElapsedTime'];
     if (gatedScreens.includes(currentScreen) && onCatchupNodeStatusChange) {
+      console.log('[TUTORIAL DEBUG] screen:', currentScreen, 'allExplored:', allExplored, 'exploredElements:', Array.from(exploredElements), 'requiredElements:', Array.from(requiredElements));
       onCatchupNodeStatusChange(currentScreen, allExplored);
     }
   }, [currentScreen, allExplored]);
