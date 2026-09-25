@@ -15,6 +15,7 @@ import {
   Trash2, 
   ChevronDown, 
   AlertCircle,
+  AlertTriangle,
   XCircle,
   X,
   Clock,
@@ -45,7 +46,6 @@ const INITIAL_STATE: AppState = {
   rhythmCheckOvertime: 0, // Counts up from 0 to 6 after rhythm check hits 0:00
   rhythmCheckPaused: false, // When true, rhythm check stays frozen even while running
   cprRound: 1,
-  shocks: 0,
   treatments: [],
   currentOverlay: null,
   catchupElapsed: 0,
@@ -85,7 +85,8 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[], customUnit?: string }> 
       { dose: '1mg', population: 'adult', indication: 'Cardiac arrest' },
       { dose: '0.01mg/kg', population: 'paed', indication: 'Cardiac arrest', calculated: true },
       { dose: 'Other', population: 'both' }
-    ] 
+    ],
+    customUnit: 'mcg'
   },
   'Adrenaline infusion': { 
     doses: [
@@ -167,7 +168,8 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[], customUnit?: string }> 
   'Morphine': {
     doses: [
       { dose: 'Other', population: 'both' }
-    ]
+    ],
+    customUnit: 'mg'
   },
   'Normal saline': { 
     doses: [
@@ -210,6 +212,25 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[], customUnit?: string }> 
 };
 
 const INFUSION_DRUGS = ['Adrenaline infusion', 'Ketamine infusion', 'Morph/midaz infusion'];
+
+// Default unit for a drug's custom ("Other") dose entry: an explicit
+// customUnit override, or extracted from its preset doses. /kg is stripped
+// since a manually-typed custom dose is always an absolute dose, not a
+// weight-based rate.
+const getDefaultCustomUnit = (med: string): string => {
+  const config = DOSE_CONFIG[med];
+  if (!config) return '';
+  if (config.customUnit) return config.customUnit;
+  const unitMatches = config.doses
+    .filter(d => d.dose !== 'Other')
+    .map(d => {
+      const match = d.dose.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
+      if (!match) return null;
+      return match[1].replace('/kg', '');
+    })
+    .filter((u): u is string => Boolean(u));
+  return unitMatches.length > 0 ? unitMatches[0] : '';
+};
 
 // --- Utilities ---
 const formatTime = (seconds: number) => {
@@ -260,6 +281,14 @@ const getTreatmentIdentity = (rawName: string): string => {
   if (name.startsWith('Sodium bicarbonate')) return 'Sodium bicarbonate';
   if (name.startsWith('Shock')) return 'Shock';
   if (name.startsWith('Disarm')) return 'Disarm';
+  // Failable interventions: a failed attempt and a later successful one are
+  // still both attempts at the same procedure, so they number together
+  // (e.g. "IV access - Unsuccessful" then "IV access #2") rather than being
+  // treated as unrelated entries.
+  const FAILABLE_INTERVENTIONS = ['ETT', 'FONA', 'IGT', 'LMA', 'IO access', 'IV access', 'NPA', 'OPA', 'Suction', 'Reassurance provided'];
+  for (const proc of FAILABLE_INTERVENTIONS) {
+    if (name === proc || name.startsWith(proc + ' ')) return proc;
+  }
   for (const med of KNOWN_MEDS) {
     if (name === med || name.startsWith(med + ' ')) return med;
   }
@@ -302,6 +331,15 @@ const renumberTreatments = (treatments: Treatment[]): Treatment[] => {
 
 // Pure pharma summary calculation, usable for both live case state and
 // archived previous-case snapshots (neither depends on component state).
+// mg/mcg entries always aggregate internally as mcg, regardless of which
+// unit was logged first - keeps aggregation order-independent, so the
+// display-time formatting below can pick whichever unit reads best.
+const toCanonicalUnit = (amount: number, unit: string): { unit: string, amount: number } => {
+  const u = unit.toLowerCase();
+  if (u === 'mg') return { unit: 'mcg', amount: amount * 1000 };
+  return { unit, amount };
+};
+
 const computePharmaSummary = (treatments: Treatment[]): Record<string, { totalDose: number, unit: string, count: number, display: string }> => {
   const summary: Record<string, { totalDose: number, unit: string, count: number, display: string }> = {};
 
@@ -317,10 +355,11 @@ const computePharmaSummary = (treatments: Treatment[]): Record<string, { totalDo
       if (doseStr) {
         const directMatch = doseStr.match(/([\d.]+)(mg\/h|mg|mL|mMol|mcg|g|u|%)/i);
         if (directMatch) {
-          const [_, amount, unit] = directMatch;
+          const [_, rawAmount, rawUnit] = directMatch;
+          const { unit, amount } = toCanonicalUnit(parseFloat(rawAmount), rawUnit);
           if (!summary[medName].unit) summary[medName].unit = unit;
           if (summary[medName].unit === unit) {
-            summary[medName].totalDose += parseFloat(amount);
+            summary[medName].totalDose += amount;
           }
         }
       }
@@ -345,19 +384,21 @@ const computePharmaSummary = (treatments: Treatment[]): Record<string, { totalDo
           // Extract the calculated value in parentheses
           const calculatedMatch = doseStr.match(/\(([\d.]+)(mg|mL|mMol|mcg|g|u|%)\)/i);
           if (calculatedMatch) {
-            const [_, amount, unit] = calculatedMatch;
+            const [_, rawAmount, rawUnit] = calculatedMatch;
+            const { unit, amount } = toCanonicalUnit(parseFloat(rawAmount), rawUnit);
             if (!summary[med].unit) summary[med].unit = unit;
             if (summary[med].unit === unit) {
-              summary[med].totalDose += parseFloat(amount);
+              summary[med].totalDose += amount;
             }
           } else {
             // Direct dose: "1mg", "300mg", "100mL", etc.
             const directMatch = doseStr.match(/([\d.]+)(mg|mL|mMol|mcg|g|u|%)/i);
             if (directMatch) {
-              const [_, amount, unit] = directMatch;
+              const [_, rawAmount, rawUnit] = directMatch;
+              const { unit, amount } = toCanonicalUnit(parseFloat(rawAmount), rawUnit);
               if (!summary[med].unit) summary[med].unit = unit;
               if (summary[med].unit === unit) {
-                summary[med].totalDose += parseFloat(amount);
+                summary[med].totalDose += amount;
               }
             }
           }
@@ -372,12 +413,27 @@ const computePharmaSummary = (treatments: Treatment[]): Record<string, { totalDo
   Object.keys(summary).forEach(med => {
     const { totalDose, unit, count } = summary[med];
     if (totalDose > 0 && unit) {
-      const roundedDose = parseFloat(totalDose.toFixed(2));
-      if (med === 'Glucose 10%' && unit === 'mL') {
-        const grams = Math.round(roundedDose * 0.1 * 10) / 10;
-        summary[med].display = `${roundedDose}mL/${grams}g (${count})`;
+      // mcg totals of 1000 or more read more naturally as mg
+      if (unit.toLowerCase() === 'mcg' && totalDose >= 1000) {
+        const mgValue = parseFloat((totalDose / 1000).toFixed(2));
+        summary[med].display = `${mgValue}mg (${count})`;
+      } else if (unit.toLowerCase() === 'ml' && totalDose >= 1000) {
+        // mL totals of 1000 or more read more naturally as L
+        const litres = parseFloat((totalDose / 1000).toFixed(2));
+        if (med === 'Glucose 10%') {
+          const grams = Math.round(totalDose * 0.1 * 10) / 10;
+          summary[med].display = `${litres}L/${grams}g (${count})`;
+        } else {
+          summary[med].display = `${litres}L (${count})`;
+        }
       } else {
-        summary[med].display = `${roundedDose}${unit} (${count})`;
+        const roundedDose = parseFloat(totalDose.toFixed(2));
+        if (med === 'Glucose 10%' && unit === 'mL') {
+          const grams = Math.round(roundedDose * 0.1 * 10) / 10;
+          summary[med].display = `${roundedDose}mL/${grams}g (${count})`;
+        } else {
+          summary[med].display = `${roundedDose}${unit} (${count})`;
+        }
       }
     } else {
       summary[med].display = `${count}`;
@@ -577,9 +633,12 @@ export default function App() {
   const [rearrestElapsed, setRearrestElapsed] = useState<number>(0);
   const [roscButtonFlashing, setRoscButtonFlashing] = useState(false);
   const [showLoggedNotification, setShowLoggedNotification] = useState(false);
+  const [showPatternSwitchModal, setShowPatternSwitchModal] = useState(false);
   const loggedTreatmentRef = useRef<string>('');
+  const patternSwitchNoticeRef = useRef<string | null>(null);
   const [isShockForced, setIsShockForced] = useState(false);
   const [rearrested, setRearrested] = useState(false);
+  const [editingTreatmentIndex, setEditingTreatmentIndex] = useState<number | null>(null);
   const [hasShownForcedShock, setHasShownForcedShock] = useState(false);
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt10 = useRef<boolean>(false);
@@ -969,7 +1028,7 @@ export default function App() {
     setShowResetWarning(false);
   };
 
-  const addTreatment = (name: string) => {
+  const addTreatment = (name: string, options?: { customDose?: boolean }) => {
     const now = new Date();
 
     // First time a given treatment type is logged, leave it unnumbered.
@@ -987,13 +1046,51 @@ export default function App() {
       clock: getLocalTime(now),
       clockSeconds: getLocalTimeWithSeconds(now),
       loggedAt: now.getTime(),
-      ...(catchupTxMode ? { prior: true } : {})
+      ...(catchupTxMode ? { prior: true } : {}),
+      ...(options?.customDose ? { customDose: true } : {})
     };
 
     if (catchupTxMode) {
       setState(prev => ({ ...prev, treatments: [...prev.treatments, treatment] }));
       setCatchupTxMode(false);
       return;
+    }
+
+    // Computed outside setState because setRhythmInterval must fire directly
+    // here, not from inside the updater below - that function is deferred by
+    // React and doesn't run synchronously, so anything only decided inside it
+    // (like which ref to set) isn't available yet by the time this function
+    // continues executing.
+    const isShockOrDisarmForReset = name.includes('Shock') || name.includes('Disarm');
+    const isROSCForReset = name === 'Disarm - ROSC';
+    // When a shock/disarm is logged early (before the timer would have hit
+    // zero on its own), automatically switch to whichever of
+    // evens/odds/half-evens/half-odds puts the next check closest to - but
+    // not over - 2:00 away from right now. Excludes rearrest, which already
+    // has its own explicit interval picker the user works through manually;
+    // this only covers a plain early log during ongoing resuscitation.
+    const isOutOfTurnForReset = timingMode !== 'log' && isShockOrDisarmForReset && !isROSCForReset && !isShockForced && (state.rhythmCheckTarget - state.elapsedSeconds) > 0;
+    let earlyResetTarget: number | null = null;
+    let earlyResetPattern: 'evens' | 'odds' | 'half-evens' | 'half-odds' | null = null;
+    patternSwitchNoticeRef.current = null;
+    if (isOutOfTurnForReset && !rearrested) {
+      const patterns: Array<'evens' | 'odds' | 'half-evens' | 'half-odds'> = ['evens', 'odds', 'half-evens', 'half-odds'];
+      let bestDelta = -1;
+      for (const p of patterns) {
+        const candidate = calcNextIntervalTarget(state.elapsedSeconds, p);
+        const delta = candidate - state.elapsedSeconds;
+        if (delta > bestDelta) {
+          bestDelta = delta;
+          earlyResetTarget = candidate;
+          earlyResetPattern = p;
+        }
+      }
+      if (earlyResetPattern) {
+        setRhythmInterval(earlyResetPattern);
+        const patternLabels: Record<string, string> = { evens: 'Evens', odds: 'Odds', 'half-evens': 'Half evens', 'half-odds': 'Half odds' };
+        patternSwitchNoticeRef.current = patternLabels[earlyResetPattern];
+        setShowPatternSwitchModal(true);
+      }
     }
 
     setState(prev => {
@@ -1003,7 +1100,13 @@ export default function App() {
       const wasRhythmCheckPaused = prev.rhythmCheckPaused;
       // Increment round if shock/disarm logged out of turn (before timer hit 0)
       // Do NOT increment if responding to a forced rhythm check overlay (already incremented by timer)
-      const isOutOfTurn = isShockOrDisarm && !isROSC && !isShockForced && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
+      // This only applies in elapsed mode - it relies on an actively-ticking
+      // rhythmCheckTarget, which log mode doesn't maintain.
+      const isOutOfTurn = timingMode !== 'log' && isShockOrDisarm && !isROSC && !isShockForced && (prev.rhythmCheckTarget - prev.elapsedSeconds) > 0;
+      // Log mode has no timer to compare against - every shock/disarm (other
+      // than ROSC) simply marks the end of a CPR round, the same way a paper
+      // code sheet counts them.
+      const isLogModeRoundComplete = timingMode === 'log' && isShockOrDisarm && !isROSC;
       const shouldResetTimer = isROSC || (isShockOrDisarm && wasRhythmCheckPaused);
       
       // Auto-add OPA before BVM
@@ -1024,14 +1127,16 @@ export default function App() {
       return {
         ...prev,
         treatments: newTreatments,
-        shocks: (name.includes('Shock') && !name.includes('Disarm')) ? prev.shocks + 1 : prev.shocks,
-        cprRound: isOutOfTurn ? prev.cprRound + 1 : prev.cprRound,
+        cprRound: (isOutOfTurn || isLogModeRoundComplete) ? prev.cprRound + 1 : prev.cprRound,
         currentOverlay: isRearrest ? 'treatment' : null,
-        // Reset rhythm check to 2:00 for ROSC, or when unpausing via other shock/disarm
-        rhythmCheckTarget: shouldResetTimer 
-          ? prev.elapsedSeconds + 120 
-          : prev.rhythmCheckTarget,
-        rhythmCheckOvertime: shouldResetTimer ? 0 : prev.rhythmCheckOvertime,
+        // Reset rhythm check to 2:00 for ROSC, or when unpausing via other shock/disarm,
+        // or to the auto-selected pattern's target when logged early
+        rhythmCheckTarget: earlyResetTarget !== null
+          ? earlyResetTarget
+          : shouldResetTimer 
+            ? prev.elapsedSeconds + 120 
+            : prev.rhythmCheckTarget,
+        rhythmCheckOvertime: (earlyResetTarget !== null || shouldResetTimer) ? 0 : prev.rhythmCheckOvertime,
         // Pause for ROSC, unpause for other shock/disarm; Rearrest exits ROSC mode
         rhythmCheckPaused: isShockOrDisarm ? isROSC : prev.rhythmCheckPaused,
         // For ROSC, freeze the countdown at 2:00
@@ -1042,7 +1147,7 @@ export default function App() {
         roscChecked: isROSC ? [] : prev.roscChecked
       };
     });
-    
+
     // Rearrest from Add Tx menu: stop flashing, set forced overlay, mark as rearrest
     if (name === 'Rearrest') {
       setRoscButtonFlashing(false);
@@ -1098,6 +1203,30 @@ export default function App() {
     });
   };
 
+  const handleEditTreatment = (idx: number) => {
+    setEditingTreatmentIndex(idx);
+    setState(prev => ({ ...prev, currentOverlay: 'treatment' }));
+  };
+
+  // Corrects what was logged (wrong drug, wrong dose, wrong Tx) without
+  // touching when it was logged or anything that already happened as a
+  // result of the original entry - e.g. editing a Shock into an Adrenaline
+  // push does NOT retroactively undo the rhythm-check reset or CPR round
+  // increment that already occurred when the Shock was first logged. Only
+  // the log record and its numbering change.
+  const editTreatment = (name: string, options?: { customDose?: boolean }) => {
+    if (editingTreatmentIndex === null) return;
+    setState(prev => {
+      if (editingTreatmentIndex >= prev.treatments.length) return prev;
+      const updated = [...prev.treatments];
+      const original = updated[editingTreatmentIndex];
+      const { customDose: _oldCustomDose, ...rest } = original;
+      updated[editingTreatmentIndex] = { ...rest, name, ...(options?.customDose ? { customDose: true } : {}) };
+      return { ...prev, treatments: renumberTreatments(updated), currentOverlay: null };
+    });
+    setEditingTreatmentIndex(null);
+  };
+
   // Retroactively correct WHEN a treatment happened by dragging it to a new
   // position in the log. The moved item's exact time becomes unknown (shown
   // as a dash) rather than guessed - if it happened somewhere between two
@@ -1130,7 +1259,7 @@ export default function App() {
   };
 
   const adrenalineStatus = useMemo(() => {
-    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push'));
+    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push') && !t.customDose);
     const lastAdr = adrTreatments[adrTreatments.length - 1];
 
     if (!lastAdr) {
@@ -1327,8 +1456,7 @@ export default function App() {
       pausedTime: adjustedElapsed * 1000,
       elapsedSeconds: adjustedElapsed,
       rhythmCheckTarget: rhythmCheckTarget,
-      cprRound: Math.max(1, priorCounts.shock + priorCounts.disarm),
-      shocks: priorCounts.shock,
+      cprRound: priorCounts.shock + priorCounts.disarm,
       treatments: allInitialTxs,
       catchupElapsed: adjustedElapsed,
       startClockTime: startClockTime,
@@ -1604,38 +1732,11 @@ export default function App() {
           <div className="h-full flex flex-col relative">
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <ArrestSummarySection state={state} showRecordingDuration />
-              {(() => {
-                const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
-                const vitalRows = [
-                  { label: 'HR',     value: v.hr,   unit: 'bpm'    },
-                  { label: 'RR',      value: v.rr,   unit: 'br/min' },
-                  { label: 'SpO₂',           value: v.spo2, unit: '%'      },
-                  { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
-                  { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
-                  { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
-                  { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
-                  { label: 'Temp',    value: v.temp, unit: '°C'     },
-                ].filter(r => r.value !== '');
-                return (
-                  <div className="rounded-xl overflow-hidden border border-neutral-100">
-                    <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
-                    {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
-                      <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
-                        <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
-                        <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
-                          {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
-                        </span>
-                      </div>
-                    )) : (
-                      <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded yet.</div>
-                    )}
-                  </div>
-                );
-              })()}
+              <VitalSignsSection vitals={state.vitals} />
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
               <div>
                 <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={deleteTreatment} onMove={moveTreatment} />
+                <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={deleteTreatment} onMove={moveTreatment} onEdit={handleEditTreatment} />
               </div>
             </div>
             <AnimatePresence>
@@ -1643,8 +1744,8 @@ export default function App() {
                 <Overlay
                   key={state.currentOverlay}
                   type={state.currentOverlay as OverlayType}
-                  onClose={() => setState(p => ({ ...p, currentOverlay: null }))}
-                  addTreatment={addTreatment}
+                  onClose={() => { setState(p => ({ ...p, currentOverlay: null })); setEditingTreatmentIndex(null); }}
+                  addTreatment={editingTreatmentIndex !== null ? editTreatment : addTreatment}
                   state={state}
                   pharmaSummary={pharmaSummary}
                   isShockForced={isShockForced}
@@ -1652,6 +1753,8 @@ export default function App() {
                   onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                   onDeleteTreatment={deleteTreatment}
                   onMoveTreatment={moveTreatment}
+                  onEditTreatment={handleEditTreatment}
+                  editingTreatmentIndex={editingTreatmentIndex}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
                 />
               )}
@@ -1799,8 +1902,8 @@ export default function App() {
               <Overlay 
                 key={state.currentOverlay}
                 type={state.currentOverlay as OverlayType} 
-                onClose={() => setState(p => ({ ...p, currentOverlay: null }))}
-                addTreatment={addTreatment}
+                onClose={() => { setState(p => ({ ...p, currentOverlay: null })); setEditingTreatmentIndex(null); }}
+                addTreatment={editingTreatmentIndex !== null ? editTreatment : addTreatment}
                 state={state}
                 pharmaSummary={pharmaSummary}
                 isShockForced={isShockForced}
@@ -1808,10 +1911,24 @@ export default function App() {
                 onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
                 onDeleteTreatment={deleteTreatment}
                 onMoveTreatment={moveTreatment}
+                onEditTreatment={handleEditTreatment}
+                editingTreatmentIndex={editingTreatmentIndex}
                   onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
               />
             )}
           </AnimatePresence>
+
+          {showPatternSwitchModal && (
+            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" style={{ height: '100dvh' }}>
+              <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+                <AlertTriangle size={48} className="mx-auto text-amber-600 mb-4" />
+                <h2 className="text-2xl font-bold text-neutral-900 mb-4">Unscheduled rhythm check added.</h2>
+                <p className="text-neutral-500 mb-2">2:00 countdown restarted.</p>
+                <p className="text-neutral-500 mb-8">Future rhythm checks changed to {patternSwitchNoticeRef.current}.</p>
+                <button onClick={() => setShowPatternSwitchModal(false)} className="w-full bg-amber-600 p-4 rounded-xl font-bold text-white btn-base">Got it</button>
+              </div>
+            </div>
+          )}
 
           {/* Tutorial Overlay - renders on top of real app */}
           {tutorialMode && (
@@ -3113,11 +3230,11 @@ function CounterItem({ label, value, onChange, activeBorderClass }: { label: str
   );
 }
 
-function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, onDeleteTreatment, onMoveTreatment, onUpdateInfusionDose }: { 
+function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockForced, toggleChecklistItem, onVitalsChange, onDeleteTreatment, onMoveTreatment, onEditTreatment, editingTreatmentIndex, onUpdateInfusionDose }: { 
   key?: string,
   type: OverlayType, 
   onClose: () => void, 
-  addTreatment: (n: string) => void,
+  addTreatment: (n: string, options?: { customDose?: boolean }) => void,
   state: AppState,
   pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>,
   isShockForced: boolean,
@@ -3125,6 +3242,8 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
   onVitalsChange: (v: AppState['vitals']) => void,
   onDeleteTreatment?: (idx: number) => void,
   onMoveTreatment?: (fromIdx: number, toIdx: number) => void,
+  onEditTreatment?: (idx: number) => void,
+  editingTreatmentIndex?: number | null,
   onUpdateInfusionDose?: (drug: string, dose: string) => void
 }) {
   const isTop = ['reversibles', 'rosc', 'phea', 'vitals'].includes(type);
@@ -3142,15 +3261,35 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
         {type === 'vitals' && <VitalsOverlay vitals={state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' }} onChange={onVitalsChange} />}
-        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} onDelete={onDeleteTreatment} onMove={onMoveTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
-        {type === 'treatment' && <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />}
+        {type === 'summary' && <SummaryOverlay state={state} pharmaSummary={pharmaSummary} onDelete={onDeleteTreatment} onMove={onMoveTreatment} onEdit={onEditTreatment} onUpdateInfusionDose={onUpdateInfusionDose} />}
+        {type === 'treatment' && (
+          <>
+            {editingTreatmentIndex != null && state.treatments[editingTreatmentIndex] && (
+              <div className="bg-emerald-50 text-emerald-800 px-4 py-3 text-center font-bold text-sm border-b border-emerald-100">
+                Editing: {state.treatments[editingTreatmentIndex].name}
+              </div>
+            )}
+            <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />
+          </>
+        )}
       </div>
     </motion.div>
   );
 }
 
 function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onChange: (v: AppState['vitals']) => void }) {
-  const update = (key: keyof AppState['vitals'], val: string) => onChange({ ...vitals, [key]: val });
+  const [draft, setDraft] = useState<Partial<AppState['vitals']>>({});
+
+  const commit = (key: keyof AppState['vitals']) => {
+    if (draft[key] === undefined) return;
+    onChange({ ...vitals, [key]: draft[key] });
+    setDraft(prev => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
   const fields: { key: keyof AppState['vitals'], label: string }[] = [
     { key: 'hr',   label: 'HR'           },
     { key: 'rr',   label: 'RR'           },
@@ -3166,18 +3305,32 @@ function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onCha
     <div className="h-full overflow-y-auto">
       <div className="p-2.5 px-4 font-bold text-[16px] tracking-wide border-b uppercase sticky top-0 text-center bg-sky-50 text-sky-800 border-sky-200">Vital Signs</div>
       <div className="p-3 space-y-2">
-        {fields.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-100">
-            <span className="text-[15px] font-bold text-neutral-800">{label}</span>
-            <input
-              type="text"
-              inputMode="decimal"
-              value={vitals[key]}
-              onChange={e => update(key, e.target.value)}
-              className="w-24 text-right text-[18px] font-bold text-sky-700 bg-transparent border-b-2 border-sky-200 focus:border-sky-500 outline-none py-1 tabular-nums"
-            />
-          </div>
-        ))}
+        {fields.map(({ key, label }) => {
+          const hasDraft = draft[key] !== undefined && draft[key] !== vitals[key];
+          return (
+            <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-100">
+              <span className="text-[15px] font-bold text-neutral-800">{label}</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={draft[key] !== undefined ? draft[key] : vitals[key]}
+                  onChange={e => setDraft(prev => ({ ...prev, [key]: e.target.value }))}
+                  onKeyDown={e => { if (e.key === 'Enter') commit(key); }}
+                  className="w-24 text-right text-[18px] font-bold text-sky-700 bg-transparent border-b-2 border-sky-200 focus:border-sky-500 outline-none py-1 tabular-nums"
+                />
+                <button
+                  onClick={() => commit(key)}
+                  disabled={!hasDraft}
+                  className={`w-5 h-5 flex-shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center transition-opacity ml-1 ${hasDraft ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  aria-label={`Confirm ${label}`}
+                >
+                  <Check size={10} />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -3363,7 +3516,7 @@ function SectionGroup({
 }
 
 // --- TREATMENT LOG (EVEN COLUMNS) ---
-function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = false, onDelete, onMove }: { treatments: Treatment[], elapsedSeconds: number, caseOpenedAt?: number | null, isSummary?: boolean, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void }) {
+function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = false, onDelete, onMove, onEdit }: { treatments: Treatment[], elapsedSeconds: number, caseOpenedAt?: number | null, isSummary?: boolean, onDelete?: (index: number) => void, onMove?: (fromIndex: number, toIndex: number) => void, onEdit?: (index: number) => void }) {
   const [pendingDelete, setPendingDelete] = React.useState<number | null>(null);
   const [reorderingRealIdx, setReorderingRealIdx] = React.useState<number | null>(null);
   const [draggingRealIdx, setDraggingRealIdx] = React.useState<number | null>(null);
@@ -3543,6 +3696,9 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
               <p className="font-bold text-neutral-900 text-lg">{treatments[pendingDelete]?.name}</p>
             </div>
             <div className="space-y-2">
+              {onEdit && (
+                <button onClick={() => { onEdit(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-emerald-50 font-bold text-emerald-700">Edit</button>
+              )}
               {onMove && (
                 <button onClick={() => { setReorderingRealIdx(pendingDelete); setPendingDelete(null); }} className="w-full py-3 rounded-xl bg-blue-50 font-bold text-blue-700">Reorder</button>
               )}
@@ -3557,6 +3713,7 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
 }
 
 function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }> }) {
+  const shockCount = state.treatments.filter(t => t.name.includes('Shock') && !t.name.includes('Disarm')).length;
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const patientLabel = state.patientType === 'adult'
     ? `Adult · ${state.patientWeight}kg`
@@ -3578,7 +3735,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
           <StatRow label="CPR Rounds" value={state.cprRound} />
-          <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
+          <StatRow label="Shocks given" value={shockCount} color="text-red-600" />
           <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
         </div>
       </div>
@@ -3629,6 +3786,7 @@ function VitalSignsSection({ vitals }: { vitals: AppState['vitals'] }) {
 }
 
 function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
+  const shockCount = state.treatments.filter(t => t.name.includes('Shock') && !t.name.includes('Disarm')).length;
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const isPaedWithAge = state.patientType === 'paed' && !!state.patientAge;
   const patientTypeLabel = state.patientType === 'adult' ? 'Adult' : state.patientType === 'paed' ? 'Paediatric' : null;
@@ -3667,14 +3825,16 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
           )}
         </div>
       )}
-      <div>
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
-        <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
-          <StatRow label="CPR Rounds" value={state.cprRound} />
-          <StatRow label="Shocks given" value={state.shocks} color="text-red-600" />
-          <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+      {state.cprRound > 0 && (
+        <div>
+          <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
+          <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
+            <StatRow label="CPR Rounds" value={state.cprRound} />
+            <StatRow label="Shocks given" value={shockCount} color="text-red-600" />
+            <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -3729,40 +3889,15 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
   );
 }
 
-function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
-  const v = state.vitals ?? { hr: '', rr: '', gcs: '', bpSys: '', bpDia: '', spo2: '', etco2: '', bgl: '', temp: '' };
-  const hasVitals = Object.values(v).some(val => val !== '');
-  const vitalRows = [
-    { label: 'HR',     value: v.hr,   unit: 'bpm'    },
-    { label: 'RR',      value: v.rr,   unit: 'br/min' },
-    { label: 'SpO₂',           value: v.spo2, unit: '%'      },
-    { label: 'EtCO₂',          value: v.etco2,unit: 'mmHg'   },
-    { label: 'BP', value: v.bpSys && v.bpDia ? `${v.bpSys}/${v.bpDia}` : v.bpSys || v.bpDia || '', unit: 'mmHg' },
-    { label: 'GCS',            value: v.gcs,  unit: '/ 15'   },
-    { label: 'BGL',            value: v.bgl,  unit: 'mmol/L' },
-    { label: 'Temp',    value: v.temp, unit: '°C'     },
-  ].filter(r => r.value !== '');
-
+function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onEdit, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onEdit?: (idx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   return (
     <div className="space-y-6 pb-20">
       <ArrestSummarySection state={state} showRecordingDuration />
-      <div className="rounded-xl overflow-hidden border border-neutral-100 shadow-sm">
-        <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
-        {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
-          <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
-            <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
-            <span className="text-[17px] font-bold text-neutral-900 tabular-nums">
-              {value} <span className="text-[12px] font-medium text-neutral-400">{unit}</span>
-            </span>
-          </div>
-        )) : (
-          <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded yet.</div>
-        )}
-      </div>
+      <VitalSignsSection vitals={state.vitals} />
       <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       <div>
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
-        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={onDelete} onMove={onMove} />
+        <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={onDelete} onMove={onMove} onEdit={onEdit} />
       </div>
     </div>
   );
@@ -3793,10 +3928,11 @@ function StatRow({ label, value, color = "text-neutral-900", stacked = false }: 
   );
 }
 
-function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOverride, noScroll }: { addTreatment: (n: string) => void, state: AppState, isShockForced?: boolean, patientTypeOverride?: string | null, noScroll?: boolean }) {
+function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOverride, noScroll }: { addTreatment: (n: string, options?: { customDose?: boolean }) => void, state: AppState, isShockForced?: boolean, patientTypeOverride?: string | null, noScroll?: boolean }) {
   const [customTx, setCustomTx] = useState('');
   const [selectedMed, setSelectedMed] = useState<string | null>(null);
   const [customDose, setCustomDose] = useState('');
+  const [selectedCustomUnit, setSelectedCustomUnit] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(isShockForced ? 'rhythmCheck' : null);
   const [customInputValues, setCustomInputValues] = useState<Record<string, string>>({});
   
@@ -3850,31 +3986,14 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
       addTreatment(finalTreatment);
       setSelectedMed(null);
       setCustomDose('');
+      setSelectedCustomUnit(null);
     }
   };
   
   const handleCustomDoseAdd = () => {
     if (selectedMed && customDose && DOSE_CONFIG[selectedMed]) {
-      // Use customUnit if specified, otherwise extract unit from dose options
-      const customUnit = DOSE_CONFIG[selectedMed].customUnit;
-      let unit = '';
-      
-      if (customUnit) {
-        unit = customUnit;
-      } else {
-        // Extract unit from dose options
-        const doses = DOSE_CONFIG[selectedMed].doses.map(d => d.dose);
-        const unitMatches = doses
-          .filter(d => d !== 'Other')
-          .map(d => {
-            const match = d.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
-            return match ? match[1] : null;
-          })
-          .filter(Boolean);
-        
-        unit = unitMatches.length > 0 ? unitMatches[0] : '';
-      }
-      
+      const unit = selectedCustomUnit ?? getDefaultCustomUnit(selectedMed);
+
       let doseWithUnit = unit ? `${customDose}${unit}` : customDose;
       
       // For Glucose 10%, add gram calculation
@@ -3892,9 +4011,10 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         doseWithUnit = formatCalciumDose(doseWithUnit, state.patientWeight);
       }
       
-      addTreatment(`${selectedMed} ${doseWithUnit}`);
+      addTreatment(`${selectedMed} ${doseWithUnit}`, { customDose: true });
       setSelectedMed(null);
       setCustomDose('');
+      setSelectedCustomUnit(null);
     }
   };
   
@@ -3902,6 +4022,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
     // Update both states atomically to prevent flash
     setSelectedMed(null);
     setCustomDose('');
+    setSelectedCustomUnit(null);
     setExpandedSection(() => 'medications');
   };
   
@@ -4100,26 +4221,9 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
             })}
             
             {showOther && (() => {
-              // Extract common unit from dose strings
-              const getUnitFromDoses = (doses: string[]): string => {
-                const unitMatches = doses
-                  .filter(d => d !== 'Other')
-                  .map(d => {
-                    const match = d.match(/(mg\/kg|mMol\/kg|mL\/kg|mcg\/kg|u\/kg|mg|mL|mMol|mcg|g|u|%)$/i);
-                    if (!match) return null;
-                    // Strip /kg — custom entry is a flat dose, not weight-based
-                    return match[1].replace('/kg', '');
-                  })
-                  .filter(Boolean);
-                
-                if (unitMatches.length > 0) {
-                  return unitMatches[0] as string;
-                }
-                return '';
-              };
-              
-              const doses = filteredDoses.map(d => d.dose);
-              const unit = DOSE_CONFIG[selectedMed].customUnit || getUnitFromDoses(doses);
+              const defaultUnit = getDefaultCustomUnit(selectedMed);
+              const unit = selectedCustomUnit ?? defaultUnit;
+              const canToggleUnit = defaultUnit === 'mg' || defaultUnit === 'mcg';
               const placeholder = unit ? `Enter dose...` : 'Enter dose...';
               
               // Calculate secondary unit for live display
@@ -4153,7 +4257,16 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
                     placeholder={placeholder}
                     className="flex-1 bg-transparent px-4 py-3 text-base outline-none min-w-0 text-right"
                   />
-                  {(unit || secondaryUnit) && (
+                  {canToggleUnit ? (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedCustomUnit(unit === 'mg' ? 'mcg' : 'mg')}
+                      className="mr-2 px-2 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-600 text-sm font-bold whitespace-nowrap flex-shrink-0"
+                      aria-label="Toggle dose unit"
+                    >
+                      {unit}
+                    </button>
+                  ) : (unit || secondaryUnit) && (
                     <span className="pr-4 text-neutral-400 text-sm font-medium whitespace-nowrap">
                       {unit}{secondaryUnit ? ` ${secondaryUnit}` : ''}
                     </span>
@@ -4211,8 +4324,7 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           { name: 'Disarm - PEA', color: 'blue' },
           state.isROSCMode
             ? { name: 'Rearrest', color: 'orange' }
-            : { name: 'Disarm - ROSC', color: 'emerald' },
-          ...(isShockForced ? [{ name: 'Rhythm check delayed' }] : [])
+            : { name: 'Disarm - ROSC', color: 'emerald' }
         ]} 
         onSelect={addTreatment}
       />
@@ -4232,7 +4344,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           <TxSection 
             title="Airway" 
             color="blue" 
-            items={['ETT', 'FONA', 'IGT', 'LMA', 'NPA', 'OPA', 'Suction']} 
+            items={[
+              { name: 'ETT', failable: true },
+              { name: 'FONA', failable: true },
+              { name: 'IGT', failable: true },
+              { name: 'LMA', failable: true },
+              { name: 'NPA', failable: true },
+              { name: 'OPA', failable: true },
+              { name: 'Suction', failable: true }
+            ]} 
             onSelect={addTreatment}
             sectionId="airway"
             expandedSection={expandedSection}
@@ -4242,7 +4362,12 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
           <TxSection 
             title="Other Tx" 
             color="neutral" 
-            items={['Corpuls', 'Extrication', 'IO access', 'IV access', 'Pacing', 'Reassurance provided']} 
+            items={[
+              'Corpuls', 'Extrication',
+              { name: 'IO access', failable: true },
+              { name: 'IV access', failable: true },
+              'Pacing', { name: 'Reassurance provided', failable: true }
+            ]} 
             onSelect={addTreatment}
             sectionId="otherTx"
             expandedSection={expandedSection}
@@ -4284,7 +4409,7 @@ function TxSection({
 }: { 
   title: string;
   color: string;
-  items: (string | { name: string; color?: string; displayName?: string })[];
+  items: (string | { name: string; color?: string; displayName?: string; failable?: boolean })[];
   onSelect: (n: string) => void;
   initiallyExpanded?: boolean;
   sectionId?: string;
@@ -4292,6 +4417,11 @@ function TxSection({
   onToggle?: (id: string) => void;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(!initiallyExpanded);
+  // Tracks which failable items (ETT, IV access, etc.) are currently staged
+  // as unsuccessful. Defaults to successful (absent from this map) - set at
+  // logging time via a toggle right on the item, rather than requiring a
+  // trip into the three-dot menu afterward.
+  const [markedUnsuccessful, setMarkedUnsuccessful] = useState<Record<string, boolean>>({});
   
   // Use controlled state if provided, otherwise use internal state
   const collapsed = sectionId && expandedSection !== undefined 
@@ -4340,9 +4470,32 @@ function TxSection({
             const itemName = typeof item === 'string' ? item : item.name;
             const itemColor = typeof item === 'string' ? null : item.color;
             const displayName = typeof item === 'string' ? item : (item.displayName ?? item.name);
+            const failable = typeof item === 'string' ? false : !!item.failable;
             const textColorClass = itemColor ? (textColorMap[itemColor] ?? 'text-neutral-700') : 'text-neutral-700';
             const bgClass = itemColor === 'orange' ? 'bg-orange-50 hover:bg-orange-100' : 'bg-neutral-50 hover:bg-neutral-100';
-            
+            const isUnsuccessful = !!markedUnsuccessful[itemName];
+
+            if (failable) {
+              return (
+                <div key={itemName} className="flex items-stretch gap-2">
+                  <button
+                    onClick={() => onSelect(isUnsuccessful ? `${itemName} - Unsuccessful` : itemName)}
+                    className={`flex-1 text-left p-3 rounded-xl font-bold text-sm btn-base ${textColorClass} ${bgClass}`}
+                    data-medication={itemName}
+                  >
+                    {displayName}
+                  </button>
+                  <button
+                    onClick={() => setMarkedUnsuccessful(prev => ({ ...prev, [itemName]: !prev[itemName] }))}
+                    className={`flex-shrink-0 px-3 rounded-xl font-bold text-xs btn-base ${isUnsuccessful ? 'bg-red-100 text-red-700' : 'bg-emerald-100 text-emerald-700'}`}
+                    aria-label={`Mark ${displayName} as ${isUnsuccessful ? 'successful' : 'unsuccessful'}`}
+                  >
+                    {isUnsuccessful ? 'Unsuccessful' : 'Successful'}
+                  </button>
+                </div>
+              );
+            }
+
             return (
               <button 
                 key={itemName} 
