@@ -46,6 +46,8 @@ const INITIAL_STATE: AppState = {
   rhythmCheckOvertime: 0, // Counts up from 0 to 6 after rhythm check hits 0:00
   rhythmCheckPaused: false, // When true, rhythm check stays frozen even while running
   cprRound: 1,
+  adrenalineWipedAt: null,
+  amiodaroneWipedAt: null,
   treatments: [],
   currentOverlay: null,
   catchupElapsed: 0,
@@ -629,8 +631,6 @@ export default function App() {
   const [newPatientType, setNewPatientType] = useState<'adult' | 'paed' | null>(null);
   const [newPaedWeightMethod, setNewPaedWeightMethod] = useState<'weight' | 'age' | null>(null);
   const [newPaedAgeLabel, setNewPaedAgeLabel] = useState<string | null>(null);
-  const [showRearrestIntervalPicker, setShowRearrestIntervalPicker] = useState(false);
-  const [rearrestElapsed, setRearrestElapsed] = useState<number>(0);
   const [roscButtonFlashing, setRoscButtonFlashing] = useState(false);
   const [showLoggedNotification, setShowLoggedNotification] = useState(false);
   const [showPatternSwitchModal, setShowPatternSwitchModal] = useState(false);
@@ -1038,6 +1038,33 @@ export default function App() {
     setShowResetWarning(false);
   };
 
+  // Checks whether the adrenaline/amiodarone timer would already be overdue
+  // right now - called at the exact moment Rearrest is pressed, from
+  // whichever of the app's several Rearrest buttons triggered it - not when
+  // ROSC first started, however long ago that was. If overdue, wipes it so
+  // it stays hidden rather than reappearing as a stale warning.
+  const applyRearrestTimerWipeCheck = () => {
+    const adrDoses = state.treatments.filter(t => t.name.includes('Adrenaline push') && !t.customDose && t.elapsed > (state.adrenalineWipedAt ?? -1));
+    const lastAdr = adrDoses[adrDoses.length - 1];
+    const adrenalineNowOverdue = !!lastAdr && !lastAdr.prior && (240 - (state.elapsedSeconds - lastAdr.elapsed)) <= 0;
+
+    const allAmioDoses = state.treatments.filter(t => t.name.includes('Amiodarone'));
+    let amiodaroneNowOverdue = false;
+    if (allAmioDoses.length < 2) {
+      const amioDoses = allAmioDoses.filter(t => t.elapsed > (state.amiodaroneWipedAt ?? -1));
+      const lastAmio = amioDoses[amioDoses.length - 1];
+      amiodaroneNowOverdue = !!lastAmio && !lastAmio.prior && (300 - (state.elapsedSeconds - lastAmio.elapsed)) <= 0;
+    }
+
+    if (adrenalineNowOverdue || amiodaroneNowOverdue) {
+      setState(prev => ({
+        ...prev,
+        adrenalineWipedAt: adrenalineNowOverdue ? state.elapsedSeconds : prev.adrenalineWipedAt,
+        amiodaroneWipedAt: amiodaroneNowOverdue ? state.elapsedSeconds : prev.amiodaroneWipedAt
+      }));
+    }
+  };
+
   const addTreatment = (name: string, options?: { customDose?: boolean }) => {
     const now = new Date();
 
@@ -1163,6 +1190,7 @@ export default function App() {
       setRoscButtonFlashing(false);
       setRearrested(true);
       setIsShockForced(true);
+      applyRearrestTimerWipeCheck();
       return; // Skip the rest — overlay stays open for rhythm check outcome
     }
 
@@ -1173,14 +1201,37 @@ export default function App() {
     
     setIsShockForced(false);
 
-    // If this treatment was logged from a rearrest, show interval picker (elapsed mode); log mode needs nothing
+    // If this treatment was logged from a rearrest, auto-pick the interval
+    // pattern the same way an early (out-of-turn) shock/disarm does - the
+    // rearrest is itself an unscheduled event, so the same "closest to but
+    // not over 2:00" logic applies directly. Applied silently here, no
+    // acknowledgment modal - unlike a plain early shock, a rearrest already
+    // has plenty happening on screen and doesn't need an extra prompt.
     if (rearrested && (name.includes('Shock') || name.includes('Disarm'))) {
       setRearrested(false);
       if (name === 'Disarm - ROSC') {
         // ROSC again — go straight back to ROSC mode, no interval picker needed
       } else if (timingMode === 'elapsed') {
-        setRearrestElapsed(state.elapsedSeconds);
-        setShowRearrestIntervalPicker(true);
+        const patterns: Array<'evens' | 'odds' | 'half-evens' | 'half-odds'> = ['evens', 'odds', 'half-evens', 'half-odds'];
+        let bestDelta = -1;
+        let bestTarget = state.elapsedSeconds;
+        let bestPattern: 'evens' | 'odds' | 'half-evens' | 'half-odds' = 'evens';
+        for (const p of patterns) {
+          const candidate = calcNextIntervalTarget(state.elapsedSeconds, p);
+          const delta = candidate - state.elapsedSeconds;
+          if (delta > bestDelta) {
+            bestDelta = delta;
+            bestTarget = candidate;
+            bestPattern = p;
+          }
+        }
+        setRhythmInterval(bestPattern);
+        setState(prev => ({
+          ...prev,
+          rhythmCheckTarget: bestTarget,
+          rhythmCheckOvertime: 0,
+          rhythmCheckPaused: false
+        }));
       }
     }
     
@@ -1269,7 +1320,10 @@ export default function App() {
   };
 
   const adrenalineStatus = useMemo(() => {
-    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push') && !t.customDose);
+    if (state.isROSCMode) {
+      return { text: "", show: false, isDue: false, countdown: 0, flashRed: false };
+    }
+    const adrTreatments = state.treatments.filter(t => t.name.includes('Adrenaline push') && !t.customDose && t.elapsed > (state.adrenalineWipedAt ?? -1));
     const lastAdr = adrTreatments[adrTreatments.length - 1];
 
     if (!lastAdr) {
@@ -1298,9 +1352,12 @@ export default function App() {
       const flashRed = timeUntilNext <= 30; // Flash red when 30s or less
       return { text: `Next adrenaline: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext, flashRed };
     }
-  }, [state.treatments, state.elapsedSeconds, tutorialMode]);
+  }, [state.treatments, state.elapsedSeconds, state.isROSCMode, state.adrenalineWipedAt, tutorialMode]);
 
   const amiodaroneStatus = useMemo(() => {
+    if (state.isROSCMode) {
+      return { text: "", show: false, isDue: false, countdown: 0, flashRed: false };
+    }
     const allAmioTreatments = state.treatments.filter(t => t.name.includes('Amiodarone'));
 
     // Protocol: first amiodarone dose starts the 5-min timer, second (final) dose clears it.
@@ -1311,7 +1368,7 @@ export default function App() {
       return { text: '', show: false, isDue: false, countdown: 0, flashRed: false };
     }
 
-    const amioTreatments = allAmioTreatments;
+    const amioTreatments = allAmioTreatments.filter(t => t.elapsed > (state.amiodaroneWipedAt ?? -1));
     const lastAmio = amioTreatments[amioTreatments.length - 1];
     
     if (!lastAmio) {
@@ -1340,7 +1397,7 @@ export default function App() {
       const flashRed = timeUntilNext <= 30; // Flash red when 30s or less
       return { text: `Next amiodarone: ${timeStr}`, show: true, isDue: false, countdown: timeUntilNext, flashRed };
     }
-  }, [state.treatments, state.elapsedSeconds, tutorialMode]);
+  }, [state.treatments, state.elapsedSeconds, state.isROSCMode, state.amiodaroneWipedAt, tutorialMode]);
 
 
   const pharmaSummary = useMemo(() => computePharmaSummary(state.treatments), [state.treatments]);
@@ -1810,6 +1867,7 @@ export default function App() {
                     setRoscButtonFlashing(false);
                     setRearrested(true);
                     setIsShockForced(true);
+                    applyRearrestTimerWipeCheck();
                   }}
                   className="absolute inset-0 w-full h-full rounded-full btn-base flex flex-col items-center justify-center"
                 >
@@ -2085,6 +2143,7 @@ export default function App() {
               setRoscButtonFlashing(false);
               setRearrested(true);
               setIsShockForced(true);
+              applyRearrestTimerWipeCheck();
             }}
             className="p-3 sm:p-5 rounded-2xl text-base sm:text-xl font-bold flex items-center justify-center gap-2 sm:gap-3 btn-base transition-colors bg-orange-500 text-white"
           >
@@ -2712,61 +2771,7 @@ export default function App() {
         </div>
       )}
 
-      {showRearrestIntervalPicker && (
-        <div className="fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-6">
-          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
-            <div className="text-center space-y-1">
-              <h2 className="text-2xl font-bold text-neutral-900">Rhythm Check Timing</h2>
-              <p className="text-neutral-500 text-sm">Rearrest at {formatTimeWithSeconds(rearrestElapsed)}</p>
-              <p className="text-neutral-500 text-sm">When are rhythm checks due?</p>
-            </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {([
-                { key: 'evens',      label: 'Evens',      example: '2:00, 4:00...' },
-                { key: 'odds',       label: 'Odds',       example: '1:00, 3:00...' },
-                { key: 'half-evens', label: 'Half evens', example: '2:30, 4:30...' },
-                { key: 'half-odds',  label: 'Half odds',  example: '1:30, 3:30...' },
-              ] as const).map(({ key, label, example }) => (
-                <button
-                  key={key}
-                  onClick={() => setRhythmInterval(key)}
-                  className={`p-4 rounded-2xl transition-all duration-200 ${
-                    rhythmInterval === key
-                      ? 'bg-emerald-500 text-white shadow-lg scale-105'
-                      : 'bg-white text-neutral-700 border-2 border-neutral-200 hover:border-emerald-300'
-                  }`}
-                >
-                  <div className="font-bold text-base">{label}</div>
-                  <div className={`text-xs mt-1 ${rhythmInterval === key ? 'text-emerald-100' : 'text-neutral-400'}`}>{example}</div>
-                </button>
-              ))}
-            </div>
-
-            <button
-              disabled={!rhythmInterval}
-              onClick={() => {
-                if (!rhythmInterval) return;
-                const newTarget = calcNextIntervalTarget(rearrestElapsed, rhythmInterval);
-                setState(prev => ({
-                  ...prev,
-                  rhythmCheckTarget: newTarget,
-                  rhythmCheckOvertime: 0,
-                  rhythmCheckPaused: false
-                }));
-                setShowRearrestIntervalPicker(false);
-              }}
-              className={`w-full p-4 rounded-xl font-bold transition-all ${
-                rhythmInterval
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-md'
-                  : 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-              }`}
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      )}
 
       {showRecalibrateMenu && (
         <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6">

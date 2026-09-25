@@ -28,6 +28,8 @@ export interface AppState {
   rhythmCheckOvertime: number;
   frozenCountdown?: number;
   cprRound: number;
+  adrenalineWipedAt: number | null;
+  amiodaroneWipedAt: number | null;
   treatments: Treatment[];
   currentOverlay: string | null;
   catchupElapsed: number;
