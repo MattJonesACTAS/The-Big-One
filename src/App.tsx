@@ -881,6 +881,16 @@ export default function App() {
     localStorage.setItem('theBigOneState', JSON.stringify(state));
   }, [state]);
 
+  // Ask the browser to exempt this site's storage from automatic eviction
+  // under storage pressure - reduces the risk of the browser silently
+  // clearing case data on its own. Silent, one-time, no UI. Not universally
+  // supported, so this is feature-detected and just no-ops where it isn't.
+  useEffect(() => {
+    if (navigator.storage && navigator.storage.persist) {
+      navigator.storage.persist();
+    }
+  }, []);
+
   // Timer logic
   // Demo tick for animated timers on timing mode selection screen
   useEffect(() => {
