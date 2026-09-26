@@ -69,7 +69,7 @@ const INITIAL_STATE: AppState = {
 const MEDICATIONS = [
   'Adrenaline push', 'Adrenaline infusion', 'Amiodarone', 
   'Atropine', 'Calcium', 'Glucose 10%', 'Heparin', 'Ketamine push', 'Ketamine infusion', 'Levetiracetam (Kepra)', 'Lignocaine',
-  'Magnesium', 'Midazolam push', 'Morph/midaz infusion', 'Normal saline', 'Oxygen', 'Sodium bicarbonate', 'Suxamethonium'
+  'Magnesium', 'Midazolam push', 'Morph/midaz infusion', 'Naloxone', 'Normal saline', 'Ondansetron', 'Oxygen', 'Sodium bicarbonate', 'Suxamethonium'
 ];
 
 type DoseOption = {
@@ -209,6 +209,21 @@ const DOSE_CONFIG: Record<string, { doses: DoseOption[], customUnit?: string }> 
   'Levetiracetam (Kepra)': {
     doses: [
       { dose: '40mg/kg', population: 'both', indication: 'Seizure', calculated: true },
+      { dose: 'Other', population: 'both' }
+    ]
+  },
+  'Naloxone': {
+    doses: [
+      { dose: '0.8mg', population: 'adult', indication: 'Suspected narcotic OD' },
+      { dose: '0.4mg', population: 'adult', indication: '2nd+ dose increments' },
+      { dose: '0.01mg/kg', population: 'paed', indication: 'Suspected narcotic OD', calculated: true },
+      { dose: 'Other', population: 'both' }
+    ]
+  },
+  'Ondansetron': {
+    doses: [
+      { dose: '8mg', population: 'adult', indication: 'Nausea/vomiting' },
+      { dose: '0.1mg/kg', population: 'paed', indication: 'Nausea/vomiting', calculated: true },
       { dose: 'Other', population: 'both' }
     ]
   }
@@ -3644,7 +3659,7 @@ function ROSCSelection({ checkedItems, onToggle, patientType, patientWeight }: {
 function PHEASelection({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
   return (
     <div className="h-full pb-10">
-      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', 'Assign roles', 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', { label: 'Assign roles', subItems: ['Team leader', 'Airway primary', 'Airway assistant', 'Drugs & access primary', 'Drugs & access assistant', 'Gofer'] }, 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement', 'Consider preparing extrication if resources allow']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup title="PRE-OXYGENATION" color="purple" items={['Nasal prongs 15L/min']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup title="MONITORING" color="purple" items={['ECG', 'BP — cycling', 'SpO2', 'EtCO2']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup title="DRUGS & ACCESS EQUIPMENT" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} checkedItems={checkedItems} onToggle={onToggle} />
@@ -4220,6 +4235,17 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         cleanDose = formatCalciumDose(cleanDose, state.patientWeight);
       }
       
+      // For Ondansetron paed, cap at 4mg
+      if (selectedMed === 'Ondansetron' && dose.includes('/kg')) {
+        const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
+        const mgMatch = cleanDose.match(/([\d.]+)mg/);
+        if (mgMatch) {
+          const calculated = parseFloat(mgMatch[1]);
+          const capped = Math.min(calculated, 4);
+          cleanDose = `${capped}mg`;
+        }
+      }
+      
       // For Amiodarone paed, apply max dose caps
       if (selectedMed === 'Amiodarone' && state.patientType === 'paed') {
         const weight = typeof state.patientWeight === 'number' ? state.patientWeight : parseFloat(String(state.patientWeight));
@@ -4338,6 +4364,12 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         const calculatedMg = Math.min(10 * weight, 1000);
         const doseDisplay = calculatedMg >= 1000 ? `1g` : `${calculatedMg}mg`;
         return `${doseDisplay} (10mg/kg)`;
+      }
+      
+      // Ondansetron paed: cap display at 4mg
+      if (selectedMed === 'Ondansetron' && doseOpt.dose.includes('/kg')) {
+        const calculatedMg = Math.min(Math.round(0.1 * weight * 10) / 10, 4);
+        return `${calculatedMg}mg (0.1mg/kg${(0.1 * weight) > 4 ? ' - 4mg max' : ''})`;
       }
       
       // Amiodarone paed: cap display at 300mg for arrest, 150mg for VT with output
