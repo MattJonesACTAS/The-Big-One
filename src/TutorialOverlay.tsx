@@ -32,10 +32,6 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
       {
         title: 'Elapsed Timer',
         description: "Earlier we chose 'Time keeping assistance' as our app mode.\n\nNow we have the elapsed case time available right in front of us, mirroring the monitor's.\n\nThis can be particularly useful when:\n\n• You're working in cramped spaces where equipment positioning is tight\n\n• You're extricating with the Corpuls running and the monitor is packaged with the patient."
-      },
-      {
-        title: 'No Timer Option',
-        description: "If you had selected the 'No timer' option instead, the app would only help you keep a log of interventions you apply during the case.\n\nIt would not assist you to keep track of rhythm checks."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
@@ -45,7 +41,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     pages: [
       {
         title: 'Rhythm Check Countdown',
-        description: "This shows the countdown to your next rhythm check, calculated from your chosen odds/evens interval.\n\nThe ring fills as you approach the next check, and both the ring and the number will turn red once it's due - the app will prompt you automatically at that point."
+        description: "This shows the countdown to your next rhythm check.\n\nWhen the counter reaches 0:00, the app will ask you what happened at that rhythm check.\n\nThis feature has been disabled in the tutorial for simplicity."
       }
     ],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
@@ -57,7 +53,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   {
     id: 'tabs', type: 'positioned', x: 50, y: 10.97,
-    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• Prehospital emergency anaesthesia (PHEA)\n\n• Vital signs survey\n\nYou will notice the reversibles checklist is already flashing red. That is a visual cue to encourage purposeful addressing of these early.' }],
+    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• PHEA\n\n• Vital signs survey\n\nYou will notice the reversibles checklist is already flashing red. That is a visual cue to encourage purposeful addressing of these early.' }],
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
@@ -74,6 +70,10 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
         description: "The Add Tx submenu has four categories of treatments you can log:\n\n• Rhythm Check (shocks and disarms)\n\n• Medications\n\n• Airway\n\n• Other Tx\n\nYou can also free type custom interventions."
       },
       {
+        title: 'Successful / Unsuccessful',
+        description: "For some interventions in Airway and Other Tx, you can choose to log them as successful or unsuccessful to keep your record keeping accurate."
+      },
+      {
         title: 'Medications',
         description: "All medications will have one or more dosage options to choose from for different indications.\n\nThese dosages are pre-calculated if they are weight based.\n\nLog an adrenaline push dose to progress."
       }
@@ -83,8 +83,8 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   // --- Home with medication alerts ---
   {
     id: 'adrenalineAlert', type: 'positioned', x: 28.05, y: 83.32,
-    pages: [{ title: 'Medication Alerts', description: 'When you log adrenaline or amiodarone, an alert will appear on the home screen to help you keep track of when the next dose is due.' }],
-    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.length > 0 && !sf
+    pages: [{ title: 'Medication Timer', description: 'When you log adrenaline or amiodarone, a timer will appear on the home screen to help you keep track of when the next dose is due.' }],
+    condition: (s, sf) => s.running && s.currentOverlay === null && s.treatments.some((t: any) => t.name.startsWith('Adrenaline push')) && !sf
   },
   {
     id: 'summaryBtn', type: 'positioned', x: 26.6, y: 95.4,
@@ -93,27 +93,45 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
   },
   // --- Summary overlay ---
   {
-    id: 'summaryInfo', type: 'positioned', x: 50, y: 50,
+    id: 'arrestSummaryInfo', type: 'positioned', x: 50, y: 35,
     pages: [
       {
         title: 'Arrest Summary',
         description: 'The top of the running summary lists the number of CPR rounds, along with the number of shocks and disarms.'
-      },
+      }
+    ],
+    condition: (s) => s.currentOverlay === 'summary'
+  },
+  {
+    id: 'vitalSignsInfo', type: 'positioned', x: 50, y: 50,
+    pages: [
       {
         title: 'Vital Signs Survey',
         description: "Next, we have the vital signs survey.\n\nAny vital signs entered via the VSS tab will appear here for quick reference during the case and at handover."
-      },
+      }
+    ],
+    condition: (s) => s.currentOverlay === 'summary'
+  },
+  {
+    id: 'pharmaSummaryInfo', type: 'positioned', x: 50, y: 50,
+    pages: [
       {
         title: 'Pharma Summary',
         description: 'Next, we have the pharmacological summary, which lists all logged medications with a cumulative tally of the total dose given of each drug.'
-      },
+      }
+    ],
+    condition: (s) => s.currentOverlay === 'summary'
+  },
+  {
+    id: 'treatmentLogInfo', type: 'positioned', x: 50, y: 52,
+    pages: [
       {
         title: 'Treatment Log',
         description: "At the bottom we have a chronological record of all logged interventions.\n\nTimestamps show the time of day and how long ago each Tx was logged."
       },
       {
         title: 'Editing Treatments',
-        description: "Treatments in the Tx log can be deleted or reordered by pressing the button with three dots to the left of the treatment name.\n\nMoving a Tx is useful if you realise partway through a case that something was actually given a bit earlier or later than when you logged it - for example, remembering a dose given a few minutes ago that you hadn't recorded at the time.\n\nMove or delete the Adrenaline push entry you added earlier to continue."
+        description: "Treatments in the Tx log can be edited, reordered or deleted by pressing the button to the left of the treatment name.\n\n'Edit' lets you correct what was logged while keeping its original time and position in the log.\n\nFor example, you can change the drug you gave, the dose you gave, or change it to something else completely.\n\n'Reorder' let's you shift a Tx to its correct position in the log.\n\nThis is useful if you realise that you missed logging something that happened earlier.\n\nEdit, reorder or delete the adrenaline push entry you logged earlier to continue."
       }
     ],
     condition: (s) => s.currentOverlay === 'summary'
@@ -123,7 +141,7 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     pages: [{ title: 'Return to Home', description: 'Press the close button to return to the home page.' }],
     condition: (s) => s.currentOverlay === 'summary'
       && (!s.treatments.some(t => t.name.startsWith('Adrenaline push'))
-          || s.treatments.some(t => t.name.startsWith('Adrenaline push') && t.timeUnknown))
+          || s.treatments.some(t => t.name.startsWith('Adrenaline push') && (t.timeUnknown || t.edited)))
   },
   // --- Home after summary ---
   {
@@ -138,12 +156,12 @@ const RAW_NODES: Omit<GlobalNode, 'displayNumber'>[] = [
     condition: (s) => !s.running
   },
   {
-    id: 'export', type: 'positioned', x: 27.23, y: 14.45,
+    id: 'export', type: 'positioned', x: 27.23, y: 15.45,
     pages: [{ title: 'Export PDF', description: 'Here you can export the case summary and Tx log to a PDF, which you can then download or email for later review.' }],
     condition: (s) => !s.running
   },
   {
-    id: 'delete', type: 'positioned', x: 73.46, y: 14.45,
+    id: 'delete', type: 'positioned', x: 73.46, y: 15.45,
     pages: [{ title: 'Close Case', description: "Once you've finished with this case, you can close the case which resets the app.\n\nThe three most recent closed cases are accessible on the opening screen if you want to look back on them later - but since this is just the tutorial, this particular case won't be saved.\n\nClose the case to finish the tutorial and we'll see you at The Big One!" }],
     condition: (s) => !s.running
   }

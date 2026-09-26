@@ -654,7 +654,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
       image: '',
       nextScreen: 'rhythmCheckTiming',
       elements: [
-        { id: 'timingLog',     x: 50, y: 38.0, number: 3, title: 'No Timer Mode',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nThis option can also be useful if you are acting as scribe during a simulation." },
+        { id: 'timingLog',     x: 50, y: 38.0, number: 3, title: 'No Timer Mode',   description: "This option means the app will only help you record the times of interventions.\n\nThis will help you with your handovers and case sheets, but not with keeping track of rhythm check times or providing reminders for medication redoses.\n\nUse this mode for big jobs that aren't arrests, like Prehospital Emergency Anaesthesia (PHEA).\n\nThis option can also be useful if you are acting as scribe during a simulation." },
         { id: 'timingElapsed', x: 50, y: 63.0, number: 4, title: 'Time Keeping Assistance Mode',  description: "In the time keeping assistance mode, the app will remind you of when your next rhythm checks and some medication repeats are due.\n\nChoose 'Time keeping assistance' to progress in the tutorial." },
       ],
     },
@@ -875,7 +875,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onClose, onTi
             </h2>
             {renderIntroDescription(
               currentScreen === 'intro1'
-                ? "The Big One is a cognitive aid for use during cardiac arrests.\n\nIt is designed to assist you to keep track of:\n\n• Rhythm check intervals\n\n• Medication re-dosing intervals\n\n• The times events occurred, making case sheets easy and accurate\n\nBy offloading this cognitive load, you can focus on situational awareness and team leadership."
+                ? "The Big One is a cognitive aid for use during cardiac arrests or any other big job.\n\nIt is designed to assist you to keep track of:\n\n• Rhythm check intervals\n\n• Medication re-dosing intervals\n\n• The times events occurred, making case sheets easy and accurate\n\nBy offloading this cognitive load, you can focus on situational awareness and team leadership."
                 : currentScreen === 'intro2'
                 ? "In this tutorial you'll see red numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
                 : "On opening The Big One, you'll need to calibrate the app to the current case.\n\nLet's get started."

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { registerSW } from 'virtual:pwa-register';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   RotateCcw, 
@@ -252,6 +253,24 @@ const formatTimeHMM = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins.toString().padStart(2, '0')}m, ${secs.toString().padStart(2, '0')}s`;
+};
+
+// For "App recording for" specifically - once a case runs an hour or more,
+// hr/min reads more naturally than a large minute count (matches the same
+// threshold-switch pattern used for mcg->mg and mL->L in the Pharma Summary).
+// Below that threshold, minutes aren't zero-padded either (6min, not 06min) -
+// this has its own inline formatting rather than delegating to formatTimeHMM
+// for that case, since formatTimeHMM's zero-padded minutes are still wanted
+// for the Ago column it's shared with.
+const formatRecordingDuration = (seconds: number): string => {
+  const totalMins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  if (totalMins >= 60) {
+    const hrs = Math.floor(totalMins / 60);
+    const mins = totalMins % 60;
+    return `${hrs}hr, ${mins}min`;
+  }
+  return `${totalMins}min, ${secs.toString().padStart(2, '0')}s`;
 };
 
 const getLocalTime = (date?: Date) => {
@@ -639,6 +658,21 @@ export default function App() {
   const [isShockForced, setIsShockForced] = useState(false);
   const [rearrested, setRearrested] = useState(false);
   const [editingTreatmentIndex, setEditingTreatmentIndex] = useState<number | null>(null);
+
+  // If a rhythm check becomes forced while editing a past entry, the edit is
+  // cancelled outright (no changes saved) rather than left running - without
+  // this, isShockForced would stay stuck true once the edit completes, since
+  // completing an edit goes through editTreatment, which has no reason to
+  // know about (or resolve) a real shock/disarm outcome. Cancelling forces
+  // the person straight back to the real, now-visible shock/disarm buttons -
+  // the same priority the tutorial overlay already gives itself for this
+  // exact situation.
+  useEffect(() => {
+    if (isShockForced && editingTreatmentIndex !== null) {
+      setEditingTreatmentIndex(null);
+    }
+  }, [isShockForced, editingTreatmentIndex]);
+
   const [hasShownForcedShock, setHasShownForcedShock] = useState(false);
   const lastBeepSecond = useRef<number | null>(null);
   const hasAutoClosedAt10 = useRef<boolean>(false);
@@ -652,6 +686,7 @@ export default function App() {
   const [catchupNodeCleared, setCatchupNodeCleared] = useState(false);
   const [tutorialScreen, setTutorialScreen] = useState({ index: -1, complete: false, nodeIndex: 0 });
   const [tutorialNodeIndex, setTutorialNodeIndex] = useState(0);
+  const caseSummaryScrollRef = useRef<HTMLDivElement>(null);
 
   // Correct timer drift when tab becomes visible again
   useEffect(() => {
@@ -679,6 +714,70 @@ export default function App() {
     });
   }, [timingMode, rhythmInterval]);
 
+  // Both the Case Summary page and the live Summary overlay are scrollable,
+  // but the tutorial's node markers are positioned relative to the viewport
+  // (fixed), not the scroll position. A one-time scroll-into-view isn't
+  // enough on its own - if the user then scrolls manually, the marker would
+  // drift out of alignment with its target again. So for every node anchored
+  // to a specific piece of scrollable content, this scrolls that content
+  // into view AND locks scrolling on its container for as long as the node
+  // stays active, so the marker can't be knocked out of alignment.
+  useEffect(() => {
+    if (!tutorialMode) return;
+
+    // Case Summary page: Export PDF and Close Case sit side by side near the
+    // top, so both nodes scroll (and lock) to the top of that page.
+    if (tutorialNodeIndex === 16 || tutorialNodeIndex === 17) {
+      caseSummaryScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const el = caseSummaryScrollRef.current;
+      const prevBodyOverflow = document.body.style.overflow;
+      const prevBodyTouchAction = document.body.style.touchAction;
+      document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
+      const prevOverflow = el?.style.overflowY;
+      const prevTouchAction = el?.style.touchAction;
+      if (el) {
+        el.style.overflowY = 'hidden';
+        el.style.touchAction = 'none';
+      }
+      return () => {
+        document.body.style.overflow = prevBodyOverflow;
+        document.body.style.touchAction = prevBodyTouchAction;
+        if (el) {
+          el.style.overflowY = prevOverflow ?? '';
+          el.style.touchAction = prevTouchAction ?? '';
+        }
+      };
+    }
+
+    // Live Summary overlay: each of its four "info" nodes is anchored to a
+    // different section spread across that scroll, so each scrolls its own
+    // section to the centre of the screen and locks that container in place.
+    const sectionForNode: Record<number, string> = {
+      9: 'arrestSummary',
+      10: 'vitalSigns',
+      11: 'pharmaSummary',
+      12: 'treatmentLog'
+    };
+    const section = sectionForNode[tutorialNodeIndex];
+    if (section) {
+      document.querySelector(`[data-tutorial-section="${section}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const container = document.querySelector('[data-scroll-container="summary"]') as HTMLElement | null;
+      if (container) {
+        const prevOverflow = container.style.overflowY;
+        const prevTouchAction = container.style.touchAction;
+        container.style.overflowY = 'hidden';
+        container.style.touchAction = 'none';
+        return () => {
+          container.style.overflowY = prevOverflow;
+          container.style.touchAction = prevTouchAction;
+        };
+      }
+    }
+  }, [tutorialMode, tutorialNodeIndex, state.currentOverlay, isCaseClosed]);
+
+
   // Capture the patient weight as it was when the tutorial started, so we know
   // once it's actually been changed (used to stop the recalibrate/weight flash).
   useEffect(() => {
@@ -689,6 +788,32 @@ export default function App() {
       tutorialInitialWeightRef.current = null;
     }
   }, [tutorialMode, state.patientWeight]);
+
+  // Temporary diagnostic: logs once per relevant change (not every second)
+  // to trace why the recalibrate/weight flash still isn't appearing despite
+  // the index===4 condition and node-advancement mechanism both checking out.
+  // Checks the class after a tick, since this effect is declared before the
+  // one that actually sets it - reading classList synchronously here would
+  // always see last render's (stale) value, not this one's.
+  useEffect(() => {
+    if (!tutorialMode) return;
+    const snapshot = {
+      tutorialScreenIndex: tutorialScreen.index,
+      tutorialNodeIndex,
+      showRecalibrateMenu,
+      showWeightChange,
+      patientWeight: state.patientWeight,
+      tutorialInitialWeight: tutorialInitialWeightRef.current,
+      weightUnchanged: state.patientWeight === tutorialInitialWeightRef.current
+    };
+    const timer = setTimeout(() => {
+      console.log('[RECALIBRATE FLASH TRACE]', {
+        ...snapshot,
+        bodyHasFlashClass: document.body.classList.contains('tutorial-flash-recalibrate')
+      });
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [tutorialMode, tutorialScreen.index, tutorialNodeIndex, showRecalibrateMenu, showWeightChange, state.patientWeight]);
 
   // Inject tutorial Elapsed Time button flash CSS
   useEffect(() => {
@@ -718,7 +843,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-elapsed-btn');
     }
     
-    // Node 8 (recalibrate) complete - flash Recalibrate button (index 3 = waiting for weight change)
+    // Node 9 (recalibrate, array index 3) complete - flash Recalibrate button,
     // then, once the Recalibrate menu is open, flash the Change Patient Weight button instead.
     // Both stop as soon as the weight actually changes, even before the node is dismissed.
     const weightUnchanged = state.patientWeight === tutorialInitialWeightRef.current;
@@ -733,14 +858,14 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-weight');
     }
 
-    // Node 11 (addTxBtn) complete - flash Add Tx button (index 6 = waiting for treatment screen)
+    // Node 11 (addTxBtn, array index 5) complete - flash Add Tx button
     if (tutorialMode && tutorialScreen.index === 6 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-add-tx');
     } else {
       document.body.classList.remove('tutorial-flash-add-tx');
     }
 
-    // Node 12 (addTxSubmenu) complete - flash Adrenaline and dose buttons (index 7)
+    // Node 12 (addTxSubmenu, array index 6) complete - flash Adrenaline and dose buttons
     if (tutorialMode && tutorialScreen.index === 7) {
       document.body.classList.add('tutorial-flash-adrenaline');
       document.body.classList.add('tutorial-flash-dose');
@@ -749,39 +874,39 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-dose');
     }
 
-    // Node 14 (summaryBtn) complete - flash Summary button (index 9 = waiting for summary overlay)
+    // Node 14 (summaryBtn, array index 8) complete - flash Summary button
     if (tutorialMode && tutorialScreen.index === 9 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-summary');
     } else {
       document.body.classList.remove('tutorial-flash-summary');
     }
 
-    // Node 15 (summaryInfo) complete - flash the Adrenaline push row's menu
-    // button (index 10), until the entry is actually moved or deleted
+    // Node 18 (treatmentLogInfo, array index 12) complete - flash the Adrenaline
+    // push row, until the entry is actually edited, moved or deleted
     const adrenalineHandled = !state.treatments.some(t => t.name.startsWith('Adrenaline push'))
-      || state.treatments.some(t => t.name.startsWith('Adrenaline push') && t.timeUnknown);
-    if (tutorialMode && tutorialScreen.index === 10 && state.currentOverlay === 'summary' && !adrenalineHandled) {
+      || state.treatments.some(t => t.name.startsWith('Adrenaline push') && (t.timeUnknown || t.edited));
+    if (tutorialMode && tutorialScreen.index === 13 && state.currentOverlay === 'summary' && !adrenalineHandled) {
       document.body.classList.add('tutorial-flash-adrenaline-tx');
     } else {
       document.body.classList.remove('tutorial-flash-adrenaline-tx');
     }
 
-    // Node 16 (closeOverlay) complete - flash summary close button (index 11 = waiting on summary)
-    if (tutorialMode && tutorialScreen.index === 11 && state.currentOverlay === 'summary') {
+    // Node 19 (closeOverlay, array index 13) complete - flash summary close button
+    if (tutorialMode && tutorialScreen.index === 14 && state.currentOverlay === 'summary') {
       document.body.classList.add('tutorial-flash-summary-close');
     } else {
       document.body.classList.remove('tutorial-flash-summary-close');
     }
 
-    // Node 17 (endCase) complete - flash End Case button (index 12 = waiting on home)
-    if (tutorialMode && tutorialScreen.index === 12 && state.currentOverlay === null) {
+    // Node 20 (endCase, array index 14) complete - flash End Case button
+    if (tutorialMode && tutorialScreen.index === 15 && state.currentOverlay === null) {
       document.body.classList.add('tutorial-flash-end');
     } else {
       document.body.classList.remove('tutorial-flash-end');
     }
 
-    // Tutorial done - flash Close Case button
-    if (tutorialMode && tutorialScreen.complete) {
+    // Node 24 (delete, array index 17, the last node) complete - tutorial done, flash Close Case button
+    if (tutorialMode && tutorialScreen.index === 18) {
       document.body.classList.add('tutorial-flash-close');
     } else {
       document.body.classList.remove('tutorial-flash-close');
@@ -800,7 +925,7 @@ export default function App() {
       document.body.classList.remove('tutorial-flash-end');
       document.body.classList.remove('tutorial-flash-close');
     };
-  }, [tutorialMode, tutorialScreen, state.treatments.length, state.currentOverlay, state.patientWeight, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
+  }, [tutorialMode, tutorialScreen, state.treatments, state.currentOverlay, state.patientWeight, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
@@ -890,6 +1015,38 @@ export default function App() {
       navigator.storage.persist();
     }
   }, []);
+
+  // PWA update handling: a new build can finish downloading and installing
+  // in the background at any time (registerType: 'prompt' means it won't
+  // take over on its own). Applying it immediately could reload the page
+  // out from under an active case or the closed-case summary, so this
+  // instead waits until the app is back on the welcome screen - no case
+  // running, and not viewing a closed case - before reloading into the new
+  // version. The current case (localStorage) and the last three saved
+  // cases aren't at risk either way; this is purely about not disrupting
+  // whoever's using the app mid-case.
+  const updateSWFnRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
+  const [updateWaiting, setUpdateWaiting] = useState(false);
+
+  useEffect(() => {
+    try {
+      updateSWFnRef.current = registerSW({
+        onNeedRefresh() {
+          setUpdateWaiting(true);
+        }
+      });
+    } catch (err) {
+      console.error('PWA update registration failed (non-fatal):', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (updateWaiting && !state.running && !isCaseClosed) {
+      updateSWFnRef.current?.(true)?.catch((err) => {
+        console.error('PWA update apply failed (non-fatal):', err);
+      });
+    }
+  }, [updateWaiting, state.running, isCaseClosed]);
 
   // Timer logic
   // Demo tick for animated timers on timing mode selection screen
@@ -1282,8 +1439,20 @@ export default function App() {
       const updated = [...prev.treatments];
       const original = updated[editingTreatmentIndex];
       const { customDose: _oldCustomDose, ...rest } = original;
-      updated[editingTreatmentIndex] = { ...rest, name, ...(options?.customDose ? { customDose: true } : {}) };
-      return { ...prev, treatments: renumberTreatments(updated), currentOverlay: null };
+      updated[editingTreatmentIndex] = { ...rest, name, edited: true, ...(options?.customDose ? { customDose: true } : {}) };
+      // Editing is reachable from two different places depending on timing
+      // mode: elapsed mode's Summary overlay, or log mode's inline running
+      // summary (which IS the home screen there, not an overlay). In
+      // elapsed mode, returning to the Summary overlay (rather than the
+      // previous behaviour of going all the way back to the home screen)
+      // lets the person see the change land in the log immediately - that
+      // overlay stays mounted throughout the whole edit flow (see its render
+      // site), so its scroll position is preserved automatically. In log
+      // mode there's no separate overlay to return to at all - the inline
+      // summary never unmounted in the first place, so going back to the
+      // plain home screen (null) already shows it exactly as it was, scroll
+      // position included.
+      return { ...prev, treatments: renumberTreatments(updated), currentOverlay: timingMode === 'log' ? null : 'summary' };
     });
     setEditingTreatmentIndex(null);
   };
@@ -1530,6 +1699,13 @@ export default function App() {
       patientWeight: parsedWeight || (tutorialMode ? 70 : null),
       patientType: weightType || (tutorialMode ? 'adult' : null),
       patientAge: (weightType === 'paed' && paedWeightMethod === 'age' && paedAgeLabel) ? paedAgeLabel : null,
+      // Without these two, INITIAL_STATE's defaults (both null) would silently
+      // overwrite the mode the person actually chose, and the separate effect
+      // that normally keeps state.timingMode in sync with this local variable
+      // wouldn't catch it - that effect only fires when the local timingMode/
+      // rhythmInterval themselves change, and they don't change here.
+      timingMode,
+      rhythmInterval,
     });
     
     // Reset all UI states for clean new case
@@ -1594,7 +1770,7 @@ export default function App() {
 
   if (isCaseClosed) {
     return (
-      <div className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 overflow-y-auto pb-24">
+      <div ref={caseSummaryScrollRef} className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 overflow-y-auto pb-24">
         <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
 
         <div className="grid grid-cols-2 gap-4">
@@ -1683,7 +1859,7 @@ export default function App() {
       {!disclaimerAccepted && (
         <div className="fixed inset-0 bg-black/90 z-[3000] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-1">The Big One <span className="text-sm font-medium text-neutral-400">v1.2</span></h1>
+            <h1 className="text-2xl font-bold text-neutral-900 mb-1">The Big One <span className="text-sm font-medium text-neutral-400">v1.3</span></h1>
             <p className="text-xs font-semibold text-emerald-600 uppercase tracking-widest mb-6">Important — please read before use</p>
             <div className="space-y-4 text-[14px] text-neutral-600 leading-relaxed mb-6">
               <p><strong className="text-neutral-900">Supplementary cognitive aid only.</strong> This application is a consolidated digital alternative to the pen, paper, and stopwatch a clinician would typically use during cardiac arrest management. The Big One tracks multiple timers, records interventions, and displays pre-configured guideline-derived information. It is a documentation, timing, and situational awareness tool only, not a clinical decision-making system, and does not replace clinical judgement, professional training, or your service's approved clinical guidelines and procedures. This application is intended for use by trained clinicians only.</p>
@@ -1806,6 +1982,14 @@ export default function App() {
                 <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={deleteTreatment} onMove={moveTreatment} onEdit={handleEditTreatment} />
               </div>
             </div>
+            {/* Unlike elapsed mode, log mode's running summary is the inline
+                content above, not an overlay - it never unmounts regardless
+                of what opens on top of it, so its scroll position is already
+                naturally preserved with no special handling needed. This is
+                a single block (not split into a persistent "summary" layer
+                like elapsed mode's equivalent) because there's no separate
+                summary overlay to keep alive here - nothing in log mode
+                ever sets currentOverlay to 'summary' at all. */}
             <AnimatePresence>
               {state.currentOverlay && state.currentOverlay !== 'tutorial' && (
                 <Overlay
@@ -1966,7 +2150,35 @@ export default function App() {
           </div>
 
           <AnimatePresence>
-            {state.currentOverlay && state.currentOverlay !== 'tutorial' && (
+            {(state.currentOverlay === 'summary' || (state.currentOverlay === 'treatment' && editingTreatmentIndex !== null)) && (
+              <Overlay
+                key="summary"
+                type="summary"
+                onClose={() => { setState(p => ({ ...p, currentOverlay: null })); setEditingTreatmentIndex(null); }}
+                addTreatment={addTreatment}
+                state={state}
+                pharmaSummary={pharmaSummary}
+                isShockForced={isShockForced}
+                toggleChecklistItem={toggleChecklistItem}
+                onVitalsChange={(v) => setState(p => ({ ...p, vitals: v }))}
+                onDeleteTreatment={deleteTreatment}
+                onMoveTreatment={moveTreatment}
+                onEditTreatment={handleEditTreatment}
+                editingTreatmentIndex={editingTreatmentIndex}
+                onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))}
+              />
+            )}
+          </AnimatePresence>
+          {/* Split into two AnimatePresence blocks (unlike log mode's single
+              block above, which needs no such split - see its own comment):
+              the Summary overlay keeps a fixed key="summary" so it stays
+              mounted the entire time an edit's Tx-selection overlay is open
+              on top of it, preserving its scroll position automatically.
+              This one genuinely needs it, since elapsed mode's running
+              summary IS an overlay - unlike log mode's, which is inline on
+              the home screen and never unmounts regardless. */}
+          <AnimatePresence>
+            {state.currentOverlay && state.currentOverlay !== 'tutorial' && state.currentOverlay !== 'summary' && (
               <Overlay 
                 key={state.currentOverlay}
                 type={state.currentOverlay as OverlayType} 
@@ -2243,7 +2455,7 @@ export default function App() {
                   </div>
 
                   <div className="text-[11px] text-neutral-400 text-center pt-2 space-y-0.5">
-                    <p>The Big One v1.2</p>
+                    <p>The Big One v1.3</p>
                     <p>ACTAS CMG v1.1.0.2</p>
                     <p>Last reviewed July 2026</p>
                   </div>
@@ -3271,7 +3483,7 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
       transition={{ type: 'spring', damping: 28, stiffness: 220, mass: 0.8 }}
       className="absolute inset-0 bg-white z-50 flex flex-col"
     >
-      <div className="flex-1 overflow-y-auto">
+      <div data-scroll-container="summary" className="flex-1 overflow-y-auto">
         {type === 'reversibles' && <ReversiblesOverlay checkedItems={state.reversiblesChecked} onToggle={(label) => toggleChecklistItem('reversibles', label)} />}
         {type === 'rosc' && <ROSCSelection checkedItems={state.roscChecked} onToggle={(label) => toggleChecklistItem('rosc', label)} patientType={state.patientType} patientWeight={state.patientWeight} />}
         {type === 'phea' && <PHEASelection checkedItems={state.pheaChecked} onToggle={(label) => toggleChecklistItem('phea', label)} />}
@@ -3284,7 +3496,13 @@ function Overlay({ type, onClose, addTreatment, state, pharmaSummary, isShockFor
                 Editing: {state.treatments[editingTreatmentIndex].name}
               </div>
             )}
-            <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={isShockForced} />
+            {/* isShockForced deliberately not passed through while editing:
+                that gate exists to force documenting a live rhythm check
+                outcome before anything else, which has nothing to do with
+                correcting an existing, already-logged entry. Without this,
+                a rhythm check timer hitting 0:00 mid-edit would suddenly
+                collapse this menu down to just the shock/disarm buttons. */}
+            <TreatmentSelection addTreatment={addTreatment} state={state} isShockForced={editingTreatmentIndex != null ? false : isShockForced} />
           </>
         )}
       </div>
@@ -3658,6 +3876,7 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
                   onPointerUp={isReorderingThis ? handleDragPointerUp : undefined}
                   onPointerCancel={isReorderingThis ? handleDragPointerUp : undefined}
                   style={isReorderingThis ? { touchAction: 'none' } : undefined}
+                  data-tx={tx.name.startsWith('Adrenaline push') ? 'adrenaline-push' : undefined}
                   className={`grid ${gridCols} px-4 py-4 items-center gap-1 transition-colors ${
                     isReorderingThis ? 'bg-blue-50 cursor-grab active:cursor-grabbing' : ''
                   }`}
@@ -3673,7 +3892,6 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
                             setPendingDelete(realIndex);
                           }
                         }}
-                        data-tx={tx.name.startsWith('Adrenaline push') ? 'adrenaline-push' : undefined}
                         className={`-ml-1.5 w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full transition-colors ${
                           isReorderingThis
                             ? 'bg-emerald-500 text-white'
@@ -3834,19 +4052,25 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
             <div className="text-right">
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">App recording for</div>
               <div className="text-[15px] font-bold text-neutral-800 tabular-nums">
-                {state.caseOpenedAt ? formatTimeHMM(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
+                {state.caseOpenedAt ? formatRecordingDuration(Math.floor(((state.caseClosedAt ?? Date.now()) - state.caseOpenedAt) / 1000)) : '—'}
               </div>
             </div>
           )}
         </div>
       )}
-      {state.cprRound > 0 && (
+      {(state.timingMode !== 'log' || state.cprRound > 0) && (
         <div>
           <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
           <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
-            <StatRow label="CPR Rounds" value={state.cprRound} />
-            <StatRow label="Shocks given" value={shockCount} color="text-red-600" />
-            <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+            {state.cprRound > 0 ? (
+              <>
+                <StatRow label="CPR Rounds" value={state.cprRound} />
+                <StatRow label="Shocks given" value={shockCount} color="text-red-600" />
+                <StatRow label="Disarmed" value={disarmCount} color="text-blue-600" />
+              </>
+            ) : (
+              <div className="p-4 text-neutral-300 italic text-sm">No CPR rounds recorded</div>
+            )}
           </div>
         </div>
       )}
@@ -3907,10 +4131,16 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
 function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onEdit, onUpdateInfusionDose }: { state: AppState, pharmaSummary: Record<string, { totalDose: number, unit: string, count: number, display: string }>, onDelete?: (idx: number) => void, onMove?: (fromIdx: number, toIdx: number) => void, onEdit?: (idx: number) => void, onUpdateInfusionDose?: (drug: string, dose: string) => void }) {
   return (
     <div className="space-y-6 pb-20">
-      <ArrestSummarySection state={state} showRecordingDuration />
-      <VitalSignsSection vitals={state.vitals} />
-      <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
-      <div>
+      <div data-tutorial-section="arrestSummary">
+        <ArrestSummarySection state={state} showRecordingDuration />
+      </div>
+      <div data-tutorial-section="vitalSigns">
+        <VitalSignsSection vitals={state.vitals} />
+      </div>
+      <div data-tutorial-section="pharmaSummary">
+        <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
+      </div>
+      <div data-tutorial-section="treatmentLog">
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={onDelete} onMove={onMove} onEdit={onEdit} />
       </div>
@@ -3950,6 +4180,15 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
   const [selectedCustomUnit, setSelectedCustomUnit] = useState<string | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(isShockForced ? 'rhythmCheck' : null);
   const [customInputValues, setCustomInputValues] = useState<Record<string, string>>({});
+
+  // The useState initializer above only runs once at mount, so if this menu
+  // was already open (e.g. mid-edit) when a rhythm check became forced,
+  // expandedSection would stay at whatever it was before - collapsed - with
+  // no way to expand it, since the toggle itself is also disabled below.
+  // This keeps it in sync whenever isShockForced actually changes.
+  useEffect(() => {
+    if (isShockForced) setExpandedSection('rhythmCheck');
+  }, [isShockForced]);
   
   const handleMedClick = (med: string) => {
     if (DOSE_CONFIG[med]) {
@@ -4331,7 +4570,8 @@ function TreatmentSelection({ addTreatment, state, isShockForced, patientTypeOve
         color="pink" 
         sectionId="rhythmCheck"
         expandedSection={expandedSection}
-        onToggle={(id) => setExpandedSection(expandedSection === id ? null : id)}
+        onToggle={(id) => { if (!isShockForced) setExpandedSection(expandedSection === id ? null : id); }}
+        showChevron={!isShockForced}
         items={[
           { name: 'Shock - VF', color: 'red' },
           { name: 'Shock - pVT', color: 'red' },
@@ -4420,7 +4660,8 @@ function TxSection({
   initiallyExpanded = false,
   sectionId,
   expandedSection,
-  onToggle
+  onToggle,
+  showChevron = true
 }: { 
   title: string;
   color: string;
@@ -4430,6 +4671,7 @@ function TxSection({
   sectionId?: string;
   expandedSection?: string | null;
   onToggle?: (id: string) => void;
+  showChevron?: boolean;
 }) {
   const [isCollapsed, setIsCollapsed] = useState(!initiallyExpanded);
   // Tracks which failable items (ETT, IV access, etc.) are currently staged
@@ -4472,7 +4714,7 @@ function TxSection({
         className={`flex items-center justify-between p-4 cursor-pointer font-bold select-none text-left ${colorMap[color]}`}
       >
         <span>{title}</span>
-        <ChevronDown className={`transition-transform duration-300 ${collapsed ? '-rotate-90' : ''}`} />
+        {showChevron && <ChevronDown className={`transition-transform duration-300 ${collapsed ? '-rotate-90' : ''}`} />}
       </div>
       <motion.div 
         initial={{ height: collapsed ? 0 : 'auto', opacity: collapsed ? 0 : 1 }}
