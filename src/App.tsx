@@ -627,6 +627,35 @@ const formatCalciumDose = (doseStr: string, weight: number | null): string => {
   return calculatedMg >= 1000 ? `1g` : `${calculatedMg}mg`;
 };
 
+// Content of the Next adrenaline / Next amiodarone timer boxes.
+// Status text arrives as e.g. "Next adrenaline: 2:28", "Next adrenaline: -0:32"
+// or "Next amiodarone: unknown". Laid out as two lines -
+// drug name above the countdown - in the drug's colours, or dark red when overdue.
+// ("Next" is dropped from the display; the status text itself is unchanged.)
+const DrugTimerContent = ({ text, flashRed, nameColour, timeColour }: {
+  text: string; flashRed: boolean; nameColour: string; timeColour: string;
+}) => {
+  const hasTime = text.includes(':');
+  const label = hasTime ? text.split(':')[0] : text;
+  const time = hasTime ? text.split(':').slice(1).join(':').trim() : null;
+  const match = label.match(/^Next\s+(.*)$/);
+  const drug = match ? match[1] : label;
+  const nameClass = flashRed ? 'text-red-900' : nameColour;
+  const timeClass = flashRed ? 'text-red-900' : timeColour;
+  return (
+    <>
+      <span className={`font-bold tracking-wide text-center leading-tight text-[17px] sm:text-[22px] mb-1 sm:mb-2 ${nameClass}`}>
+        {drug.charAt(0).toUpperCase() + drug.slice(1)}
+      </span>
+      {time && (
+        <span className={`font-bold text-center leading-none tabular-nums text-[25px] sm:text-[47px] ${timeClass}`}>
+          {time}
+        </span>
+      )}
+    </>
+  );
+};
+
 export default function App() {
   const [disclaimerAccepted, setDisclaimerAccepted] = useState(() => {
     return localStorage.getItem('disclaimerAccepted') === 'true';
@@ -2363,30 +2392,13 @@ export default function App() {
                   ? 'bg-red-200 text-red-900 border-neutral-100'
                   : adrenalineStatus.flashRed 
                   ? 'bg-red-200 text-red-900 border-neutral-100 animate-pulse' 
-                  : 'bg-neutral-100 text-neutral-900 border-neutral-100'
+                  : 'bg-[#daf3e5] text-emerald-900 border-[#daf3e5]' // pale green, part-way between muted sage and emerald-100
               }`}
             >
               {disregardAdrenaline === 'pending' ? (
                 <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
               ) : (
-                <>
-                  <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
-                    adrenalineStatus.flashRed 
-                      ? 'text-[12px] sm:text-[14px] text-red-900'
-                      : 'text-[12px] sm:text-[14px] text-neutral-900'
-                  }`}>
-                    {adrenalineStatus.text.includes(':') ? adrenalineStatus.text.split(':')[0] + ':' : adrenalineStatus.text}
-                  </span>
-                  {adrenalineStatus.text.includes(':') && (
-                    <span className={`font-bold text-center leading-none tabular-nums ${
-                      adrenalineStatus.flashRed
-                        ? 'text-[25px] sm:text-[47px] text-red-900'
-                        : 'text-[25px] sm:text-[47px] text-neutral-400'
-                    }`}>
-                      {adrenalineStatus.text.split(':').slice(1).join(':').trim()}
-                    </span>
-                  )}
-                </>
+                <DrugTimerContent text={adrenalineStatus.text} flashRed={adrenalineStatus.flashRed} nameColour="text-emerald-900" timeColour="text-emerald-500" />
               )}
             </div>
             
@@ -2409,30 +2421,13 @@ export default function App() {
                     ? 'bg-red-200 text-red-900 border-neutral-100'
                     : amiodaroneStatus.flashRed
                     ? 'bg-red-200 text-red-900 border-neutral-100 animate-pulse' 
-                    : 'bg-neutral-100 text-neutral-900 border-neutral-100'
+                    : 'bg-purple-100 text-purple-900 border-purple-100' // pale purple = ICP-only drug (ACTAS guideline app convention)
                 }`}
               >
                 {disregardAmiodarone === 'pending' ? (
                   <span className="text-xl sm:text-2xl font-bold tracking-tight text-center">Disregard?</span>
                 ) : (
-                  <>
-                    <span className={`font-bold tracking-widest text-center mb-1.5 sm:mb-3 ${
-                      amiodaroneStatus.flashRed
-                        ? 'text-[12px] sm:text-[14px] text-red-900'
-                        : 'text-[12px] sm:text-[14px] text-neutral-900'
-                    }`}>
-                      {amiodaroneStatus.text.includes(':') ? amiodaroneStatus.text.split(':')[0] + ':' : amiodaroneStatus.text}
-                    </span>
-                    {amiodaroneStatus.text.includes(':') && (
-                      <span className={`font-bold text-center leading-none tabular-nums ${
-                        amiodaroneStatus.flashRed
-                          ? 'text-[25px] sm:text-[47px] text-red-900'
-                          : 'text-[25px] sm:text-[47px] text-neutral-400'
-                      }`}>
-                        {amiodaroneStatus.text.split(':').slice(1).join(':').trim()}
-                      </span>
-                    )}
-                  </>
+                  <DrugTimerContent text={amiodaroneStatus.text} flashRed={amiodaroneStatus.flashRed} nameColour="text-purple-900" timeColour="text-purple-400" />
                 )}
               </div>
           </div>
