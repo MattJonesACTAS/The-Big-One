@@ -13,6 +13,7 @@ export interface Treatment {
   loggedAt?: number;
   timeUnknown?: boolean;
   customDose?: boolean;
+  edited?: boolean;
 }
 
 export interface AppState {
