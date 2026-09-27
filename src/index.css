@@ -79,6 +79,26 @@
       display: none !important;
     }
 
+    /* The Previous Cases viewer is itself a full-screen overlay (.fixed),
+       which the generic rule above would otherwise hide entirely - along
+       with the actual content inside it, producing a blank PDF. Restoring
+       display isn't enough on its own though: position:fixed is relative to
+       the viewport, not the page flow, so it also needs to become a normal,
+       in-flow element to paginate correctly across multiple printed pages
+       rather than being clipped to one viewport-sized page. */
+    .previous-case-modal {
+      display: block !important;
+      position: static !important;
+      inset: auto !important;
+    }
+
+    /* The viewer is portalled to <body>, outside #root. While it's open,
+       hide #root entirely so only the saved case prints - not the
+       welcome/catchup screen sitting behind it. */
+    body.viewing-previous-case > #root {
+      display: none !important;
+    }
+
     body {
       overflow: visible !important;
       height: auto !important;
@@ -134,9 +154,14 @@
        and spacing value used inside it is pinned to an explicit pixel number
        here (base value x1.8, the same visual scale as everything else),
        scoped narrowly so nothing outside this group is affected. */
+    /* Reduced further after phone-exported PDFs showed a whole row (not
+       just a few px) getting cut - phone print paths apparently impose
+       their own extra margin on top of/regardless of this page's own CSS,
+       leaving less usable height than desktop. Trimmed with real headroom
+       here rather than the bare minimum, so it holds up across both. */
     .break-inside-avoid > :not(:last-child),
     .break-inside-avoid .space-y-6 > :not(:last-child) {
-      margin-block-end: 43px !important;
+      margin-block-end: 32px !important;
     }
     .break-inside-avoid .text-xs { font-size: 22px !important; }
     .break-inside-avoid .text-4xl { font-size: 65px !important; }
@@ -146,7 +171,7 @@
     .break-inside-avoid .mb-1 { margin-bottom: 7px !important; }
     .break-inside-avoid .px-4 { padding-left: 29px !important; padding-right: 29px !important; }
     .break-inside-avoid .py-3 { padding-top: 22px !important; padding-bottom: 22px !important; }
-    .break-inside-avoid .p-2 { padding: 14px !important; }
+    .break-inside-avoid .p-2 { padding: 4px !important; }
     .break-inside-avoid .px-3 { padding-left: 22px !important; padding-right: 22px !important; }
     .break-inside-avoid .p-4 { padding: 29px !important; }
     .break-inside-avoid .w-6 { width: 43px !important; }

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { registerSW } from 'virtual:pwa-register';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -294,6 +295,13 @@ const formatRecordingDuration = (seconds: number): string => {
 // timed fallback in case a particular browser doesn't fire it reliably.
 // For on-screen/PDF display specifically - unlike the filename above, slashes
 // are fine here since this isn't constrained by filesystem rules.
+// Every case date (header and PDF filename) is the date the case was closed,
+// never the date it's being viewed/exported. If a case has no recorded close
+// time (e.g. archived before caseClosedAt existed), say so rather than
+// substituting today's date.
+const formatCaseDate = (closedAt: number | null) =>
+  closedAt ? formatDisplayDate(new Date(closedAt)) : 'Date not recorded';
+
 const formatDisplayDate = (date: Date) => {
   const dd = String(date.getDate()).padStart(2, '0');
   const mm = String(date.getMonth() + 1).padStart(2, '0');
@@ -301,15 +309,19 @@ const formatDisplayDate = (date: Date) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
-const exportCasePdf = () => {
+const exportCasePdf = (closedAt: number | null) => {
   const originalTitle = document.title;
-  const now = new Date();
-  const dd = String(now.getDate()).padStart(2, '0');
-  const mm = String(now.getMonth() + 1).padStart(2, '0');
-  const yyyy = now.getFullYear();
-  // Hyphens, not slashes: "/" isn't valid in filenames on any OS, so the
-  // browser would silently strip or mangle it when suggesting a save name.
-  document.title = `Case Summary - ${yyyy}-${mm}-${dd}`;
+  if (closedAt) {
+    const closed = new Date(closedAt);
+    const dd = String(closed.getDate()).padStart(2, '0');
+    const mm = String(closed.getMonth() + 1).padStart(2, '0');
+    const yyyy = closed.getFullYear();
+    // Hyphens, not slashes: "/" isn't valid in filenames on any OS, so the
+    // browser would silently strip or mangle it when suggesting a save name.
+    document.title = `Case Summary - ${yyyy}-${mm}-${dd}`;
+  } else {
+    document.title = 'Case Summary';
+  }
   let restored = false;
   const restoreTitle = () => {
     if (restored) return;
@@ -685,6 +697,13 @@ export default function App() {
   const [previousCases, setPreviousCases] = useState<AppState[]>(() => loadPreviousCases());
   const [showPreviousCasesList, setShowPreviousCasesList] = useState(false);
   const [viewingPreviousCase, setViewingPreviousCase] = useState<AppState | null>(null);
+  // While a saved case is open, flag <body> so print CSS can hide #root
+  // (the welcome/catchup screen behind the viewer) and print only the
+  // portalled viewer.
+  useEffect(() => {
+    document.body.classList.toggle('viewing-previous-case', !!viewingPreviousCase);
+    return () => document.body.classList.remove('viewing-previous-case');
+  }, [viewingPreviousCase]);
   const [showPauseWarning, setShowPauseWarning] = useState(false);
   const [showResetWarning, setShowResetWarning] = useState(false);
   const [showElapsedRecalibrate, setShowElapsedRecalibrate] = useState(false);
@@ -1820,7 +1839,7 @@ export default function App() {
   if (isCaseClosed) {
     return (
       <div ref={caseSummaryScrollRef} className="min-h-screen bg-neutral-200 p-6 overflow-y-auto pb-24">
-      <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-8 space-y-6">
+      <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-6 space-y-6">
         <div className="space-y-6 break-inside-avoid has-arrest-summary">
         <div className="text-center space-y-6">
           <div className="inline-flex items-center gap-3 text-emerald-600 font-bold text-xs tracking-[0.2em] uppercase">
@@ -1829,19 +1848,19 @@ export default function App() {
             <span className="w-6 h-px bg-emerald-300" />
           </div>
           <h1 className="text-4xl font-bold text-neutral-900">Case Summary</h1>
-          <p className="text-neutral-400 text-sm font-medium">{formatDisplayDate(new Date())}</p>
+          <p className="text-neutral-400 text-sm font-medium">{formatCaseDate(state.caseClosedAt)}</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-2">
           <button 
-            onClick={exportCasePdf}
-            className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold btn-base border border-emerald-100"
+            onClick={() => exportCasePdf(state.caseClosedAt)}
+            className="flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 py-3 px-2 rounded-xl font-bold btn-base border border-emerald-100"
           >
             <FileText size={20} /> Export PDF
           </button>
           <button 
             onClick={() => setShowCloseWarning(true)}
-            className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold btn-base border border-red-100"
+            className="flex items-center justify-center gap-1 bg-red-50 text-red-700 py-3 px-2 rounded-xl font-bold btn-base border border-red-100"
             data-button="close-case"
           >
             <Trash2 size={20} /> Close Case
@@ -2559,10 +2578,15 @@ export default function App() {
                 </div>
               )}
 
-              {viewingPreviousCase && (
-                <div className="fixed inset-0 bg-neutral-200 z-[2000] overflow-y-auto">
+              {/* Portalled to <body> so the viewer is no longer a descendant of
+                  the Catchup modal's .fixed wrapper - print CSS hides every
+                  .fixed element, and a display:none ancestor hides all of its
+                  descendants regardless of their own display value, which is
+                  what made the saved-case PDF blank. */}
+              {viewingPreviousCase && createPortal(
+                <div className="fixed inset-0 bg-neutral-200 z-[2000] overflow-y-auto previous-case-modal">
                   <div className="min-h-screen p-6 pb-24">
-                  <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-8 space-y-6">
+                  <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-6 space-y-6">
                     <div className="space-y-6 break-inside-avoid has-arrest-summary">
                     <div className="text-center space-y-6">
           <div className="inline-flex items-center gap-3 text-emerald-600 font-bold text-xs tracking-[0.2em] uppercase">
@@ -2571,19 +2595,19 @@ export default function App() {
             <span className="w-6 h-px bg-emerald-300" />
           </div>
           <h1 className="text-4xl font-bold text-neutral-900">Case Summary</h1>
-          <p className="text-neutral-400 text-sm font-medium">{formatDisplayDate(new Date())}</p>
+          <p className="text-neutral-400 text-sm font-medium">{formatCaseDate(viewingPreviousCase.caseClosedAt)}</p>
         </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-2">
                       <button
-                        onClick={exportCasePdf}
-                        className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold btn-base border border-emerald-100"
+                        onClick={() => exportCasePdf(viewingPreviousCase.caseClosedAt)}
+                        className="flex items-center justify-center gap-1 bg-emerald-50 text-emerald-700 py-3 px-2 rounded-xl font-bold btn-base border border-emerald-100"
                       >
                         <FileText size={20} /> Export PDF
                       </button>
                       <button
                         onClick={() => { setViewingPreviousCase(null); setShowPreviousCasesList(true); }}
-                        className="flex items-center justify-center gap-2 bg-red-50 text-red-700 py-3 px-4 rounded-xl font-bold btn-base border border-red-100"
+                        className="flex items-center justify-center gap-1 bg-red-50 text-red-700 py-3 px-2 rounded-xl font-bold btn-base border border-red-100"
                       >
                         Back
                       </button>
@@ -2611,7 +2635,8 @@ export default function App() {
                     </div>
                   </div>
                   </div>
-                </div>
+                </div>,
+                document.body
               )}
 
               {!catchupTxMode && catchupStep === 2 && (
