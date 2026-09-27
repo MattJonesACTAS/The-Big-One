@@ -1,6 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@700&family=Roboto:wght@700&display=swap');
 @import "tailwindcss";
 
+/* Guarantees every printed page - not just the first/last - gets a
+   consistent margin, so the grey backdrop shows at the top and bottom of
+   each page regardless of where content happens to break. */
+@page {
+  margin: 12mm;
+}
+
 @theme {
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -52,6 +59,15 @@
   }
   
   @media print {
+    /* The @page margin area (and any leftover space below content on the
+       last page) is painted from the root element's background, not from
+       any individual div's - setting it here is what actually makes grey
+       appear at the top/bottom of every page, including past where the
+       card's own content ends. */
+    html, body {
+      background: #e5e5e5 !important;
+    }
+
     .btn-base, 
     button, 
     .fixed, 
@@ -64,15 +80,92 @@
     }
 
     body {
-      background-color: white !important;
       overflow: visible !important;
       height: auto !important;
       padding: 0 !important;
     }
 
+    /* zoom was removed here: it's a non-standard property, and its known
+       weakness is exactly this scenario - it can cause the browser's page-
+       break calculation to let content overflow past where a page should
+       end, since the pagination engine doesn't reliably account for it.
+       That's what was eating into the bottom margin on every page. Root
+       font-size scales everything using rem-based Tailwind text sizes
+       (the vast majority of the text here) in a way page-break math fully
+       understands, since it's a real, native size change rather than a
+       post-layout visual scale. */
+    html {
+      font-size: 180%;
+    }
+
+    /* The handful of places using an arbitrary pixel value (text-[Npx])
+       instead of a rem-based Tailwind size don't scale with the above, so
+       they need their own explicit bump to the same 1.8x factor. */
+    /* Every distinct arbitrary pixel size actually used across the summary's
+       components (StatRow, TreatmentLog, VitalSignsSection, ArrestSummarySection,
+       PharmaSummarySection) - missing any of these is what caused inconsistent
+       sizing between boxes, since some text scaled via font-size and some didn't. */
+    .text-\[11px\] { font-size: 20px !important; }
+    .text-\[12px\] { font-size: 22px !important; }
+    .text-\[13px\] { font-size: 23px !important; }
+    .text-\[14px\] { font-size: 25px !important; }
+    .text-\[15px\] { font-size: 27px !important; }
+    .text-\[16px\] { font-size: 29px !important; }
+    .text-\[17px\] { font-size: 31px !important; }
+
+    /* @page margin (above) is the standards-correct way to do this, but
+       mobile print/PDF paths don't reliably respect it - this content-level
+       padding is a fallback that's guaranteed to render regardless, since
+       it's just normal box-model padding rather than a paged-media feature.
+       It only reaches the very top/bottom of the whole card, not every
+       in-between page break, which @page would handle if it's supported. */
     .min-h-screen {
       min-height: auto !important;
-      padding: 20px !important;
+      padding: 36px !important;
+    }
+
+    /* The header + Case Details + Arrest Summary group (.break-inside-avoid)
+       always has the same bounded shape - a fixed set of rows, never
+       dependent on how much data a case has, unlike Treatment Log. So rather
+       than leaving its total height to emerge from rem-based Tailwind
+       classes interacting with the global 1.8x root font-size above (which
+       is what made the last two attempts overshoot in opposite directions -
+       impossible to predict exactly without live rendering), every font-size
+       and spacing value used inside it is pinned to an explicit pixel number
+       here (base value x1.8, the same visual scale as everything else),
+       scoped narrowly so nothing outside this group is affected. */
+    .break-inside-avoid > :not(:last-child),
+    .break-inside-avoid .space-y-6 > :not(:last-child) {
+      margin-block-end: 43px !important;
+    }
+    .break-inside-avoid .text-xs { font-size: 22px !important; }
+    .break-inside-avoid .text-4xl { font-size: 65px !important; }
+    .break-inside-avoid .text-sm { font-size: 25px !important; }
+    .break-inside-avoid .gap-3 { gap: 22px !important; }
+    .break-inside-avoid .gap-4 { gap: 29px !important; }
+    .break-inside-avoid .mb-1 { margin-bottom: 7px !important; }
+    .break-inside-avoid .px-4 { padding-left: 29px !important; padding-right: 29px !important; }
+    .break-inside-avoid .py-3 { padding-top: 22px !important; padding-bottom: 22px !important; }
+    .break-inside-avoid .p-2 { padding: 14px !important; }
+    .break-inside-avoid .px-3 { padding-left: 22px !important; padding-right: 22px !important; }
+    .break-inside-avoid .p-4 { padding: 29px !important; }
+    .break-inside-avoid .w-6 { width: 43px !important; }
+
+    /* This group's content is fixed and bounded (same rows every case), so
+       rather than continuing to fine-tune its height to just barely
+       consume exactly one page - fragile, and the source of the last two
+       overshoots in opposite directions - force the page to end right
+       after it unconditionally. Vital Signs then always starts fresh on
+       its own page regardless of exactly how much room was left over. */
+    /* Scoped to .has-arrest-summary specifically (not all of
+       .break-inside-avoid): Arrest Summary itself is conditionally hidden
+       for non-arrest cases (PHEA only, no CPR rounds) - forcing a break
+       after a group that's missing it would waste roughly half a page for
+       exactly those cases, for no reason, since there'd be nothing at risk
+       of splitting awkwardly in the first place. */
+    .has-arrest-summary {
+      break-after: page !important;
+      page-break-after: always !important;
     }
 
     /* Keep important text black/dark for printing */
@@ -85,6 +178,28 @@
       print-color-adjust: exact;
     }
 
+    /* Vital Signs' banner uses sky (not emerald) - without this, it loses
+       its background colour on print while the other section banners,
+       which all happen to use emerald, don't. */
+    .bg-sky-50 {
+      background-color: #f0f9ff !important;
+      print-color-adjust: exact;
+    }
+
+    /* Case Details' banner uses neutral (not emerald/sky) - same gap as
+       above, applied to a third color that was still missing its own rule. */
+    .bg-neutral-50 {
+      background-color: #fafafa !important;
+      print-color-adjust: exact;
+    }
+
+    /* The page backdrop behind the summary card - without this it would
+       print as plain white, losing the card effect entirely. */
+    .bg-neutral-200 {
+      background-color: #e5e5e5 !important;
+      print-color-adjust: exact;
+    }
+
     .divide-y > * {
       border-color: #eee !important;
     }
@@ -93,8 +208,24 @@
       box-shadow: none !important;
     }
     
-    .border {
+    /* Arrest Summary and Pharma Summary use border-x/border-b (not the plain
+       .border class other boxes use), so without also covering those, their
+       borders stayed at their original, barely-visible light colour while
+       every other box's got darkened for print - this is what actually
+       made them look thinner/fainter, not a real difference in width. */
+    .border, .border-x, .border-t, .border-b, .border-l, .border-r {
       border-color: #ddd !important;
+    }
+
+    /* Without this, a box whose content spans a page break just gets cut
+       off mid-border, with no bottom edge on the first page or top edge on
+       the next - box-decoration-break makes each page fragment render as if
+       it were a complete, independently-rounded box (border, background and
+       radius all reapplied at the break), rather than one shape sliced in
+       half. Covers the outer summary card and each individual section box. */
+    .rounded-xl, .rounded-3xl {
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
     }
   }
 }

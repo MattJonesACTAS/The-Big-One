@@ -288,6 +288,41 @@ const formatRecordingDuration = (seconds: number): string => {
   return `${totalMins}min, ${secs.toString().padStart(2, '0')}s`;
 };
 
+// The browser's print dialog / "Save as PDF" suggests document.title as the
+// default filename, so this briefly renames the page to the desired export
+// name right before printing, then restores the real title afterwards -
+// afterprint fires once the print/save dialog is actually dismissed, with a
+// timed fallback in case a particular browser doesn't fire it reliably.
+// For on-screen/PDF display specifically - unlike the filename above, slashes
+// are fine here since this isn't constrained by filesystem rules.
+const formatDisplayDate = (date: Date) => {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+};
+
+const exportCasePdf = () => {
+  const originalTitle = document.title;
+  const now = new Date();
+  const dd = String(now.getDate()).padStart(2, '0');
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const yyyy = now.getFullYear();
+  // Hyphens, not slashes: "/" isn't valid in filenames on any OS, so the
+  // browser would silently strip or mangle it when suggesting a save name.
+  document.title = `Case Summary - ${yyyy}-${mm}-${dd}`;
+  let restored = false;
+  const restoreTitle = () => {
+    if (restored) return;
+    restored = true;
+    document.title = originalTitle;
+    window.removeEventListener('afterprint', restoreTitle);
+  };
+  window.addEventListener('afterprint', restoreTitle);
+  window.print();
+  setTimeout(restoreTitle, 2000);
+};
+
 const getLocalTime = (date?: Date) => {
   const d = date || new Date();
   return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: false });
@@ -1785,12 +1820,22 @@ export default function App() {
 
   if (isCaseClosed) {
     return (
-      <div ref={caseSummaryScrollRef} className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 overflow-y-auto pb-24">
-        <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
+      <div ref={caseSummaryScrollRef} className="min-h-screen bg-neutral-200 p-6 overflow-y-auto pb-24">
+      <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-8 space-y-6">
+        <div className="space-y-6 break-inside-avoid has-arrest-summary">
+        <div className="text-center space-y-6">
+          <div className="inline-flex items-center gap-3 text-emerald-600 font-bold text-xs tracking-[0.2em] uppercase">
+            <span className="w-6 h-px bg-emerald-300" />
+            The Big One
+            <span className="w-6 h-px bg-emerald-300" />
+          </div>
+          <h1 className="text-4xl font-bold text-neutral-900">Case Summary</h1>
+          <p className="text-neutral-400 text-sm font-medium">{formatDisplayDate(new Date())}</p>
+        </div>
 
         <div className="grid grid-cols-2 gap-4">
           <button 
-            onClick={() => window.print()}
+            onClick={exportCasePdf}
             className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold btn-base border border-emerald-100"
           >
             <FileText size={20} /> Export PDF
@@ -1804,16 +1849,18 @@ export default function App() {
           </button>
         </div>
 
-        <ArrestSummarySection state={state} showRecordingDuration />
+        <ArrestSummarySection state={state} showRecordingDuration alwaysShowArrestSummary />
+        </div>
 
         <VitalSignsSection vitals={state.vitals} />
 
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} />
         
-        <div>
-          <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+        <div className="rounded-xl border border-neutral-100">
+          <div className="bg-emerald-50 text-emerald-800 p-3 font-bold text-sm tracking-wider text-center rounded-t-xl">TREATMENT LOG</div>
           <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} isSummary={true} />
         </div>
+      </div>
 
         {showCloseWarning && (
            <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-6" style={{ height: '100dvh' }}>
@@ -1992,8 +2039,8 @@ export default function App() {
               <ArrestSummarySection state={state} showRecordingDuration />
               <VitalSignsSection vitals={state.vitals} />
               <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={(drug, dose) => setState(prev => ({ ...prev, infusionDoses: { ...prev.infusionDoses, [drug]: dose } }))} />
-              <div>
-                <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+              <div className="rounded-xl border border-neutral-100">
+                <div className="bg-emerald-50 text-emerald-800 p-3 font-bold text-sm tracking-wider text-center rounded-t-xl">TREATMENT LOG</div>
                 <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={deleteTreatment} onMove={moveTreatment} onEdit={handleEditTreatment} />
               </div>
             </div>
@@ -2514,13 +2561,23 @@ export default function App() {
               )}
 
               {viewingPreviousCase && (
-                <div className="fixed inset-0 bg-white z-[2000] overflow-y-auto">
-                  <div className="min-h-screen bg-white p-6 max-w-2xl mx-auto space-y-6 pb-24">
-                    <h1 className="text-4xl font-bold text-center text-neutral-900 mb-8">Case Summary</h1>
+                <div className="fixed inset-0 bg-neutral-200 z-[2000] overflow-y-auto">
+                  <div className="min-h-screen p-6 pb-24">
+                  <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-neutral-200 shadow-2xl p-8 space-y-6">
+                    <div className="space-y-6 break-inside-avoid has-arrest-summary">
+                    <div className="text-center space-y-6">
+          <div className="inline-flex items-center gap-3 text-emerald-600 font-bold text-xs tracking-[0.2em] uppercase">
+            <span className="w-6 h-px bg-emerald-300" />
+            The Big One
+            <span className="w-6 h-px bg-emerald-300" />
+          </div>
+          <h1 className="text-4xl font-bold text-neutral-900">Case Summary</h1>
+          <p className="text-neutral-400 text-sm font-medium">{formatDisplayDate(new Date())}</p>
+        </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <button
-                        onClick={() => window.print()}
+                        onClick={exportCasePdf}
                         className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 py-3 px-4 rounded-xl font-bold btn-base border border-emerald-100"
                       >
                         <FileText size={20} /> Export PDF
@@ -2533,7 +2590,8 @@ export default function App() {
                       </button>
                     </div>
 
-                    <ArrestSummarySection state={viewingPreviousCase} showRecordingDuration />
+                    <ArrestSummarySection state={viewingPreviousCase} showRecordingDuration alwaysShowArrestSummary />
+                    </div>
 
                     <VitalSignsSection vitals={viewingPreviousCase.vitals} />
 
@@ -2543,8 +2601,8 @@ export default function App() {
                       activeInfusions={INFUSION_DRUGS.filter(d => viewingPreviousCase.treatments.some(t => t.name.startsWith(d)))}
                     />
 
-                    <div>
-                      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+                    <div className="rounded-xl border border-neutral-100">
+                      <div className="bg-emerald-50 text-emerald-800 p-3 font-bold text-sm tracking-wider text-center rounded-t-xl">TREATMENT LOG</div>
                       <TreatmentLog
                         treatments={viewingPreviousCase.treatments}
                         elapsedSeconds={viewingPreviousCase.elapsedSeconds}
@@ -2552,6 +2610,7 @@ export default function App() {
                         isSummary={true}
                       />
                     </div>
+                  </div>
                   </div>
                 </div>
               )}
@@ -3659,11 +3718,11 @@ function ROSCSelection({ checkedItems, onToggle, patientType, patientWeight }: {
 function PHEASelection({ checkedItems, onToggle }: { checkedItems: string[], onToggle: (label: string) => void }) {
   return (
     <div className="h-full pb-10">
-      <SectionGroup title="PREPARATION" color="purple" items={['Adequate hands and skills mix?', { label: 'Assign roles', subItems: ['Team leader', 'Airway primary', 'Airway assistant', 'Drugs & access primary', 'Drugs & access assistant', 'Gofer'] }, 'C-spine immobilisation required?', 'Optimise patient position', 'Optimise environment', 'Optimise equipment placement', 'Consider preparing extrication if resources allow']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="PRE-OXYGENATION" color="purple" items={['Nasal prongs 15L/min']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="INITIAL TEAM BRIEF" color="purple" items={['Adequate hands and skills mix?', { label: 'Optimise patient position', subItems: ['Consider relocating patient now to optimal location', 'Apply C-spine immobilisation if required', 'If remaining on scene and resources allow, prepare extrication concurrently'] }, { label: 'Assign roles', subItems: ['Team leader', 'Airway primary', 'Airway assistant', 'Drugs & access primary', 'Drugs & access assistant', 'Gofer'] }]} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="SCENE OPTIMISATION" color="purple" items={['Optimise environment', 'Optimise equipment placement']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup title="MONITORING" color="purple" items={['ECG', 'BP — cycling', 'SpO2', 'EtCO2']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="DRUGS & ACCESS EQUIPMENT" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} checkedItems={checkedItems} onToggle={onToggle} />
-      <SectionGroup title="AIRWAY EQUIPMENT AND BRIEF" color="purple" items={['Sufficient oxygen available?', 'Suction', 'OPA/NPA', 'LMA', 'BVM', 'Airtraq', 'ETT', 'Syringe', 'Securing method', 'Laryngoscope checked', 'FONA scalpel', 'External laryngeal manipulation discussed', 'Fall back plan discussed']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="DRUGS & ACCESS" color="purple" items={['IV/IO access ×2 if possible', 'IV fluids', 'Ketamine drawn up', 'Suxamethonium drawn up', 'Post PHEA sedation medication/s drawn up']} checkedItems={checkedItems} onToggle={onToggle} />
+      <SectionGroup title="AIRWAY" color="purple" items={['Sufficient oxygen available?', 'Pre-oxygenation applied?', 'Suction', 'OPA/NPA', 'LMA', 'BVM', 'Airtraq', 'ETT', 'Syringe', 'Securing method', 'Laryngoscope checked', 'FONA scalpel', 'External laryngeal manipulation discussed', 'Fall back plan discussed']} checkedItems={checkedItems} onToggle={onToggle} />
       <SectionGroup 
         title="POST-INTUBATION" 
         color="darkPurple" 
@@ -3857,7 +3916,7 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
     : 'grid-cols-[1.9fr_1fr_1.1fr]';
 
   return (
-    <div className="bg-white rounded-b-xl border border-neutral-100 overflow-hidden shadow-sm">
+    <div className="bg-white rounded-b-xl">
       <div className={`grid ${gridCols} gap-1 bg-neutral-100 border-b border-neutral-200 px-4 py-3`}>
         <div className={`text-[11px] font-black text-neutral-800 uppercase tracking-widest text-left ${onDelete ? 'pl-5' : ''}`}>Treatment</div>
         <div className="text-[11px] font-black text-neutral-800 uppercase tracking-widest text-center">Logged at</div>
@@ -3972,7 +4031,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
   return (
     <div className="space-y-6">
       {patientLabel && (
-        <div className="rounded-xl overflow-hidden border border-neutral-100">
+        <div className="rounded-xl border border-neutral-100">
           <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-xs tracking-wider text-center">PATIENT</div>
           <div className="bg-white px-4 py-3">
             <span className="text-[17px] font-bold text-neutral-900 text-center block">{patientLabel}</span>
@@ -3992,7 +4051,7 @@ function SummaryStats({ state, pharmaSummary }: { state: AppState, pharmaSummary
         <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">PHARMA SUMMARY</div>
         <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
           {Object.keys(pharmaSummary).length === 0 ? (
-            <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
+            <div className="p-4 text-neutral-300 italic text-sm">No medications recorded</div>
           ) : (
             Object.entries(pharmaSummary).map(([name, info]) => (
               <StatRow key={name} label={name} value={info.display} />
@@ -4017,8 +4076,9 @@ function VitalSignsSection({ vitals }: { vitals: AppState['vitals'] }) {
     { label: 'Temp',    value: v.temp, unit: '°C'     },
   ].filter(r => r.value !== '');
   return (
-    <div className="rounded-xl overflow-hidden border border-neutral-100">
-      <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center">VITAL SIGNS</div>
+    <div className="rounded-xl border border-neutral-100">
+      <div className="bg-sky-50 text-sky-800 px-4 py-3 font-bold text-sm tracking-wider text-center rounded-t-xl">VITAL SIGNS</div>
+      <div className="bg-white rounded-b-xl">
       {vitalRows.length > 0 ? vitalRows.map(({ label, value, unit }, i) => (
         <div key={label} className={`flex items-center justify-between px-4 py-3 ${i < vitalRows.length - 1 ? 'border-b border-neutral-100' : ''}`}>
           <span className="text-[14px] font-semibold text-neutral-500">{label}</span>
@@ -4027,13 +4087,14 @@ function VitalSignsSection({ vitals }: { vitals: AppState['vitals'] }) {
           </span>
         </div>
       )) : (
-        <div className="px-4 py-3 text-[14px] text-neutral-400 italic">No vital signs recorded.</div>
+        <div className="p-4 text-neutral-300 italic text-sm">No vital signs recorded</div>
       )}
+      </div>
     </div>
   );
 }
 
-function ArrestSummarySection({ state, showRecordingDuration }: { state: AppState, showRecordingDuration?: boolean }) {
+function ArrestSummarySection({ state, showRecordingDuration, alwaysShowArrestSummary }: { state: AppState, showRecordingDuration?: boolean, alwaysShowArrestSummary?: boolean }) {
   const shockCount = state.treatments.filter(t => t.name.includes('Shock') && !t.name.includes('Disarm')).length;
   const disarmCount = state.treatments.filter(t => t.name.includes('Disarm')).length;
   const isPaedWithAge = state.patientType === 'paed' && !!state.patientAge;
@@ -4049,7 +4110,9 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
   return (
     <div className="space-y-6">
       {(patientTypeLabel || showRecordingDuration) && (
-        <div className="rounded-xl overflow-hidden border border-neutral-100 bg-white px-4 py-3 flex items-start justify-between gap-3 shadow-sm">
+        <div className="rounded-xl border border-neutral-100">
+          <div className="bg-neutral-50 text-neutral-500 px-4 py-3 font-bold text-sm tracking-wider text-center rounded-t-xl">CASE DETAILS</div>
+          <div className="bg-white px-4 py-3 flex items-start justify-between gap-3 rounded-b-xl">
           {patientTypeLabel && (
             <div>
               <div className="text-[11px] font-medium text-neutral-400 uppercase tracking-wide mb-1">Patient settings</div>
@@ -4071,12 +4134,13 @@ function ArrestSummarySection({ state, showRecordingDuration }: { state: AppStat
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
-      {(state.timingMode !== 'log' || state.cprRound > 0) && (
-        <div>
-          <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">ARREST SUMMARY</div>
-          <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm">
+      {(state.timingMode !== 'log' || state.cprRound > 0 || alwaysShowArrestSummary) && (
+        <div className="rounded-xl border border-neutral-100">
+          <div className="bg-emerald-50 text-emerald-800 px-4 py-3 font-bold text-sm tracking-wider text-center rounded-t-xl">ARREST SUMMARY</div>
+          <div className="bg-white divide-y divide-neutral-50 rounded-b-xl">
             {state.cprRound > 0 ? (
               <>
                 <StatRow label="CPR Rounds" value={state.cprRound} />
@@ -4103,11 +4167,11 @@ function PharmaSummarySection({ pharmaSummary, infusionDoses, activeInfusions, o
   const hasContent = nonInfusionEntries.length > 0 || (activeInfusions && activeInfusions.length > 0);
 
   return (
-    <div>
-      <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">PHARMA SUMMARY</div>
-      <div className="bg-white border-x border-b border-neutral-100 rounded-b-lg divide-y divide-neutral-50 shadow-sm min-h-[60px]">
+    <div className="rounded-xl border border-neutral-100">
+      <div className="bg-emerald-50 text-emerald-800 px-4 py-3 font-bold text-sm tracking-wider text-center rounded-t-xl">PHARMA SUMMARY</div>
+      <div className="bg-white divide-y divide-neutral-50 min-h-[60px] rounded-b-xl">
         {!hasContent ? (
-          <div className="p-4 text-neutral-300 italic text-sm">No medications given</div>
+          <div className="p-4 text-neutral-300 italic text-sm">No medications recorded</div>
         ) : (
           <>
             {nonInfusionEntries.map(([name, info]) => (
@@ -4147,7 +4211,7 @@ function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onEdit, onUpda
   return (
     <div className="space-y-6 pb-20">
       <div data-tutorial-section="arrestSummary">
-        <ArrestSummarySection state={state} showRecordingDuration />
+        <ArrestSummarySection state={state} showRecordingDuration alwaysShowArrestSummary />
       </div>
       <div data-tutorial-section="vitalSigns">
         <VitalSignsSection vitals={state.vitals} />
@@ -4155,8 +4219,8 @@ function SummaryOverlay({ state, pharmaSummary, onDelete, onMove, onEdit, onUpda
       <div data-tutorial-section="pharmaSummary">
         <PharmaSummarySection pharmaSummary={pharmaSummary} infusionDoses={state.infusionDoses} activeInfusions={INFUSION_DRUGS.filter(d => state.treatments.some(t => t.name.startsWith(d)))} onUpdateInfusionDose={onUpdateInfusionDose} />
       </div>
-      <div data-tutorial-section="treatmentLog">
-        <div className="bg-emerald-50 text-emerald-800 p-3 rounded-t-lg font-bold text-sm tracking-wider text-center">TREATMENT LOG</div>
+      <div data-tutorial-section="treatmentLog" className="rounded-xl border border-neutral-100">
+        <div className="bg-emerald-50 text-emerald-800 p-3 font-bold text-sm tracking-wider text-center rounded-t-xl">TREATMENT LOG</div>
         <TreatmentLog treatments={state.treatments} elapsedSeconds={state.elapsedSeconds} caseOpenedAt={state.caseOpenedAt} onDelete={onDelete} onMove={onMove} onEdit={onEdit} />
       </div>
     </div>
