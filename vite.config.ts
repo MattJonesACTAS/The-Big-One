@@ -9,8 +9,8 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: 'inline',
+      registerType: 'prompt',
+      injectRegister: false,
       devOptions: {
         enabled: false
       },
