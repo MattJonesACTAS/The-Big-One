@@ -1084,23 +1084,39 @@ export default function App() {
     }
   }, []);
 
-  // PWA update handling: a new build can finish downloading and installing
-  // in the background at any time (registerType: 'prompt' means it won't
-  // take over on its own). Applying it immediately could reload the page
-  // out from under an active case or the closed-case summary, so this
-  // instead waits until the app is back on the welcome screen - no case
-  // running, and not viewing a closed case - before reloading into the new
-  // version. The current case (localStorage) and the last three saved
-  // cases aren't at risk either way; this is purely about not disrupting
-  // whoever's using the app mid-case.
+  // PWA updates - checked and applied only on the welcome screen.
+  // "Welcome screen" = the first catchup step, with no case running, no
+  // closed-case summary, no saved case / saved-case list open, and not in
+  // the tutorial. Nothing update-related happens anywhere else: no check
+  // (network request) and no install/reload during or around a case.
+  //
+  // Checking: the browser only checks for a new version on a fresh page
+  // load. An installed Android PWA is usually resumed from memory rather
+  // than freshly loaded, so without an explicit check it can sit on an old
+  // version indefinitely. So: check each time the welcome screen is reached,
+  // and each time the app is brought back on screen while sitting on it.
+  //
+  // Applying: silent. Once a new version has downloaded, it's applied
+  // (page reload) as soon as the app is on the welcome screen. The current
+  // case and the last three saved cases are in localStorage and survive
+  // the reload either way.
   const updateSWFnRef = useRef<((reloadPage?: boolean) => Promise<void>) | null>(null);
+  const swRegistrationRef = useRef<ServiceWorkerRegistration | null>(null);
   const [updateWaiting, setUpdateWaiting] = useState(false);
+
+  const onWelcomeScreen =
+    showCatchup && !catchupTxMode && catchupStep === 1 &&
+    !state.running && !isCaseClosed &&
+    !viewingPreviousCase && !showPreviousCasesList && !tutorialMode;
 
   useEffect(() => {
     try {
       updateSWFnRef.current = registerSW({
         onNeedRefresh() {
           setUpdateWaiting(true);
+        },
+        onRegisteredSW(_swUrl, registration) {
+          swRegistrationRef.current = registration ?? null;
         }
       });
     } catch (err) {
@@ -1109,12 +1125,28 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (updateWaiting && !state.running && !isCaseClosed) {
+    if (!onWelcomeScreen) return;
+    const checkForUpdate = () => {
+      if (!navigator.onLine) return;
+      swRegistrationRef.current?.update().catch((err) => {
+        console.error('PWA update check failed (non-fatal):', err);
+      });
+    };
+    checkForUpdate();
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') checkForUpdate();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [onWelcomeScreen]);
+
+  useEffect(() => {
+    if (updateWaiting && onWelcomeScreen) {
       updateSWFnRef.current?.(true)?.catch((err) => {
         console.error('PWA update apply failed (non-fatal):', err);
       });
     }
-  }, [updateWaiting, state.running, isCaseClosed]);
+  }, [updateWaiting, onWelcomeScreen]);
 
   // Timer logic
   // Demo tick for animated timers on timing mode selection screen
