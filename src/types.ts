@@ -49,6 +49,10 @@ export interface AppState {
   pheaChecked: string[];
   isROSCMode: boolean;
   timingMode: 'elapsed' | 'log' | 'minimal' | null;
+  // True once the monitor's elapsed time has been entered during this case (when it started in a
+  // timer mode, or a Recalibrate step was confirmed). The case clock keeps running in Tx log only, so
+  // it stays valid there. Absent on cases saved before this existed.
+  elapsedCalibrated?: boolean;
   rhythmInterval: 'evens' | 'odds' | 'half-evens' | 'half-odds' | null;
   vitals: {
     hr: string; rr: string; gcs: string;

@@ -2142,6 +2142,7 @@ export default function App() {
       // wouldn't catch it - that effect only fires when the local timingMode/
       // rhythmInterval themselves change, and they don't change here.
       timingMode,
+      elapsedCalibrated: timingMode === 'elapsed' || timingMode === 'minimal',
       rhythmInterval,
     });
     
@@ -2216,6 +2217,8 @@ export default function App() {
   const beginModeChange = (target: 'log' | 'minimal' | 'elapsed') => {
     if (target === 'log') {
       // No timer to recalibrate, so it takes effect straight away
+      // (A case saved before elapsedCalibrated existed was calibrated if it was in a timer mode)
+      if (state.elapsedCalibrated === undefined && timingMode !== 'log') setState(prev => ({ ...prev, elapsedCalibrated: true }));
       setTimingMode('log');
       setShowModeChange(false);
       addTreatment(`Mode changed: ${TIMING_MODE_LABELS.log}`);
@@ -2226,12 +2229,22 @@ export default function App() {
     setStagedMode(target);
     const startingInterval = rhythmInterval || 'evens';
     if (!rhythmInterval) setRhythmInterval(startingInterval);
-    setStagedElapsedSeconds(state.elapsedSeconds);
+    // Coming from Tx log only with a clock that was never checked against the monitor, it isn't
+    // offered as a starting point: it starts at 00:00:00 and stays there until the real elapsed
+    // time is entered. Otherwise (between the two timer modes, or back from Tx log only once the
+    // time has been entered) the clock was already calibrated and kept running, so it's kept and
+    // carries on ticking.
+    const fromTxLogOnly = timingMode === 'log' && !state.elapsedCalibrated;
+    setStagedElapsedSeconds(fromTxLogOnly ? 0 : state.elapsedSeconds);
     setStagedRhythmInterval(startingInterval);
-    setElapsedManuallyEdited(false);
+    setElapsedManuallyEdited(fromTxLogOnly); // true stops the live tick
     setShowModeChange(false);
     setShowElapsedRecalibrate(true);
   };
+
+  // Switching from Tx log only with a clock that was never checked against the monitor: Done stays
+  // unavailable until the monitor's elapsed time has actually been entered (anything above 00:00:00).
+  const needsElapsedEntry = !!stagedMode && timingMode === 'log' && !state.elapsedCalibrated && stagedElapsedSeconds === 0;
 
   // What the Recalibrate step needs to know about the rhythm check right now
   const recalDelayed = state.rhythmCheckDelayedAt != null;
@@ -3843,7 +3856,7 @@ export default function App() {
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6">
             <div className="text-center space-y-1">
               <h2 className="text-2xl font-bold text-neutral-900">Recalibrate Elapsed Time</h2>
-              <p className="text-neutral-500 text-sm">Adjust elapsed time and rhythm check interval</p>
+              <p className="text-neutral-500 text-sm">{stagedMode && timingMode === 'log' && !state.elapsedCalibrated ? 'Enter the elapsed time shown on the monitor' : 'Adjust elapsed time and rhythm check interval'}</p>
             </div>
 
             <div>
@@ -3910,6 +3923,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => {
+                  if (needsElapsedEntry) return;
                   // Commit staged changes to real state.
                   // While a rhythm check is delayed the interval can't be changed (it is
                   // reset by itself once that check is done), so the current one is kept
@@ -3920,6 +3934,7 @@ export default function App() {
                     const held = prev.rhythmCheckDelayedAt != null;
                     return {
                       ...prev,
+                      elapsedCalibrated: true,
                       elapsedSeconds: stagedElapsedSeconds,
                       startTime: Date.now(),
                       pausedTime: stagedElapsedSeconds * 1000,
@@ -3936,7 +3951,8 @@ export default function App() {
                     setStagedMode(null);
                   }
                 }}
-                className="bg-emerald-600 text-white p-4 rounded-xl font-bold btn-base"
+                disabled={needsElapsedEntry}
+                className={`p-4 rounded-xl font-bold btn-base ${needsElapsedEntry ? 'bg-neutral-100 text-neutral-300 cursor-not-allowed' : 'bg-emerald-600 text-white'}`}
               >
                 Done
               </button>
