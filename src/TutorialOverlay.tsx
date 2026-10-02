@@ -582,7 +582,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   const showDarkOverlay = activePopup !== null || activePositioned !== null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}>
+    <div data-tutorial-ui="true" style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}>
 
       {/* Dark backdrop */}
       {showDarkOverlay && (

@@ -107,7 +107,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
       nextScreen: null, // progression driven by real catchupStep, not by Next click
       elements: [
         { id: 'previousTx', x: 50, y: 50, number: 3, title: 'Previous Treatments', description: "Next, you will need to enter what treatments (Tx) you've already applied before you opened the app.\n\nThe most common cardiac arrest Tx's are listed front and centre for quick access, but you can add any Tx you like from the full list.",
-          morePages: [{ title: "Give it a Go", text: "Add a couple of treatments then move onto the next page." }] },
+          morePages: [{ title: "Give it a Go", text: "Add two treatments, then press '{nextButton}'." }] },
       ],
     },
     timingMethod: {
@@ -236,7 +236,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
   };
 
   return (
-    <div style={{
+    <div data-tutorial-ui="true" style={{
       position: 'fixed',
       top: 0,
       left: 0,
@@ -257,7 +257,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
       
       {/* Intro pages: dark overlay over the live catchup behind */}
       {(currentScreen === 'intro1' || currentScreen === 'introWhen' || currentScreen === 'intro2') && (
-        <div style={{
+        <div data-tutorial-ui="true" style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -332,7 +332,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
           ("Learn more" on the mode cards is ModeAboutSlide, below, which the real
           app's mode page uses as well.) */}
       {modeIntroLabel && (
-        <div style={{
+        <div data-tutorial-ui="true" style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0, 0, 0, 0.85)',
@@ -440,6 +440,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
       {activeExplanation && (
         <div
           onClick={handleCloseExplanation}
+          data-tutorial-ui="true"
           style={{
             position: 'fixed',
             top: 0,
@@ -485,7 +486,7 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
               textAlign: 'left',
               whiteSpace: 'pre-line',
             }}>
-              {renderWithItalics(explanationPage === 0 ? activeExplanation.description : (() => { const pg = activeExplanation.morePages![explanationPage - 1]; return typeof pg === 'string' ? pg : pg.text; })())}
+              {renderWithItalics((explanationPage === 0 ? activeExplanation.description : (() => { const pg = activeExplanation.morePages![explanationPage - 1]; return typeof pg === 'string' ? pg : pg.text; })()).replace('{nextButton}', mode === 'log' ? 'Start Case' : 'Next'))}
             </p>
             {activeExplanation.morePages?.length ? (
               <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '14px' }}>
@@ -563,7 +564,7 @@ export function ModeAboutSlide({ mode, onClose }: { mode: 'log' | 'minimal' | 'e
     flexShrink: 0,
   };
   return (
-    <div style={{
+    <div data-tutorial-ui="true" style={{
       position: 'fixed',
       top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(0, 0, 0, 0.85)',

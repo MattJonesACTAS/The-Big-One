@@ -68,6 +68,13 @@
       background: #e5e5e5 !important;
     }
 
+    /* The tutorial's layers (the numbered red nodes, the dark backdrop, the popups) are
+       drawn with inline styles, so the class-based rules below don't reach them: without
+       this they print on every page of an exported PDF. */
+    [data-tutorial-ui] {
+      display: none !important;
+    }
+
     .btn-base, 
     button, 
     .fixed, 
