@@ -878,6 +878,16 @@ export default function App() {
   // The timer's interval can't see this state directly, so it reads this copy
   const isShockForcedRef = useRef(false);
   isShockForcedRef.current = isShockForced;
+  // Once a rhythm check popup is answered or closed, it's no longer pending (see
+  // pendingRhythmCheckDueAt). Only on a real change, so a restored pending check
+  // isn't wiped as the app starts up.
+  const wasShockForcedRef = useRef(false);
+  useEffect(() => {
+    if (wasShockForcedRef.current && !isShockForced) {
+      setState(prev => (prev.pendingRhythmCheckDueAt == null ? prev : { ...prev, pendingRhythmCheckDueAt: null }));
+    }
+    wasShockForcedRef.current = isShockForced;
+  }, [isShockForced]);
   const [rearrested, setRearrested] = useState(false);
   const [editingTreatmentIndex, setEditingTreatmentIndex] = useState<number | null>(null);
 
@@ -1423,6 +1433,7 @@ export default function App() {
           let nextRound = prev.cprRound;
           let nextOverlay = prev.currentOverlay;
           let nextTreatments = prev.treatments;
+          let nextPending = prev.pendingRhythmCheckDueAt ?? null;
           let nextOvertime = prev.rhythmCheckOvertime;
           let nextPaused = prev.rhythmCheckPaused;
           
@@ -1432,6 +1443,23 @@ export default function App() {
           if (!prev.rhythmCheckPaused && prev.rhythmCheckDelayedAt == null && timingMode !== 'log') {
             const countdown = prev.rhythmCheckTarget - newElapsed;
 
+            // The app was restarted (or crashed) while a timer-fired rhythm check popup was
+            // unanswered: the saved state remembers it but the popup itself is gone. Carry on
+            // as if the app had stayed open - if the 0:20 return to the home screen has been
+            // reached, note the check as "nothing logged" (stamped at its due time); if not,
+            // bring the popup back for it.
+            if (nextPending != null && !isShockForcedRef.current && !tutorialMode && !showCatchup) {
+              if (countdown <= 20) {
+                nextTreatments = withNothingLoggedEntry(prev, newElapsed, nextPending, now);
+                nextPending = null;
+              } else if (tutorialPopupAtZeroOK) {
+                nextOverlay = 'treatment';
+                setIsShockForced(true);
+                isShockForcedRef.current = true;
+                rhythmCheckDueAtRef.current = nextPending;
+              }
+            }
+
             // Auto-close overlay ONCE at 10s (not in tutorial)
             if (countdown === 20 && !hasAutoClosedAt10.current && tutorialAutoCloseOK) {
               nextOverlay = null;
@@ -1440,6 +1468,7 @@ export default function App() {
               if (isShockForcedRef.current && !tutorialMode && !showCatchup) {
                 nextTreatments = withNothingLoggedEntry(prev, newElapsed, rhythmCheckDueAtRef.current, now);
                 setIsShockForced(false);
+                nextPending = null;
               }
             }
 
@@ -1469,6 +1498,7 @@ export default function App() {
                     nextOverlay = 'treatment';
                     setIsShockForced(true);
                     rhythmCheckDueAtRef.current = prev.rhythmCheckTarget;
+                    nextPending = prev.rhythmCheckTarget;
                   }
                   nextTarget = calcNextIntervalTarget(newElapsed, rhythmInterval);
                   nextRound += 1;
@@ -1509,7 +1539,8 @@ export default function App() {
             rhythmCheckOvertime: nextOvertime,
             rhythmCheckPaused: nextPaused,
             cprRound: nextRound,
-            currentOverlay: nextOverlay
+            currentOverlay: nextOverlay,
+            pendingRhythmCheckDueAt: nextPending
           };
         });
       }, 500);
@@ -1810,6 +1841,8 @@ export default function App() {
     if (name === 'Rearrest') {
       setRoscButtonFlashing(false);
       setRearrested(true);
+      // An unanswered rearrest popup is noted at the time of the rearrest, not an earlier check
+      rhythmCheckDueAtRef.current = state.elapsedSeconds;
       setIsShockForced(true);
       applyRearrestTimerWipeCheck();
       return; // Skip the rest — overlay stays open for rhythm check outcome
@@ -2672,6 +2705,7 @@ export default function App() {
                     }));
                     setRoscButtonFlashing(false);
                     setRearrested(true);
+                    rhythmCheckDueAtRef.current = state.elapsedSeconds;
                     setIsShockForced(true);
                     applyRearrestTimerWipeCheck();
                   }}
@@ -2950,6 +2984,7 @@ export default function App() {
               }));
               setRoscButtonFlashing(false);
               setRearrested(true);
+              rhythmCheckDueAtRef.current = state.elapsedSeconds;
               setIsShockForced(true);
               applyRearrestTimerWipeCheck();
             }}
@@ -2985,7 +3020,7 @@ export default function App() {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: '-100%', opacity: 0 }}
               transition={{ type: 'spring', damping: 30, stiffness: 280 }}
-              className={`bg-white rounded-[28px] max-w-md w-[90%] shadow-2xl overflow-hidden overflow-x-hidden ${catchupTxMode ? '' : 'p-6 absolute'}`}
+              className={`bg-white rounded-[28px] max-w-md w-[90%] shadow-2xl overflow-hidden overflow-x-hidden ${catchupTxMode ? '' : 'p-6 absolute max-h-[calc(100dvh-2rem)] overflow-y-auto'}`}
               style={catchupTxMode ? { height: '68vh' } : {}}
             >
               {catchupTxMode && (
@@ -3325,7 +3360,7 @@ export default function App() {
                   )}
                   
                   {/* Navigation Buttons */}
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="sticky bottom-0 bg-white grid grid-cols-2 gap-3 pt-2">
                     <button 
                       onClick={() => setCatchupStep(6)} 
                       className="py-4 rounded-xl font-bold transition-colors bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
@@ -3355,7 +3390,7 @@ export default function App() {
                   <p className="text-neutral-600 text-sm px-4">This is the time in the top-right corner of the monitor</p>
                   <ElapsedTimePicker value={catchupElapsed} onChange={setCatchupElapsed} />
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="sticky bottom-0 bg-white grid grid-cols-2 gap-3">
                     <button 
                       onClick={() => {
                         setCatchupStep(7);
@@ -3412,7 +3447,7 @@ export default function App() {
                     ))}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="sticky bottom-0 bg-white grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => setCatchupStep(timingMode === 'minimal' ? 6 : 3)} className="bg-neutral-100 text-neutral-700 py-4 rounded-xl font-bold hover:bg-neutral-200 transition-colors">Back</button>
                     <button
                       onClick={() => rhythmInterval && setCatchupStep(4)}
@@ -3467,7 +3502,7 @@ export default function App() {
                     >
                       <Plus size={16} /> Full Tx List
                     </button>
-                    <div className="grid grid-cols-2 gap-3 pt-2">
+                    <div className="sticky bottom-0 bg-white grid grid-cols-2 gap-3 pt-2">
                       <button onClick={() => setCatchupStep(2)} className="bg-neutral-100 text-neutral-700 p-3 rounded-xl font-bold btn-base">Back</button>
                       <button
                         onClick={() => {
@@ -3588,7 +3623,7 @@ export default function App() {
                     })}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-2">
+                  <div className="sticky bottom-0 bg-white grid grid-cols-2 gap-3 pt-2">
                     <button onClick={() => (showInteractiveTutorial ? setIntroRewind(n => n + 1) : setCatchupStep(1))} className="bg-neutral-100 py-4 rounded-xl font-bold transition-colors text-neutral-700 hover:bg-neutral-200">Back</button>
                     <button
                       onClick={() => {
