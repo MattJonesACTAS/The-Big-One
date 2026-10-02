@@ -40,6 +40,22 @@ export interface GlobalNode {
 
 type RawNode = Omit<GlobalNode, 'displayNumber'>;
 
+// The VSS tab node's pages; only the last line of the second page differs by mode.
+function vssTabPages(whereShown: string): NodePage[] {
+  return [{
+    title: 'VSS Tab',
+    description: "The VSS tab works differently to the checklists.\n\nIts main purpose is to record your most recent set of vital signs before handover.\n\nThat way, you can have them all in one place.\n\nThe VSS tab does not record values over time; it only displays the most recent entry for each vital sign."
+  }, {
+    title: 'VSS Tab',
+    description: "As you type a value, a green tick appears next to it, confirming that a change has been made.\n\nEntering a new value replaces the old one.\n\n" + whereShown
+  }, {
+    title: 'Give it a Go',
+    description: 'Open the VSS tab, record a vital sign, and close the tab to continue.'
+  }];
+}
+// True once at least one vital sign has been entered on the VSS tab
+const VITALS_SAVED = (s: any) => Object.values(s.vitals ?? {}).some((v: any) => String(v ?? '').trim() !== '');
+
 const ELAPSED_RAW: RawNode[] = [
   // --- Home screen nodes ---
   {
@@ -158,8 +174,8 @@ const ELAPSED_RAW: RawNode[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
-    id: 'tabs', type: 'positioned', x: 50, y: 10.97, anchor: '[data-tutorial-anchor="checklist-row"]',
-    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• PHEA\n\n• Vital signs survey\n\nYou will notice the reversibles checklist is already flashing red.\n\nThat is a visual cue to encourage purposeful addressing of these early.' }, { title: 'Give it a Go', description: 'Open the 4H 4T checklist and tick one off to continue.' }],
+    id: 'tabs', type: 'positioned', x: 37.5, y: 10.97, anchor: '[data-button="rosc"]',
+    pages: [{ title: 'Checklists', description: 'Quick access to checklists for:\n\n• Reversible causes of arrest\n\n• ROSC\n\n• PHEA\n\nYou will notice the 4H 4T checklist starts out flashing red.\n\nThis encourages early management of the reversible causes of arrest.\n\nThe ROSC checklist works the same way: it goes red when ROSC mode is activated.' }, { title: 'Give it a Go', description: 'Open the 4H 4T checklist and tick one off to continue.' }],
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
@@ -173,16 +189,23 @@ const ELAPSED_RAW: RawNode[] = [
     condition: (s, sf) => s.running && s.currentOverlay === 'reversibles' && !sf && s.reversiblesChecked.length > 0
   },
   {
+    // Introduces the VSS tab once the 4H 4T checklist has been ticked and closed.
+    // The last line on the second page differs by mode (see vssTabPages).
+    id: 'vssTab', type: 'positioned', x: 87.5, y: 10.97, anchor: '[data-button="vitals"]',
+    pages: vssTabPages("Your values appear on the running summary and the case summary, which we'll see later."),
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf && s.reversiblesChecked.length > 0
+  },
+  {
     id: 'addTxBtn', type: 'positioned', x: 74.65, y: 95.29, anchor: '[data-button="add-tx"]',
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.' }, { title: 'Give it a Go', description: 'Press the \'+ Add Tx\' button so we can log our first Tx.' }],
     // Doesn't show until the previous node's own instruction has actually
-    // been followed - a real tick on the reversibles (4H 4T) checklist, not
-    // just having read about it.
-    condition: (s, sf) => s.running && s.currentOverlay === null && !sf && s.reversiblesChecked.length > 0
+    // been followed - a vital sign actually saved on the VSS tab (after a real
+    // tick on the 4H 4T checklist), not just having read about it.
+    condition: (s, sf) => s.running && s.currentOverlay === null && !sf && s.reversiblesChecked.length > 0 && VITALS_SAVED(s)
   },
   // --- Treatment screen ---
   {
-    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 36.08, anchor: '[data-tutorial-anchor="add-tx-submenu"]',
+    id: 'addTxSubmenu', type: 'positioned', x: 50, y: 36.08, anchor: '[data-tx-section="airway"]',
     pages: [
       {
         title: 'Add Tx Submenu',
@@ -374,6 +397,7 @@ const MINIMAL_NODES: RawNode[] = [
     flashWhileCurrent: undefined
   }),
   nodeById('closeChecklist'),
+  withOverrides('vssTab', { pages: vssTabPages("Your values appear on the case summary when the case is closed, which we'll see later.") }),
   withOverrides('addTxBtn', {
     pages: [{
       title: 'Add Treatment Button',
@@ -384,6 +408,8 @@ const MINIMAL_NODES: RawNode[] = [
     }]
   }),
   withOverrides('addTxSubmenu', {
+    // Timers only has no Airway section, so this marker stays on the submenu itself
+    anchor: '[data-tutorial-anchor="add-tx-submenu"]',
     pages: [{
       title: 'Add Tx Submenu',
       description: "The Add Tx submenu has two categories:\n\n• Rhythm Check (No ROSC and ROSC)\n\n• Medications (adrenaline and amiodarone)\n\nThere are no doses to choose in this mode."
@@ -426,6 +452,7 @@ const LOG_NODES: RawNode[] = [
   }),
   nodeById('tabs'),
   nodeById('closeChecklist'),
+  withOverrides('vssTab', { pages: vssTabPages("Your values appear on the home page summary and the case summary, which we'll see later.") }),
   nodeById('addTxBtn'),
   nodeById('addTxSubmenu'),
   withOverrides('arrestSummaryInfo', {

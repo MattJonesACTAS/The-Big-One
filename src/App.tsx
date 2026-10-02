@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { registerSW } from 'virtual:pwa-register';
 import { APP_VERSION, LAST_SEEN_VERSION_KEY, pendingReleaseNotes } from './releaseNotes';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useIsPresent } from 'motion/react';
 import { 
   RotateCcw, 
   Pause, 
@@ -2502,6 +2502,7 @@ export default function App() {
             setRoscButtonFlashing(false);
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'rosc' ? null : 'rosc' }))
           }}
+          data-button="rosc"
           disabled={isShockForced || tutorialRhythmDemoActive}
           className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors ${
             state.currentOverlay === 'rosc' ? 'bg-red-100 text-red-800' : 
@@ -2527,6 +2528,7 @@ export default function App() {
             setState(p => ({ ...p, currentOverlay: p.currentOverlay === 'vitals' ? null : 'vitals' }))
           }}
           disabled={isShockForced || tutorialRhythmDemoActive}
+          data-button="vitals"
           className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${state.currentOverlay === 'vitals' ? 'bg-red-100 text-red-800' : 'bg-sky-100 text-sky-700'} ${isShockForced ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
         >
           {state.currentOverlay === 'vitals' ? 'Close' : 'VSS'}
@@ -4291,16 +4293,18 @@ function TimersOnlySelection({ state, isShockForced, addTreatment, onDelayRhythm
 }
 
 function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onChange: (v: AppState['vitals']) => void }) {
-  const [draft, setDraft] = useState<Partial<AppState['vitals']>>({});
+  // Every keystroke is saved straight away. The green tick is not a button: it
+  // only confirms that a field has been changed since the VSS tab was opened,
+  // and it clears when the tab closes (the values stay).
+  const [changed, setChanged] = useState<Set<keyof AppState['vitals']>>(new Set());
+  // While the tab slides closed this component can still be mounted, and a quick
+  // reopen reuses it - so clear the ticks as soon as the tab starts closing.
+  const isPresent = useIsPresent();
+  useEffect(() => { if (!isPresent) setChanged(new Set()); }, [isPresent]);
 
-  const commit = (key: keyof AppState['vitals']) => {
-    if (draft[key] === undefined) return;
-    onChange({ ...vitals, [key]: draft[key] });
-    setDraft(prev => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
-    });
+  const update = (key: keyof AppState['vitals'], value: string) => {
+    onChange({ ...vitals, [key]: value });
+    setChanged(prev => (prev.has(key) ? prev : new Set(prev).add(key)));
   };
 
   const fields: { key: keyof AppState['vitals'], label: string }[] = [
@@ -4319,7 +4323,7 @@ function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onCha
       <div className="p-2.5 px-4 font-bold text-[16px] tracking-wide border-b uppercase sticky top-0 text-center bg-sky-50 text-sky-800 border-sky-200">Vital Signs</div>
       <div className="p-3 space-y-2">
         {fields.map(({ key, label }) => {
-          const hasDraft = draft[key] !== undefined && draft[key] !== vitals[key];
+          const isChanged = changed.has(key);
           return (
             <div key={key} className="flex items-center justify-between bg-neutral-50 rounded-xl px-4 py-3 border border-neutral-100">
               <span className="text-[15px] font-bold text-neutral-800">{label}</span>
@@ -4327,19 +4331,19 @@ function VitalsOverlay({ vitals, onChange }: { vitals: AppState['vitals'], onCha
                 <input
                   type="text"
                   inputMode="decimal"
-                  value={draft[key] !== undefined ? draft[key] : vitals[key]}
-                  onChange={e => setDraft(prev => ({ ...prev, [key]: e.target.value }))}
-                  onKeyDown={e => { if (e.key === 'Enter') commit(key); }}
+                  aria-label={label}
+                  value={vitals[key]}
+                  onChange={e => update(key, e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
                   className="w-24 text-right text-[18px] font-bold text-sky-700 bg-transparent border-b-2 border-sky-200 focus:border-sky-500 outline-none py-1 tabular-nums"
                 />
-                <button
-                  onClick={() => commit(key)}
-                  disabled={!hasDraft}
-                  className={`w-5 h-5 flex-shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center transition-opacity ml-1 ${hasDraft ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                  aria-label={`Confirm ${label}`}
+                <span
+                  data-vss-tick={key}
+                  aria-hidden="true"
+                  className={`w-5 h-5 flex-shrink-0 rounded-full bg-emerald-500 text-white flex items-center justify-center transition-opacity ml-1 pointer-events-none ${isChanged ? 'opacity-100' : 'opacity-0'}`}
                 >
                   <Check size={10} />
-                </button>
+                </span>
               </div>
             </div>
           );
@@ -5571,6 +5575,7 @@ function TxSection({
     <div>
       <div 
         data-tutorial-anchor="tx-section-header"
+        data-tx-section={sectionId}
         onClick={handleToggle}
         className={`flex items-center justify-between p-4 cursor-pointer font-bold select-none text-left ${colorMap[color]}`}
       >
