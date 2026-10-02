@@ -41,6 +41,9 @@ interface InteractiveTutorialProps {
   // Bumped by the mode page's Back button: steps back to the last intro slide,
   // so the tutorial moves forward and backward along one line
   introRewind?: number;
+  // Bumped each time a mode's tutorial is started from the mode page: the setup notes
+  // then need reading again, as in a fresh tutorial
+  setupReset?: number;
 }
 
 // EXPERIMENT: true shows each mode's "Learn more" as ONE scrollable page
@@ -68,7 +71,7 @@ const MODE_ABOUT_PAGES: Record<'log' | 'minimal' | 'elapsed', { title: string; t
   ],
 };
 
-const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodesComplete, onCatchupNodeStatusChange, catchupStep, modeIntroLabel, onModeIntroNext, mode, onExit, introRewind }) => {
+const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodesComplete, onCatchupNodeStatusChange, catchupStep, modeIntroLabel, onModeIntroNext, mode, onExit, introRewind, setupReset }) => {
   const [currentScreen, setCurrentScreen] = useState('intro1');
   const [exploredElements, setExploredElements] = useState<Set<string>>(new Set());
   // Which notes have been read on each page, so going Back to a page that was
@@ -212,6 +215,15 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
 
   // The mode page (where the tutorial really sits after the intro slides)
   // asks to go back: show the last intro slide again.
+  const lastSetupReset = useRef(setupReset ?? 0);
+  useEffect(() => {
+    const n = setupReset ?? 0;
+    if (n !== lastSetupReset.current) {
+      lastSetupReset.current = n;
+      ['patientDetails', 'previousTreatments', 'rhythmCheckTiming', 'enterElapsedTime'].forEach(k => { delete readByScreen.current[k]; });
+    }
+  }, [setupReset]);
+
   const lastRewind = useRef(introRewind ?? 0);
   useEffect(() => {
     const n = introRewind ?? 0;

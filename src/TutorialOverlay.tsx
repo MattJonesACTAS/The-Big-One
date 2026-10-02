@@ -163,6 +163,16 @@ const ELAPSED_RAW: RawNode[] = [
     condition: (s, sf, initialWeight) => s.running && s.currentOverlay === null && !sf && initialWeight != null && s.patientWeight !== initialWeight
   },
   {
+    // Appears over the checklist's own Close button once something has been ticked: until now
+    // the tutorial said nothing about how to get out of the checklist again.
+    id: 'closeChecklist', type: 'positioned', x: 12.5, y: 10.97, anchor: '[data-button="reversibles"]',
+    pages: [
+      { title: 'Closing a Checklist', description: "When you've finished with a checklist, press its 'Close' button to return to the home screen.\n\nWhatever you've ticked is kept." },
+      { title: 'Give it a Go', description: 'Close the checklist to continue.' }
+    ],
+    condition: (s, sf) => s.running && s.currentOverlay === 'reversibles' && !sf && s.reversiblesChecked.length > 0
+  },
+  {
     id: 'addTxBtn', type: 'positioned', x: 74.65, y: 95.29, anchor: '[data-button="add-tx"]',
     pages: [{ title: 'Add Treatment Button', description: 'This opens the treatments (Tx) menu for logging interventions in real time.' }, { title: 'Give it a Go', description: 'Press the \'+ Add Tx\' button so we can log our first Tx.' }],
     // Doesn't show until the previous node's own instruction has actually
@@ -247,7 +257,7 @@ const ELAPSED_RAW: RawNode[] = [
       },
       {
         title: 'Editing Treatments',
-        description: "'Reorder' lets you shift a Tx to its correct position in the log.\n\nThis is useful if you realise that you missed logging something that happened earlier."
+        description: "'Reorder' lets you shift a Tx to its correct position in the log.\n\nThis is useful if you realise that you missed logging something that happened earlier.\n\nBe aware that when you reorder a Tx, the app can't know when it actually happened, so its time is wiped."
       },
       {
         title: 'Give it a Go',
@@ -363,6 +373,7 @@ const MINIMAL_NODES: RawNode[] = [
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf,
     flashWhileCurrent: undefined
   }),
+  nodeById('closeChecklist'),
   withOverrides('addTxBtn', {
     pages: [{
       title: 'Add Treatment Button',
@@ -414,6 +425,7 @@ const LOG_NODES: RawNode[] = [
     }]
   }),
   nodeById('tabs'),
+  nodeById('closeChecklist'),
   nodeById('addTxBtn'),
   nodeById('addTxSubmenu'),
   withOverrides('arrestSummaryInfo', {

@@ -915,6 +915,8 @@ export default function App() {
   const [aboutMode, setAboutMode] = useState<'log' | 'minimal' | 'elapsed' | null>(null);
   // Tutorial: the mode page's Back asks the intro slides to step back one (see InteractiveTutorial)
   const [introRewind, setIntroRewind] = useState(0);
+  // Tutorial: bumped whenever a mode's tutorial is started, so its setup notes need reading afresh
+  const [setupReset, setSetupReset] = useState(0);
   const [catchupNodeCleared, setCatchupNodeCleared] = useState(false);
   const [tutorialNodeIndex, setTutorialNodeIndex] = useState(0);
   // Which nodes this tutorial is showing and which one it is on. Everything
@@ -983,6 +985,24 @@ export default function App() {
   // Leaving the tutorial from its first setup page: back to the welcome page,
   // with the tutorial and everything entered in it (mode, weight, interval,
   // previous treatments) cleared so a real calibration starts from scratch.
+  // Starting a mode's tutorial is always a clean slate: whatever was entered on the setup
+  // screens while trying another mode (or this one) is cleared, as are the setup notes read.
+  const resetTutorialSetup = () => {
+    setRhythmInterval(null);
+    setWeightInput('');
+    setWeightType(null);
+    setPaedWeightMethod(null);
+    setPaedAgeLabel('');
+    setCatchupElapsed({ hrs: 0, mins: 0, secs: 0 });
+    setUseManualEntry(false);
+    setCatchupTxMode(false);
+    setPriorTxs([]);
+    setPriorCounts({ shock: 0, disarm: 0, adrenaline: 0, amiodarone: 0 });
+    setElapsedTimestamp(null);
+    setState(INITIAL_STATE);
+    setSetupReset(n => n + 1);
+  };
+
   const exitTutorialToWelcome = () => {
     setShowInteractiveTutorial(false);
     setTutorialModeIntro(null);
@@ -999,6 +1019,9 @@ export default function App() {
     setCatchupElapsed({ hrs: 0, mins: 0, secs: 0 });
     setUseManualEntry(false);
     setCatchupTxMode(false);
+    setPriorTxs([]);
+    setPriorCounts({ shock: 0, disarm: 0, adrenaline: 0, amiodarone: 0 });
+    setElapsedTimestamp(null);
     setState(INITIAL_STATE);
     setCatchupStep(1);
   };
@@ -2359,6 +2382,7 @@ export default function App() {
           mode={timingMode}
           onExit={exitTutorialToWelcome}
           introRewind={introRewind}
+          setupReset={setupReset}
           modeIntroLabel={tutorialModeIntro ? TIMING_MODE_LABELS[tutorialModeIntro] : null}
           onModeIntroNext={() => {
             const chosen = tutorialModeIntro;
@@ -2463,6 +2487,7 @@ export default function App() {
             }));
           }}
           disabled={isShockForced || tutorialRhythmDemoActive}
+          data-button="reversibles"
           className={`p-4 sm:p-6 rounded-xl text-sm sm:text-xl font-bold btn-base transition-colors text-center ${
             state.currentOverlay === 'reversibles' ? 'bg-red-100 text-red-800' :
             !state.reversiblesChecklistOpened ? 'bg-red-600 text-white animate-pulse' :
@@ -3569,6 +3594,7 @@ export default function App() {
                         // a "you've chosen ..." page comes first (see the InteractiveTutorial
                         // props below), then that mode's tutorial.
                         if (showInteractiveTutorial) {
+                          resetTutorialSetup();
                           setTutorialModeIntro(timingMode);
                           return;
                         }
@@ -4638,6 +4664,7 @@ function TreatmentLog({ treatments, elapsedSeconds, caseOpenedAt, isSummary = fa
                   <div className="pr-1 flex items-center gap-2">
                     {onDelete && (
                       <button
+                        data-tx-more={tx.name.startsWith('Adrenaline push') ? 'adrenaline-push' : undefined}
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => {
                           if (isReorderingThis) {
