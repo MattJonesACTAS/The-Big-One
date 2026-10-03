@@ -42,8 +42,10 @@ export interface GlobalNode {
 
 type RawNode = Omit<GlobalNode, 'displayNumber'>;
 
-// How long the rhythm check popup shows on its own before its tutorial slide covers it
-const RHYTHM_REVEAL_DELAY_MS = 1500;
+// How long the rhythm check popup shows on its own before its tutorial slide covers it:
+// longer the first time it appears, shorter for the later ones
+const RHYTHM_REVEAL_DELAY_FIRST_MS = 1500;
+const RHYTHM_REVEAL_DELAY_MS = 1000;
 
 // The VSS tab node's pages; only the last line of the second page differs by mode.
 function vssTabPages(whereShown: string): NodePage[] {
@@ -608,7 +610,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     };
     if (!showsDuringRhythmCheck) { show(); return; }
     setRevealPending(true);
-    const t = setTimeout(show, RHYTHM_REVEAL_DELAY_MS);
+    const t = setTimeout(show, currentNode.id === 'rhythmDemoFirstPopup' ? RHYTHM_REVEAL_DELAY_FIRST_MS : RHYTHM_REVEAL_DELAY_MS);
     return () => clearTimeout(t);
   }, [currentNode?.id, conditionMet]);
 
