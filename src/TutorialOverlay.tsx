@@ -18,6 +18,8 @@ export interface TutorialFlashContext {
   showWeightChange: boolean;
   weightUnchanged: boolean;
   adrenalineHandled: boolean;
+  intervalUnchanged: boolean;
+  showElapsedRecalibrate: boolean;
 }
 
 export interface GlobalNode {
@@ -31,7 +33,7 @@ export interface GlobalNode {
   // otherwise it falls back to the x/y percentages.
   anchor?: string;
   pages: NodePage[];
-  condition?: (appState: any, isShockForced?: boolean, initialPatientWeight?: number | null) => boolean;
+  condition?: (appState: any, isShockForced?: boolean, initialPatientWeight?: number | null, intervalBaseline?: string | null) => boolean;
   // While this node is the one the tutorial is waiting on (i.e. the previous
   // node has been dismissed and this one's condition isn't met yet), which
   // body classes to switch on so the right button pulses. Returns class names.
@@ -39,6 +41,9 @@ export interface GlobalNode {
 }
 
 type RawNode = Omit<GlobalNode, 'displayNumber'>;
+
+// How long the rhythm check popup shows on its own before its tutorial slide covers it
+const RHYTHM_REVEAL_DELAY_MS = 1500;
 
 // The VSS tab node's pages; only the last line of the second page differs by mode.
 function vssTabPages(whereShown: string): NodePage[] {
@@ -101,7 +106,7 @@ const ELAPSED_RAW: RawNode[] = [
     id: 'rhythmDemoFirstPopup', type: 'popup',
     pages: [{
       title: 'Select the Outcome',
-      description: "Once the countdown reaches 0:00, the 'rhythm check popup' will appear.\n\nWhen it does, you will use it to log what the outcome of the rhythm check was.\n\nThere are three kinds of outcome:\n\n• Shock or disarm (red and blue)\n\n• ROSC (green)\n\n• Delay Rhythm Check (amber)\n\nWe'll come back to Delay and ROSC shortly."
+      description: "When the countdown reached 0:00, the 'rhythm check popup' appeared.\n\nYou use it to log what the outcome of the rhythm check was.\n\nThere are three kinds of outcome:\n\n• Shock or disarm (red and blue)\n\n• ROSC (green)\n\n• Delay Rhythm Check (amber)\n\nWe'll come back to Delay and ROSC shortly."
     }, {
       title: 'Give it a Go',
       description: "Choose any red or blue option to continue."
@@ -170,7 +175,7 @@ const ELAPSED_RAW: RawNode[] = [
   },
   {
     id: 'recalibrate', type: 'positioned', x: 25.4, y: 4.2, anchor: '[data-button="recalibrate"]',
-    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the patient's weight\n\n• Change the app mode" }, { title: 'Give it a Go', description: "Change the patient's weight to move forward." }],
+    pages: [{ title: 'Recalibrate Button', description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the rhythm check interval\n\n• Change the patient's weight\n\n• Change the app mode" }, { title: 'Give it a Go', description: "Change the patient's weight to move forward." }],
     condition: (s, sf) => s.running && s.currentOverlay === null && !sf
   },
   {
@@ -349,7 +354,7 @@ export const TUTORIAL_FLASH_CLASSES = [
   'tutorial-flash-adrenaline', 'tutorial-flash-dose', 'tutorial-flash-summary',
   'tutorial-flash-adrenaline-tx', 'tutorial-flash-summary-close', 'tutorial-flash-end',
   'tutorial-flash-close',
-];
+, 'tutorial-flash-recalibrate-timer'];
 
 const ELAPSED_NODES: RawNode[] = ELAPSED_RAW.map(n => FLASH[n.id] ? { ...n, flashWhileCurrent: FLASH[n.id] } : n);
 const nodeById = (id: string): RawNode => {
@@ -373,7 +378,7 @@ const MINIMAL_NODES: RawNode[] = [
   withOverrides('rhythmDemoFirstPopup', {
     pages: [{
       title: 'Select the Outcome',
-      description: "Once the countdown reaches 0:00, the 'rhythm check popup' will appear.\n\nWhen it does, you will use it to log what the outcome of the rhythm check was.\n\nThere are three kinds of outcome:\n\n• No ROSC (red)\n\n• ROSC (green)\n\n• Delay Rhythm Check (amber)\n\nWe'll come back to Delay and ROSC shortly."
+      description: "When the countdown reached 0:00, the 'rhythm check popup' appeared.\n\nYou use it to log what the outcome of the rhythm check was.\n\nThere are three kinds of outcome:\n\n• No ROSC (red)\n\n• ROSC (green)\n\n• Delay Rhythm Check (amber)\n\nWe'll come back to Delay and ROSC shortly."
     }, {
       title: 'Give it a Go',
       description: "Choose 'No ROSC' to continue."
@@ -388,13 +393,18 @@ const MINIMAL_NODES: RawNode[] = [
   withOverrides('recalibrate', {
     pages: [{
       title: 'Recalibrate Button',
-      description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the app mode"
-    }]
+      description: "The recalibrate button allows you to change how the app functions.\n\nHere you can:\n\n• Fine tune the elapsed timer if you didn't get it quite right\n\n• Change the rhythm check interval\n\n• Change the app mode"
+    }, { title: 'Give it a Go', description: "Change the rhythm check interval to move forward." }]
   }),
-  // no patient weight in this mode, so nothing to wait for before checklists
+  // no patient weight in this mode, so the checklists wait for a real rhythm check interval change instead
   withOverrides('tabs', {
-    condition: (s, sf) => s.running && s.currentOverlay === null && !sf,
-    flashWhileCurrent: undefined
+    condition: (s, sf, _w, intervalBaseline) => s.running && s.currentOverlay === null && !sf && intervalBaseline != null && s.rhythmInterval !== intervalBaseline,
+    flashWhileCurrent: (c) => {
+      if (!c.intervalUnchanged) return [];
+      if (!c.showRecalibrateMenu && !c.showElapsedRecalibrate) return ['tutorial-flash-recalibrate'];
+      if (c.showRecalibrateMenu) return ['tutorial-flash-recalibrate-timer'];
+      return [];
+    }
   }),
   nodeById('closeChecklist'),
   withOverrides('vssTab', { pages: vssTabPages("Your values appear on the case summary when the case is closed, which we'll see later.") }),
@@ -516,9 +526,13 @@ interface Props {
   isCaseClosed?: boolean;
   globalNodeIndex?: number;
   mode?: TutorialMode;
+  // True while one of the app's own menus (Recalibrate, Change Mode, warnings...) is open: the
+  // waiting node's marker then hides behind it instead of floating on top
+  appModalOpen?: boolean;
+  intervalBaseline?: string | null;
 }
 
-export default function TutorialOverlay({ appState, isShockForced, onExit, onNodeChange, isCaseClosed, globalNodeIndex: externalNodeIndex = 0, mode = 'elapsed' }: Props) {
+export default function TutorialOverlay({ appState, isShockForced, onExit, onNodeChange, isCaseClosed, globalNodeIndex: externalNodeIndex = 0, mode = 'elapsed', appModalOpen = false, intervalBaseline = null }: Props) {
   const ALL_NODES = getTutorialNodes(mode);
   const [internalNodeIndex, setInternalNodeIndex] = useState(externalNodeIndex);
   const [currentPageIndex, setCurrentPageIndex] = useState(0);
@@ -573,16 +587,29 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   const inRhythmCheckWindow = appState.running && isShockForced && !showsDuringRhythmCheck;
 
   const conditionMet = !inRhythmCheckWindow && currentNode
-    ? (currentNode.condition ? currentNode.condition(appState, isShockForced, initialWeightRef.current) : true)
+    ? (currentNode.condition ? currentNode.condition(appState, isShockForced, initialWeightRef.current, intervalBaseline) : true)
     : false;
 
-  // Auto-show popup when condition met
+  // Auto-show popup when condition met. The four slides that sit over the real
+  // rhythm check popup wait RHYTHM_REVEAL_DELAY_MS first, so the user sees that
+  // popup arrive before the slide covers it. While waiting, taps are blocked
+  // (see revealPending below) so an outcome can't be chosen before the slide shows.
+  const [revealPending, setRevealPending] = useState(false);
   useEffect(() => {
-    if (currentNode?.type === 'popup' && conditionMet && !activePopup) {
+    if (!(currentNode?.type === 'popup' && conditionMet && !activePopup)) {
+      setRevealPending(false);
+      return;
+    }
+    const show = () => {
+      setRevealPending(false);
       setActivePopup(currentNode);
       setCurrentPageIndex(0);
       setPageAnimKey(k => k + 1);
-    }
+    };
+    if (!showsDuringRhythmCheck) { show(); return; }
+    setRevealPending(true);
+    const t = setTimeout(show, RHYTHM_REVEAL_DELAY_MS);
+    return () => clearTimeout(t);
   }, [currentNode?.id, conditionMet]);
 
   // Dismiss active popup during rhythm check window
@@ -623,6 +650,11 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   return (
     <div data-tutorial-ui="true" style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}>
 
+      {/* Invisible tap blocker while a rhythm check slide is waiting to appear */}
+      {revealPending && (
+        <div data-tutorial-reveal-blocker="true" style={{ position: 'absolute', inset: 0, zIndex: 9999, pointerEvents: 'auto' }} />
+      )}
+
       {/* Dark backdrop */}
       {showDarkOverlay && (
         <div style={{
@@ -633,7 +665,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
       )}
 
       {/* Positioned node circle */}
-      {currentNode?.type === 'positioned' && conditionMet && !activePositioned && !tutorialDone && (
+      {currentNode?.type === 'positioned' && conditionMet && !activePositioned && !tutorialDone && !appModalOpen && (
         <div
           onClick={handleNodeClick}
           style={{

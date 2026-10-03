@@ -916,6 +916,13 @@ export default function App() {
   
   // Tutorial mode state
   const [tutorialMode, setTutorialMode] = useState(false);
+  // Shown instead of committing a mode change while the tutorial is running
+  const [showTutorialModeBlocked, setShowTutorialModeBlocked] = useState(false);
+  // The rhythm check interval at the moment the Timers only tutorial asks for it to be changed
+  // (when the Recalibrate node is dismissed and the next node starts waiting), so it can wait for
+  // a real change, like the weight change in the other modes. Taken then rather than earlier,
+  // because the rhythm check walkthrough just before can still update the interval by itself.
+  const [tutorialIntervalBaseline, setTutorialIntervalBaseline] = useState<string | null>(null);
   const tutorialInitialWeightRef = useRef<number | null>(null);
   const [showInteractiveTutorial, setShowInteractiveTutorial] = useState(false);
   const [timingNodesComplete, setTimingNodesComplete] = useState(false);
@@ -934,6 +941,11 @@ export default function App() {
   // without any position ever needing renumbering.
   const tutorialNodeList = useMemo(() => getTutorialNodes(timingMode ?? 'elapsed'), [timingMode]);
   const tutorialNodeId = tutorialNodeIndex >= tutorialNodeList.length ? 'done' : tutorialNodeList[tutorialNodeIndex].id;
+  useEffect(() => {
+    if (tutorialMode && tutorialNodeId === 'tabs') setTutorialIntervalBaseline(rhythmInterval);
+    if (!tutorialMode) setTutorialIntervalBaseline(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorialMode, tutorialNodeId]);
   // The rhythm check walkthrough only exists in the modes that have timers
   const demoStartIdx = tutorialNodeList.findIndex(n => n.id === 'rhythmDemoFirstPopup');
   const demoEndIdx = tutorialNodeList.findIndex(n => n.id === 'rhythmDemoLastPopup');
@@ -1238,14 +1250,14 @@ export default function App() {
     if (tutorialMode) {
       activeFlashes = tutorialNodeId === 'done'
         ? ['tutorial-flash-close']
-        : (tutorialNodeList[tutorialNodeIndex]?.flashWhileCurrent?.({ state, showRecalibrateMenu, showWeightChange, weightUnchanged, adrenalineHandled }) ?? []);
+        : (tutorialNodeList[tutorialNodeIndex]?.flashWhileCurrent?.({ state, showRecalibrateMenu, showWeightChange, weightUnchanged, adrenalineHandled, intervalUnchanged: rhythmInterval === tutorialIntervalBaseline, showElapsedRecalibrate }) ?? []);
     }
     TUTORIAL_FLASH_CLASSES.forEach(c => document.body.classList.toggle(c, activeFlashes.includes(c)));
 
     return () => {
       TUTORIAL_FLASH_CLASSES.forEach(c => document.body.classList.remove(c));
     };
-  }, [tutorialMode, tutorialNodeId, tutorialNodeIndex, tutorialNodeList, state, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange]);
+  }, [tutorialMode, tutorialNodeId, tutorialNodeIndex, tutorialNodeList, state, showCatchup, catchupStep, showInteractiveTutorial, timingNodesComplete, showRecalibrateMenu, showWeightChange, rhythmInterval, tutorialIntervalBaseline, showElapsedRecalibrate]);
 
   // Timeout for disregard pending states (3 seconds)
   useEffect(() => {
@@ -2272,6 +2284,8 @@ export default function App() {
   // the log.
   const beginModeChange = (target: 'log' | 'minimal' | 'elapsed') => {
     if (target === 'log') {
+      // Choosing Tx log only commits straight away, so this is where the tutorial stops it
+      if (tutorialMode) { setShowModeChange(false); setShowTutorialModeBlocked(true); return; }
       // No timer to recalibrate, so it takes effect straight away
       // (A case saved before elapsedCalibrated existed was calibrated if it was in a timer mode)
       if (state.elapsedCalibrated === undefined && timingMode !== 'log') setState(prev => ({ ...prev, elapsedCalibrated: true }));
@@ -2388,6 +2402,8 @@ export default function App() {
             isCaseClosed={isCaseClosed}
             globalNodeIndex={tutorialNodeIndex}
             mode={timingMode ?? 'elapsed'}
+            appModalOpen={showEndWarning || showPauseWarning || showRecalibrateMenu || showWeightChange || showModeChange || showElapsedRecalibrate || showResetWarning || showPatternSwitchModal || showCloseWarning || showTutorialModeBlocked}
+            intervalBaseline={tutorialIntervalBaseline}
             onNodeChange={(nodeIndex, done) => {
               setTutorialNodeIndex(nodeIndex);
             }}
@@ -2628,6 +2644,8 @@ export default function App() {
                 isCaseClosed={isCaseClosed}
                 globalNodeIndex={tutorialNodeIndex}
                 mode={timingMode ?? 'elapsed'}
+                appModalOpen={showEndWarning || showPauseWarning || showRecalibrateMenu || showWeightChange || showModeChange || showElapsedRecalibrate || showResetWarning || showPatternSwitchModal || showCloseWarning || showTutorialModeBlocked}
+                intervalBaseline={tutorialIntervalBaseline}
                 onNodeChange={(nodeIndex, done) => {
                   setTutorialNodeIndex(nodeIndex);
                 }}
@@ -2882,6 +2900,8 @@ export default function App() {
               isCaseClosed={isCaseClosed}
               globalNodeIndex={tutorialNodeIndex}
               mode={timingMode ?? 'elapsed'}
+              appModalOpen={showEndWarning || showPauseWarning || showRecalibrateMenu || showWeightChange || showModeChange || showElapsedRecalibrate || showResetWarning || showPatternSwitchModal || showCloseWarning || showTutorialModeBlocked}
+              intervalBaseline={tutorialIntervalBaseline}
               onNodeChange={(nodeIndex, done) => {
                 setTutorialNodeIndex(nodeIndex);
               }}
@@ -3694,6 +3714,7 @@ export default function App() {
                 setElapsedManuallyEdited(false);
                 setShowElapsedRecalibrate(true);
               }}
+              data-button="recalibrate-timer"
               className="w-full p-4 rounded-2xl bg-neutral-100 text-neutral-800 font-bold text-center"
             >
               <div className="text-base">Recalibrate Timer</div>
@@ -3859,6 +3880,14 @@ export default function App() {
               <button onClick={() => { setPendingWeightForMode(null); setShowWeightChange(false); }} className="p-3 rounded-xl bg-neutral-100 font-bold text-neutral-700">Cancel</button>
               <button
                 onClick={() => {
+                  // Mid-tutorial, a weight entered on the way to a mode change isn't saved:
+                  // the mode change is stopped here instead
+                  if (tutorialMode && pendingWeightForMode) {
+                    setPendingWeightForMode(null);
+                    setShowWeightChange(false);
+                    setShowTutorialModeBlocked(true);
+                    return;
+                  }
                   const w = parseFloat(newWeightInput);
                   if (!isNaN(w) && w > 0) {
                     // No "changed" entry for a first weight: there was nothing to change from
@@ -3911,6 +3940,17 @@ export default function App() {
             <button onClick={() => setShowModeChange(false)} className="w-full p-3 rounded-xl bg-white border border-neutral-200 text-neutral-500 font-bold">
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {showTutorialModeBlocked && (
+        <div className="fixed inset-0 bg-black/60 z-[2000] flex items-center justify-center p-6" data-modal="tutorial-mode-blocked">
+          <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-4 text-center">
+            <h2 className="text-2xl font-bold text-neutral-900">Change Mode Disabled</h2>
+            <p className="text-neutral-600">Changing mode is disabled during the tutorial.</p>
+            <p className="text-neutral-600">You can change mode once you've finished the tutorial.</p>
+            <button onClick={() => setShowTutorialModeBlocked(false)} className="w-full p-4 rounded-xl bg-emerald-600 text-white font-bold btn-base">OK</button>
           </div>
         </div>
       )}
@@ -3988,6 +4028,13 @@ export default function App() {
               <button
                 onClick={() => {
                   if (needsElapsedEntry) return;
+                  // Mid-tutorial, a mode change is stopped at its final step and nothing staged is kept
+                  if (tutorialMode && stagedMode) {
+                    setShowElapsedRecalibrate(false);
+                    setStagedMode(null);
+                    setShowTutorialModeBlocked(true);
+                    return;
+                  }
                   // Commit staged changes to real state.
                   // While a rhythm check is delayed the interval can't be changed (it is
                   // reset by itself once that check is done), so the current one is kept

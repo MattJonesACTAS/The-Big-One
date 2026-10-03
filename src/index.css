@@ -284,6 +284,10 @@ body.tutorial-flash-recalibrate [data-button="recalibrate"] {
   animation: adrenalineFlash 1.5s infinite;
 }
 
+body.tutorial-flash-recalibrate-timer [data-button="recalibrate-timer"] {
+  animation: adrenalineFlash 1.5s infinite;
+}
+
 body.tutorial-flash-weight [data-button="change-weight"] {
   animation: adrenalineFlash 1.5s infinite;
 }
