@@ -240,6 +240,21 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
     else if (currentScreen === 'intro2') setCurrentScreen('introWhen');
   };
 
+  // Phone back button on the intro slides: one slide back, and nothing on the first one
+  // (see handleBackRef in App.tsx)
+  useEffect(() => {
+    if (currentScreen !== 'intro1' && currentScreen !== 'introWhen' && currentScreen !== 'intro2') return;
+    const onBack = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d.handled) return;
+      d.handled = true;
+      if (currentScreen === 'introWhen') setCurrentScreen('intro1');
+      else if (currentScreen === 'intro2') setCurrentScreen('introWhen');
+    };
+    window.addEventListener('bigone:back', onBack);
+    return () => window.removeEventListener('bigone:back', onBack);
+  }, [currentScreen]);
+
   const handleNext = () => {
     if (currentScreenData.nextScreen) {
       setCurrentScreen(currentScreenData.nextScreen);

@@ -614,6 +614,16 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     return () => clearTimeout(t);
   }, [currentNode?.id, conditionMet]);
 
+  // Phone back button: while a tutorial slide is showing (or about to), back does nothing,
+  // since these slides only go forward (see handleBackRef in App.tsx)
+  useEffect(() => {
+    if (!activePopup && !activePositioned && !revealPending) return;
+    const onBack = (e: Event) => { (e as CustomEvent).detail.handled = true; };
+    window.addEventListener('bigone:back', onBack);
+    return () => window.removeEventListener('bigone:back', onBack);
+  }, [activePopup, activePositioned, revealPending]);
+
+
   // Dismiss active popup during rhythm check window
   useEffect(() => {
     if (inRhythmCheckWindow && activePositioned) {
