@@ -3251,7 +3251,7 @@ export default function App() {
                       }} 
                       className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white p-5 rounded-2xl text-lg font-bold shadow-lg shadow-emerald-500/30 transition-all duration-200 hover:shadow-xl hover:scale-[1.02]"
                     >
-                      Calibrate
+                      Start
                     </button>
                     <button 
                       onClick={() => {
