@@ -47,6 +47,44 @@ type RawNode = Omit<GlobalNode, 'displayNumber'>;
 const RHYTHM_REVEAL_DELAY_FIRST_MS = 1500;
 const RHYTHM_REVEAL_DELAY_MS = 1000;
 
+// How long the tutorial waits for an instructed action ("Give it a Go") before offering the
+// instruction again in a "Lost?" slide. A fixed timer: taps and open menus don't reset it.
+const LOST_DELAY_MS = 20000;
+
+// Fuller wording for the "Lost?" slide where the instructed action takes more than one tap, keyed by
+// the node whose "Give it a Go" slide was dismissed. Any node not listed repeats that slide's own text.
+const LOST_TEXT: Record<TutorialMode, Record<string, string>> = {
+  elapsed: {
+    recalibrate: "Press the 'Recalibrate' button at the top left of the home screen and follow the option to change the patient's weight.",
+    tabs: "Press the '4H 4T' button in the row of buttons near the top of the home screen and tick one item off.",
+    vssTab: "Press the 'VSS' button at the right end of the row of buttons near the top of the home screen, type in a vital sign, then press 'Close'.",
+    addTxBtn: "Press the '+ Add Tx' button at the bottom right of the home screen so we can log our first Tx.",
+    addTxSubmenu: "Press the '+ Add Tx' button at the bottom right of the home screen, open the 'Medications' section, choose 'Adrenaline push', and select a dose.",
+    treatmentLogInfo: "Press the 'Summary' button at the bottom left of the home screen, tap the small button beside the adrenaline push entry in the treatment log, and choose Edit, Reorder, or Delete.",
+    endCase: "Press the 'End Case' button at the top right of the home screen and confirm.",
+    delete: "Press the 'Close Case' button on the right and confirm to finish the tutorial.",
+  },
+  log: {
+    recalibrate: "Press the 'Recalibrate' button at the top left of the home screen and follow the option to change the patient's weight.",
+    tabs: "Press the '4H 4T' button in the row of buttons near the top of the home screen and tick one item off.",
+    vssTab: "Press the 'VSS' button at the right end of the row of buttons near the top of the home screen, type in a vital sign, then press 'Close'.",
+    addTxBtn: "Press the '+ Add Tx' button at the bottom right of the home screen so we can log our first Tx.",
+    addTxSubmenu: "Press the '+ Add Tx' button at the bottom right of the home screen, open the 'Medications' section, choose 'Adrenaline push', and select a dose.",
+    treatmentLogInfo: "Tap the small button beside the adrenaline push entry in the treatment log on the home screen, and choose Edit, Reorder, or Delete.",
+    endCase: "Press the 'End Case' button at the top right of the home screen and confirm.",
+    delete: "Press the 'Close Case' button on the right and confirm to finish the tutorial.",
+  },
+  minimal: {
+    recalibrate: "Press the 'Recalibrate' button at the top left of the home screen and follow the option to change the rhythm check interval.",
+    tabs: "Press the '4H 4T' button in the row of buttons near the top of the home screen and tick one item off.",
+    vssTab: "Press the 'VSS' button at the right end of the row of buttons near the top of the home screen, type in a vital sign, then press 'Close'.",
+    addTxBtn: "Press the '+ Add Tx' button at the bottom right of the home screen so we can start an adrenaline timer.",
+    addTxSubmenu: "Press the '+ Add Tx' button at the bottom right of the home screen and choose 'Adrenaline' to start its timer.",
+    endCase: "Press the 'End Case' button at the top right of the home screen and confirm.",
+    delete: "Press the 'Close Case' button on the right and confirm to finish the tutorial.",
+  },
+};
+
 // The VSS tab node's pages; only the last line of the second page differs by mode.
 function vssTabPages(whereShown: string): NodePage[] {
   return [{
@@ -597,6 +635,10 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
   // popup arrive before the slide covers it. While waiting, taps are blocked
   // (see revealPending below) so an outcome can't be chosen before the slide shows.
   const [revealPending, setRevealPending] = useState(false);
+  // The instruction from the last dismissed "Give it a Go" slide while its action is still to be done,
+  // and the "Lost?" slide when it's showing (see below)
+  const [lostInstruction, setLostInstruction] = useState<string | null>(null);
+  const [lostNode, setLostNode] = useState<GlobalNode | null>(null);
   useEffect(() => {
     if (!(currentNode?.type === 'popup' && conditionMet && !activePopup)) {
       setRevealPending(false);
@@ -614,14 +656,37 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     return () => clearTimeout(t);
   }, [currentNode?.id, conditionMet]);
 
-  // Phone back button: while a tutorial slide is showing (or about to), back does nothing,
-  // since these slides only go forward (see handleBackRef in App.tsx)
+  // Phone back button: while a tutorial slide is showing (or about to), back does the same as the
+  // slide's own Back button: one page back on page 2 onwards, nothing on page 1
+  // (see handleBackRef in App.tsx)
   useEffect(() => {
-    if (!activePopup && !activePositioned && !revealPending) return;
-    const onBack = (e: Event) => { (e as CustomEvent).detail.handled = true; };
+    if (!activePopup && !activePositioned && !revealPending && !lostNode) return;
+    const onBack = (e: Event) => {
+      (e as CustomEvent).detail.handled = true;
+      if (!lostNode && (activePopup || activePositioned) && currentPageIndex > 0) handleBack();
+    };
     window.addEventListener('bigone:back', onBack);
     return () => window.removeEventListener('bigone:back', onBack);
-  }, [activePopup, activePositioned, revealPending]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePopup, activePositioned, revealPending, lostNode, currentPageIndex]);
+
+  // "Lost?" slide: after a "Give it a Go" slide is dismissed, if the instructed action still hasn't
+  // been done LOST_DELAY_MS later, show that instruction again under the heading "Lost?", and
+  // again after each further wait until it's done. It never shows over another slide or while the
+  // real rhythm check popup is up (the wait starts again once those have finished).
+  useEffect(() => {
+    if (lostInstruction !== null && conditionMet) setLostInstruction(null);   // the action was done
+  }, [lostInstruction, conditionMet]);
+  useEffect(() => {
+    if (lostInstruction === null || conditionMet || tutorialDone || lostNode
+        || activePopup || activePositioned || revealPending || isShockForced) return;
+    const t = setTimeout(() => {
+      setLostNode({ id: 'lost', type: 'popup', pages: [{ title: 'Lost?', description: lostInstruction }] } as unknown as GlobalNode);
+      setCurrentPageIndex(0);
+      setPageAnimKey(k => k + 1);
+    }, LOST_DELAY_MS);
+    return () => clearTimeout(t);
+  }, [lostInstruction, conditionMet, tutorialDone, lostNode, activePopup, activePositioned, revealPending, isShockForced, currentNode?.id]);
 
 
   // Dismiss active popup during rhythm check window
@@ -632,7 +697,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     }
   }, [inRhythmCheckWindow, activePositioned]);
 
-  const activeNode = activePopup || activePositioned;
+  const activeNode = activePopup || activePositioned || lostNode;
   const activePages = activeNode?.pages ?? [];
   const currentPage = activePages[currentPageIndex];
   const isLastPage = currentPageIndex >= activePages.length - 1;
@@ -642,7 +707,21 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     setPageAnimKey(k => k + 1);
   };
 
+  const handleBack = () => {
+    setCurrentPageIndex(prev => Math.max(0, prev - 1));
+    setPageAnimKey(k => k + 1);
+  };
+
   const handleGotIt = () => {
+    if (lostNode) {            // closing the "Lost?" slide doesn't move the tutorial on
+      setLostNode(null);
+      setCurrentPageIndex(0);
+      return;
+    }
+    const lastPage = activePages[activePages.length - 1];
+    setLostInstruction(lastPage && /^give it a go$/i.test(lastPage.title)
+      ? (LOST_TEXT[mode]?.[activeNode?.id ?? ''] ?? lastPage.description)
+      : null);
     setCurrentPageIndex(0);
     setActivePopup(null);
     setActivePositioned(null);
@@ -657,7 +736,7 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
     }
   };
 
-  const showDarkOverlay = activePopup !== null || activePositioned !== null;
+  const showDarkOverlay = activePopup !== null || activePositioned !== null || lostNode !== null;
 
   return (
     <div data-tutorial-ui="true" style={{ position: 'fixed', inset: 0, zIndex: 9998, pointerEvents: 'none' }}>
@@ -737,16 +816,30 @@ export default function TutorialOverlay({ appState, isShockForced, onExit, onNod
             </div>
           )}
 
-          <button
-            onClick={isLastPage ? handleGotIt : handleNext}
-            style={{
-              width: '100%', backgroundColor: '#059669', color: 'white',
-              padding: '16px', borderRadius: '12px', border: 'none',
-              fontSize: '16px', fontWeight: '700', cursor: 'pointer'
-            }}
-          >
-            {isLastPage ? 'Got It' : 'Next'}
-          </button>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            {currentPageIndex > 0 && !lostNode && (
+              <button
+                onClick={handleBack}
+                style={{
+                  flex: 1, backgroundColor: '#f3f4f6', color: '#374151',
+                  padding: '16px', borderRadius: '12px', border: 'none',
+                  fontSize: '16px', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                Back
+              </button>
+            )}
+            <button
+              onClick={isLastPage ? handleGotIt : handleNext}
+              style={{
+                flex: 1, backgroundColor: '#059669', color: 'white',
+                padding: '16px', borderRadius: '12px', border: 'none',
+                fontSize: '16px', fontWeight: '700', cursor: 'pointer'
+              }}
+            >
+              {isLastPage ? 'Got It' : 'Next'}
+            </button>
+          </div>
         </div>
       )}
 

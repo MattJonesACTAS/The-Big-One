@@ -34,6 +34,7 @@ interface InteractiveTutorialProps {
   // Set (to the chosen mode's name) while the "you've chosen ..." page is showing
   modeIntroLabel?: string | null;
   onModeIntroNext?: () => void;
+  onModeIntroBack?: () => void;
   // The mode being learned, so the setup screens number themselves to match its (shorter or longer) sequence
   mode?: 'log' | 'minimal' | 'elapsed' | null;
   // Back on the very first slide leaves the tutorial
@@ -71,7 +72,7 @@ const MODE_ABOUT_PAGES: Record<'log' | 'minimal' | 'elapsed', { title: string; t
   ],
 };
 
-const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodesComplete, onCatchupNodeStatusChange, catchupStep, modeIntroLabel, onModeIntroNext, mode, onExit, introRewind, setupReset }) => {
+const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodesComplete, onCatchupNodeStatusChange, catchupStep, modeIntroLabel, onModeIntroNext, onModeIntroBack, mode, onExit, introRewind, setupReset }) => {
   const [currentScreen, setCurrentScreen] = useState('intro1');
   const [exploredElements, setExploredElements] = useState<Set<string>>(new Set());
   // Which notes have been read on each page, so going Back to a page that was
@@ -255,6 +256,20 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
     return () => window.removeEventListener('bigone:back', onBack);
   }, [currentScreen]);
 
+  // Phone back button while a setup note is open: one page back on page 2 onwards, nothing on page 1
+  // (see handleBackRef in App.tsx)
+  useEffect(() => {
+    if (!activeExplanation) return;
+    const onBack = (e: Event) => {
+      const d = (e as CustomEvent).detail;
+      if (d.handled) return;
+      d.handled = true;
+      if (explanationPage > 0) setExplanationPage(explanationPage - 1);
+    };
+    window.addEventListener('bigone:back', onBack);
+    return () => window.removeEventListener('bigone:back', onBack);
+  }, [activeExplanation, explanationPage]);
+
   const handleNext = () => {
     if (currentScreenData.nextScreen) {
       setCurrentScreen(currentScreenData.nextScreen);
@@ -309,12 +324,31 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
               {currentScreen === 'introWhen' && 'When to Use the App'}
               {currentScreen === 'intro2' && 'Navigating the Tutorial'}
             </h2>
-            {renderIntroDescription(
+            {currentScreen !== 'intro2' && renderIntroDescription(
               currentScreen === 'intro1'
                 ? "The Big One is a cognitive aid for use during cardiac arrests or any other big job.\n\nIt is designed to assist you to keep track of:\n\n• Rhythm check intervals\n\n• Medication re-dosing intervals\n\n• The times events occurred, making case sheets easy and accurate\n\nBy offloading this cognitive load, you can focus on situational awareness and team leadership."
                 : currentScreen === 'introWhen'
                 ? "Imagine you're first on scene to a cardiac arrest or another complex job that will require multiple crews.\n\nYou perform the initial necessary interventions, then eventually more crews arrive.\n\nYou then take a step back, assume the role of Team Leader, assign roles to other crew members, and go hands off for the rest of the case.\n\nThat is when The Big One can be used."
-                : "In this tutorial you'll see red numbered icons hovering over different elements of the app.\n\nClick on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial."
+                : ''
+            )}
+            {currentScreen === 'intro2' && (
+              <>
+                {renderIntroDescription("In this tutorial you'll see red numbered icons hovering over elements of the app, like this:")}
+                {/* Example of a real tutorial icon (same look and size, same gentle pulse); it can't be pressed */}
+                <div aria-hidden="true" style={{ display: 'flex', justifyContent: 'center', margin: '33px 0 33px', pointerEvents: 'none' }}>
+                  <div style={{
+                    width: '50px', height: '50px', borderRadius: '50%',
+                    backgroundColor: '#ef4444',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '20px', fontWeight: '700', color: 'white',
+                    animation: 'introExampleBreath 2s ease-in-out infinite',
+                  }}>
+                    1
+                  </div>
+                </div>
+                <style>{`@keyframes introExampleBreath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }`}</style>
+                {renderIntroDescription("Click on the icons to learn about these features.\n\nYou'll need to clear all icons and complete any instructions to progress through the tutorial.")}
+              </>
             )}
             <div style={{ display: 'flex', gap: '10px' }}>
               <button
@@ -384,23 +418,41 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
               Calibration
             </h2>
             {renderIntroDescription(`You've chosen '${modeIntroLabel}' mode.\n\nNext, you'll need to calibrate the app to the current case.`)}
-            <button
-              onClick={onModeIntroNext}
-              style={{
-                width: '100%',
-                padding: '12px',
-                backgroundColor: '#10b981',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '16px',
-                fontWeight: '600',
-                cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
-              }}
-            >
-              Next
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                onClick={onModeIntroBack}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#f3f4f6',
+                  color: '#374151',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                Back
+              </button>
+              <button
+                onClick={onModeIntroNext}
+                style={{
+                  flex: 1,
+                  padding: '12px',
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)',
+                }}
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -522,24 +574,44 @@ const InteractiveTutorial: React.FC<InteractiveTutorialProps> = ({ onTimingNodes
                 ))}
               </div>
             ) : null}
-            <button
-              onClick={() => (activeExplanation.morePages?.length && explanationPage < activeExplanation.morePages.length)
-                ? setExplanationPage(explanationPage + 1)
-                : handleCloseExplanation()}
-              style={{
-                width: '100%',
-                backgroundColor: '#10b981',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px',
-                fontSize: '15px',
-                fontWeight: '600',
-                cursor: 'pointer',
-              }}
-            >
-              {activeExplanation.morePages?.length && explanationPage < activeExplanation.morePages.length ? 'Next' : 'Got It'}
-            </button>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {explanationPage > 0 && (
+                <button
+                  onClick={() => setExplanationPage(explanationPage - 1)}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    fontSize: '15px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={() => (activeExplanation.morePages?.length && explanationPage < activeExplanation.morePages.length)
+                  ? setExplanationPage(explanationPage + 1)
+                  : handleCloseExplanation()}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '12px',
+                  fontSize: '15px',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                }}
+              >
+                {activeExplanation.morePages?.length && explanationPage < activeExplanation.morePages.length ? 'Next' : 'Got It'}
+              </button>
+            </div>
           </div>
         </div>
       )}

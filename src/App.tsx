@@ -1530,7 +1530,7 @@ export default function App() {
 
     // 7. Setup pages: the same step back as each page's Back button
     if (showCatchup && !state.running && !tutorialMode) {
-      if (tutorialModeIntro) return;
+      if (tutorialModeIntro) { setTutorialModeIntro(null); return; }   // the "you've chosen..." slide: back to App Mode
       if (catchupStep === 6) { if (showInteractiveTutorial) setIntroRewind(n => n + 1); else setCatchupStep(1); }
       else if (catchupStep === 2) setCatchupStep(6);
       else if (catchupStep === 3) setCatchupStep(2);
@@ -2602,6 +2602,7 @@ export default function App() {
           introRewind={introRewind}
           setupReset={setupReset}
           modeIntroLabel={tutorialModeIntro ? TIMING_MODE_LABELS[tutorialModeIntro] : null}
+          onModeIntroBack={() => setTutorialModeIntro(null)}
           onModeIntroNext={() => {
             const chosen = tutorialModeIntro;
             setTutorialModeIntro(null);
