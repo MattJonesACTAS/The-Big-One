@@ -22,6 +22,9 @@
   
   html {
     overscroll-behavior-y: none;
+    /* The same black as the status bar at the top. On phones with a navigation bar the page sits
+       above it and this colour shows behind the bar's (white) buttons, so they stay visible. */
+    background-color: #000000;
   }
 }
 
